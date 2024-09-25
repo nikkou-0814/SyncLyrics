@@ -3,8 +3,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Lyrics Sync App',
-  description: '音楽ファイルから歌詞を自動認識し、同期表示するアプリ',
+  title: 'SyncLyrics',
+  description: '音楽ファイルを挿入、歌詞を検索し歌詞の同期をします。',
 };
 
 export default function RootLayout({
