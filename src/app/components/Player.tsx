@@ -373,9 +373,9 @@ const Player: React.FC<PlayerProps> = ({
           </button>
 
           {/* 中央のトラック情報 */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 text-center flex flex-col">
-            <p className="text-white font-semibold">{trackName}</p>
-            <p className="text-gray-400 text-sm">
+          <div className="absolute left-1/2 transform -translate-x-1/2 text-center flex flex-col items-center justify-center">
+            <p className="text-white font-semibold pb-1">{trackName}</p>
+            <p className="text-gray-400 text-sm mb-2">
               {albumName} - {artistName}
             </p>
           </div>
