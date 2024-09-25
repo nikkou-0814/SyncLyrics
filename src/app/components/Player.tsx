@@ -269,7 +269,7 @@ const Player: React.FC<PlayerProps> = ({
           ref={lyricsContainerRef}
         >
           <div className="relative">
-            <div className="h-80"></div>
+            <div className="h-96"></div>
             {lyricsData.map((line, index) => {
               const isActive = index === currentLineIndex;
               const isPast = index < currentLineIndex;
@@ -322,7 +322,7 @@ const Player: React.FC<PlayerProps> = ({
                 </p>
               );
             })}
-            <div className="h-80"></div>
+            <div className="h-96"></div>
           </div>
         </div>
       </div>
