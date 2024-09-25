@@ -1,5 +1,3 @@
-// src/app/page.tsx
-
 'use client';
 
 import { useState } from 'react';
@@ -22,7 +20,7 @@ interface SearchResult {
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
-  // const [selectedTrack, setSelectedTrack] = useState<SearchResult | null>(null); // Removed
+  const [selectedTrack, setSelectedTrack] = useState<SearchResult | null>(null);
   const [lyricsData, setLyricsData] = useState<LyricLine[] | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -39,7 +37,6 @@ export default function Home() {
     setError(null);
 
     try {
-      // パラメータを 'q' に変更
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
 
@@ -66,7 +63,7 @@ export default function Home() {
 
     setIsProcessing(true);
     setError(null);
-    // setSelectedTrack(track); // Removed since 'selectedTrack' is no longer used
+    setSelectedTrack(track);
 
     try {
       const res = await fetch('/api/get-lyrics', {
@@ -108,12 +105,15 @@ export default function Home() {
       setAudioFile(e.target.files[0]);
       setAudioUrl(URL.createObjectURL(e.target.files[0]));
       setLyricsData(null);
+      setSelectedTrack(null);
       setError(null);
     }
   };
 
+  // Removed unused handleLyricClick function
+
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-900 text-white p-4">
+    <div className="min-h-screen flex flex-col items-center bg-gray-900 text-white p-4 relative">
       {!lyricsData && (
         <div className="w-full max-w-md">
           <h1 className="text-2xl mb-4 text-center">音楽を挿入し曲名を検索してください</h1>
@@ -165,6 +165,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* 処理中のスピナー */}
       {isProcessing && !lyricsData && (
         <div className="mt-8 flex items-center justify-center">
           <svg
@@ -191,8 +192,15 @@ export default function Home() {
         </div>
       )}
 
-      {lyricsData && audioUrl && (
-        <Player lyricsData={lyricsData} audioUrl={audioUrl} />
+      {/* プレイヤーコントロール */}
+      {lyricsData && audioUrl && selectedTrack && (
+        <Player
+          lyricsData={lyricsData}
+          audioUrl={audioUrl}
+          trackName={selectedTrack.trackName}
+          albumName={selectedTrack.albumName}
+          artistName={selectedTrack.artistName}
+        />
       )}
     </div>
   );
