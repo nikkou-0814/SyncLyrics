@@ -89,7 +89,6 @@ export default function Home() {
 
       setLyricsData(data.lyricsData);
 
-      // アップロードされた音声ファイルのURLを生成
       const url = URL.createObjectURL(audioFile);
       setAudioUrl(url);
     } catch (err) {
@@ -110,21 +109,18 @@ export default function Home() {
     }
   };
 
-  // Removed unused handleLyricClick function
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4 relative">
       {!lyricsData && (
         <div className="w-full max-w-md">
           <h1 className="text-2xl mb-4 text-center">音楽を挿入し曲名を検索してください</h1>
-          {/* 音楽ファイルのアップロード */}
           <input
             type="file"
             accept="audio/*"
             onChange={handleFileChange}
             className="w-full mb-4"
           />
-          {/* 曲名の検索 */}
+
           <input
             type="text"
             placeholder="曲名を入力"
@@ -165,7 +161,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* 処理中のスピナー */}
       {isProcessing && !lyricsData && (
         <div className="mt-8 flex items-center justify-center">
           <svg
@@ -192,7 +187,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* プレイヤーコントロール */}
       {lyricsData && audioUrl && selectedTrack && (
         <Player
           lyricsData={lyricsData}

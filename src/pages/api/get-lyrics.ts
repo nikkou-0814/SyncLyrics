@@ -1,9 +1,6 @@
-// src/pages/api/get-lyrics.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import axios from 'axios';
 
-// リクエストボディの型定義
 interface SearchRequestBody {
   track_name: string;
   artist_name: string;
@@ -11,13 +8,11 @@ interface SearchRequestBody {
   duration: number;
 }
 
-// 歌詞の行を表す型定義
 interface LyricLine {
   time: number;
   text: string;
 }
 
-// lrclib.net APIのレスポンスの型定義
 interface LrcLibResponse {
   syncedLyrics: string;
 }
@@ -29,7 +24,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // JSON データを取得
     const { track_name, artist_name, album_name, duration } = req.body as SearchRequestBody;
 
     console.log('Received data:', { track_name, artist_name, album_name, duration });
@@ -39,7 +33,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    // lrclib.net API にリクエストを送信
     const params: SearchRequestBody = {
       track_name,
       artist_name,
@@ -65,7 +58,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return;
       }
 
-      // 歌詞データを解析してタイムスタンプとテキストを取得
       const lyricsData: LyricLine[] = [];
       const lines = syncedLyrics.trim().split('\n');
       const regex = /^\s*\[(\d+):(\d+\.\d+)\](.*)?$/;
