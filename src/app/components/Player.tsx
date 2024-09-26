@@ -255,7 +255,7 @@ const Player: React.FC<PlayerProps> = ({
         onMouseLeave={handleLyricsMouseLeave}
       >
         <div
-          className="overflow-y-auto w-full max-w-2xl"
+          className="overflow-y-auto w-full max-w-2xl hidden-scrollbar"
           style={{
             height: '89vh', // 歌詞表示の高さを調整
             maskImage: isLyricsHovered
@@ -294,7 +294,7 @@ const Player: React.FC<PlayerProps> = ({
                   className={`text-center my-4 transition-all duration-300 px-2 ${
                     isActive
                       ? 'text-white'
-                      : 'text-gray-400 hover:text-gray-300 cursor-pointer'
+                      : 'text-gray-500 hover:text-gray-300 cursor-pointer'
                   }`}
                   style={{
                     opacity: opacity,
@@ -306,15 +306,15 @@ const Player: React.FC<PlayerProps> = ({
                   {isInterlude ? (
                     // アクティブなインタールードの場合のみドットを表示
                     <span
-                      className={`flex space-x-2 justify-center transition-all duration-500 ${
+                      className={`flex space-x-2 justify-center duration-500 ${
                         isActive
-                          ? 'animate-fade-in-scale m-10'
+                          ? 'animate-fade-in-scale m-4'
                           : 'animate-fade-out-scale opacity-0 scale-0 m-0'
                       }`}
                     >
-                      <span className="h-5 w-5 bg-white rounded-full"></span>
-                      <span className="h-5 w-5 bg-white rounded-full"></span>
-                      <span className="h-5 w-5 bg-white rounded-full"></span>
+                      <span className="h-4 w-4 bg-white rounded-full animate-bounce"></span>
+                      <span className="h-4 w-4 bg-white rounded-full animate-bounce [animation-delay:200ms]"></span>
+                      <span className="h-4 w-4 bg-white rounded-full animate-bounce [animation-delay:400ms]"></span>
                     </span>
                   ) : (
                     line.text

@@ -113,7 +113,7 @@ export default function Home() {
   // Removed unused handleLyricClick function
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-900 text-white p-4 relative">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4 relative">
       {!lyricsData && (
         <div className="w-full max-w-md">
           <h1 className="text-2xl mb-4 text-center">音楽を挿入し曲名を検索してください</h1>
@@ -135,7 +135,7 @@ export default function Home() {
           <button
             onClick={handleSearch}
             disabled={!searchQuery || isProcessing}
-            className={`w-full py-2 px-4 rounded ${
+            className={`w-full py-2 px-4 rounded transition-all ${
               !searchQuery || isProcessing
                 ? 'bg-gray-500 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700'
@@ -152,7 +152,7 @@ export default function Home() {
                 {searchResults.map((track) => (
                   <li
                     key={track.id}
-                    className="mb-2 p-2 bg-gray-800 rounded cursor-pointer hover:bg-gray-700"
+                    className="mb-2 p-2 bg-gray-800 rounded cursor-pointer hover:bg-gray-700 transition-all"
                     onClick={() => handleSelectTrack(track)}
                   >
                     <p className="text-lg">{track.trackName}</p>

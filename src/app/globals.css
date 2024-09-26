@@ -11,3 +11,14 @@ html {
 .ease-custom {
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+@layer utilities {
+    .hidden-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .hidden-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+}
+  

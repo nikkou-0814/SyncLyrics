@@ -18,7 +18,8 @@ const config: Config = {
       animation: {
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'fade-in-scale': 'fade-in-scale 0.5s forwards',
-        'fade-out-scale': 'fade-out-scale 0.5s forwards',
+        'fade-out-scale': 'fade-out-scale 0.3s forwards',
+        'bounce': 'bounce 1.5s ease-in-out infinite',
       },
       keyframes: {
         pulse: {
@@ -31,7 +32,12 @@ const config: Config = {
         },
         'fade-out-scale': {
           '0%': { opacity: '1', transform: 'scale(1)' },
+          '30%': { opacity: '1', transform: 'scale(1.2)' },
           '100%': { opacity: '0', transform: 'scale(0)' },
+        },
+        'bounce': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(0.7)' },
         },
       },
       transitionTimingFunction: {
