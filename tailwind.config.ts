@@ -19,7 +19,7 @@ const config: Config = {
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'fade-in-scale': 'fade-in-scale 0.5s forwards',
         'fade-out-scale': 'fade-out-scale 0.3s forwards',
-        'bounce': 'bounce 1.5s ease-in-out infinite',
+        'bounce': 'bounce 2s ease-in-out infinite',
       },
       keyframes: {
         pulse: {

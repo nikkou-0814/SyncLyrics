@@ -165,7 +165,7 @@ const Player: React.FC<PlayerProps> = ({
 
       targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
 
-      smoothScrollTo(container, targetScrollTop, 500);
+      smoothScrollTo(container, targetScrollTop, 700);
     }
   }, [currentLineIndex, smoothScrollTo]);
 
