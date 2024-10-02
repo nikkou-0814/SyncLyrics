@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const headers = {
-      'User-Agent': 'LyricsSyncApp/1.0 (https://your-app-url.com)',
+      'User-Agent': 'LyricsSyncApp/1.0 (https://lrclib.net/api/search)',
     };
 
     const response = await axios.get<LrcLibSearchResponse>('https://lrclib.net/api/search', {
