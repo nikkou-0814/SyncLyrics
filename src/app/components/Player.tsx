@@ -32,7 +32,7 @@ const Player: React.FC<PlayerProps> = ({
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
 
   const INTERLUDE_SCROLL_DURATION = 1500;
-  const NORMAL_SCROLL_DURATION = 700;
+  const NORMAL_SCROLL_DURATION = 1000;
 
   const cubicBezier = useCallback(
     (p1x: number, p1y: number, p2x: number, p2y: number) => {
