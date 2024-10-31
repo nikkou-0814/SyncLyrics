@@ -31,31 +31,31 @@ const Player: React.FC<PlayerProps> = ({
   const [volume, setVolume] = useState<number>(1);
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
 
+  const INTERLUDE_SCROLL_DURATION = 1500;
+  const NORMAL_SCROLL_DURATION = 700;
+
   const cubicBezier = useCallback(
     (p1x: number, p1y: number, p2x: number, p2y: number) => {
-
       const NEWTON_ITERATIONS = 4;
       const NEWTON_MIN_SLOPE = 0.001;
       const SUBDIVISION_PRECISION = 0.0000001;
       const SUBDIVISION_MAX_ITERATIONS = 10;
-  
+
       const ax = 3.0 * p1x - 3.0 * p2x + 1.0;
       const bx = 3.0 * p2x - 6.0 * p1x;
       const cx = 3.0 * p1x;
-  
+
       const ay = 3.0 * p1y - 3.0 * p2y + 1.0;
       const by = 3.0 * p2y - 6.0 * p1y;
       const cy = 3.0 * p1y;
-  
+
       const sampleCurveX = (t: number) => ((ax * t + bx) * t + cx) * t;
       const sampleCurveY = (t: number) => ((ay * t + by) * t + cy) * t;
-      const sampleCurveDerivativeX = (t: number) => (3.0 * ax * t + 2.0 * bx) * t + cx;
-  
+      const sampleCurveDerivativeX = (t: number) =>
+        (3.0 * ax * t + 2.0 * bx) * t + cx;
+
       const solveCurveX = (x: number) => {
-        let t0 = 0.0;
-        let t1 = 1.0;
         let t2 = x;
-  
         for (let i = 0; i < NEWTON_ITERATIONS; i++) {
           const x2 = sampleCurveX(t2) - x;
           const d2 = sampleCurveDerivativeX(t2);
@@ -67,7 +67,11 @@ const Player: React.FC<PlayerProps> = ({
           }
           t2 -= x2 / d2;
         }
-  
+
+        let t0 = 0.0;
+        let t1 = 1.0;
+        t2 = x;
+
         for (let i = 0; i < SUBDIVISION_MAX_ITERATIONS; i++) {
           const x2 = sampleCurveX(t2) - x;
           if (Math.abs(x2) < SUBDIVISION_PRECISION) {
@@ -80,14 +84,14 @@ const Player: React.FC<PlayerProps> = ({
           }
           t2 = (t1 + t0) / 2.0;
         }
-  
+
         return t2;
       };
-  
+
       return (t: number) => sampleCurveY(solveCurveX(t));
     },
     []
-  ); 
+  );
 
   const smoothScrollTo = useCallback(
     (element: HTMLElement, to: number, duration: number) => {
@@ -154,20 +158,40 @@ const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     if (!lyricsContainerRef.current) return;
     const container = lyricsContainerRef.current;
-    const activeLyric = document.getElementById(`lyric-${currentLineIndex}`);
-    if (activeLyric) {
-      const containerHeight = container.clientHeight;
-      const contentHeight = container.scrollHeight;
-      const lyricOffsetTop = activeLyric.offsetTop;
-      const lyricHeight = activeLyric.clientHeight;
+    const isInterlude = lyricsData[currentLineIndex]?.text.trim() === '';
 
-      let targetScrollTop = lyricOffsetTop - containerHeight / 2 + lyricHeight / 2;
+    const scrollDuration = isInterlude ? INTERLUDE_SCROLL_DURATION : NORMAL_SCROLL_DURATION;
 
-      targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
+    if (isInterlude) {
+      const prevLyricIndex = currentLineIndex - 1;
+      const prevLyric = document.getElementById(`lyric-${prevLyricIndex}`);
+      if (prevLyric) {
+        const prevLyricHeight = prevLyric.clientHeight;
+        let targetScrollTop = container.scrollTop + prevLyricHeight;
+        const additionalOffset = 20;
+        targetScrollTop += additionalOffset;
+        const contentHeight = container.scrollHeight;
+        const containerHeight = container.clientHeight;
+        targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
 
-      smoothScrollTo(container, targetScrollTop, 700);
+        smoothScrollTo(container, targetScrollTop, scrollDuration);
+      }
+    } else {
+      const activeLyric = document.getElementById(`lyric-${currentLineIndex}`);
+      if (activeLyric) {
+        const containerHeight = container.clientHeight;
+        const contentHeight = container.scrollHeight;
+        const lyricOffsetTop = activeLyric.offsetTop;
+        const lyricHeight = activeLyric.clientHeight;
+
+        let targetScrollTop = lyricOffsetTop - containerHeight / 2 + lyricHeight / 2;
+
+        targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
+
+        smoothScrollTo(container, targetScrollTop, scrollDuration);
+      }
     }
-  }, [currentLineIndex, smoothScrollTo]);
+  }, [currentLineIndex, lyricsData, smoothScrollTo]);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;
@@ -231,7 +255,6 @@ const Player: React.FC<PlayerProps> = ({
 
   return (
     <>
-      {/* 歌詞 */}
       <div
         className="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 text-white"
         onMouseEnter={handleLyricsMouseEnter}
@@ -257,13 +280,7 @@ const Player: React.FC<PlayerProps> = ({
               const isActive = index === currentLineIndex;
               const isPast = index < currentLineIndex;
 
-              const opacity = isLyricsHovered
-                ? 1
-                : isActive
-                ? 1
-                : isPast
-                ? 0
-                : 1;
+              const opacity = isLyricsHovered ? 1 : isActive ? 1 : isPast ? 0 : 1;
 
               const isInterlude = line.text.trim() === '';
 
@@ -271,7 +288,7 @@ const Player: React.FC<PlayerProps> = ({
                 <p
                   key={index}
                   id={`lyric-${index}`}
-                  className={`text-center my-4 transition-all duration-300 px-2 ${
+                  className={`text-center my-8 transition-all duration-300 px-2 ${
                     isActive
                       ? 'text-white'
                       : 'text-gray-500 hover:text-gray-300 cursor-pointer'
@@ -284,17 +301,50 @@ const Player: React.FC<PlayerProps> = ({
                   onClick={() => handleLyricClick(line.time)}
                 >
                   {isInterlude ? (
-                    <span
+                    <div
                       className={`flex space-x-2 justify-center duration-500 ${
                         isActive
-                          ? 'animate-fade-in-scale m-4'
-                          : 'animate-fade-out-scale opacity-0 scale-0 m-0'
+                          ? 'animate-fade-in-scale my-10'
+                          : 'animate-fade-out-scale opacity-0 my-0 py-0'
                       }`}
+                      style={{
+                        transition: 'margin 1s cubic-bezier(0.22, 1, 0.36, 1)'
+                      }}                      
                     >
-                      <span className="h-4 w-4 bg-white rounded-full animate-bounce"></span>
-                      <span className="h-4 w-4 bg-white rounded-full animate-bounce [animation-delay:200ms]"></span>
-                      <span className="h-4 w-4 bg-white rounded-full animate-bounce [animation-delay:400ms]"></span>
-                    </span>
+                      <span
+                        className={`h-4 w-4 bg-white rounded-full animate-bounce ${
+                          isActive
+                            ? ''
+                            : 'my-0 p-0'
+                        }`}
+                        style={{
+                          animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
+                          animationDelay: '0ms',
+                        }}
+                      ></span>
+                      <span
+                        className={`h-4 w-4 bg-white rounded-full animate-bounce ${
+                          isActive
+                            ? ''
+                            : 'my-0 p-0'
+                        }`}
+                        style={{
+                          animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
+                          animationDelay: '200ms',
+                        }}
+                      ></span>
+                      <span
+                        className={`h-4 w-4 bg-white rounded-full animate-bounce ${
+                          isActive
+                            ? ''
+                            : 'my-0 p-0'
+                        }`}
+                        style={{
+                          animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
+                          animationDelay: '400ms',
+                        }}
+                      ></span>
+                    </div>
                   ) : (
                     line.text
                   )}
@@ -306,9 +356,7 @@ const Player: React.FC<PlayerProps> = ({
         </div>
       </div>
 
-      {/* コントロール */}
       <div className="fixed bottom-0 w-full bg-gray-800 h-[100px] flex flex-col justify-between">
-        {/* プログレスバー */}
         <div className="flex items-center justify-center px-2 mt-3 mx-3">
           <span className="text-sm text-white">{formatTime(currentTime)}</span>
           <input
@@ -325,10 +373,7 @@ const Player: React.FC<PlayerProps> = ({
           />
           <span className="text-sm text-white">{formatTime(duration)}</span>
         </div>
-
-        {/* トラック情報 */}
         <div className="flex items-center justify-between px-4 mb-4 ml-3">
-          {/* 再生/停止 */}
           <button onClick={togglePlayPause} className="text-white">
             {isPlaying ? (
               <svg
@@ -351,7 +396,6 @@ const Player: React.FC<PlayerProps> = ({
             )}
           </button>
 
-          {/* トラック情報 */}
           <div className="absolute left-1/2 transform -translate-x-1/2 text-center flex flex-col items-center justify-center">
             <p className="text-white font-semibold pb-1">{trackName}</p>
             <p className="text-gray-400 text-sm mb-2">
@@ -359,7 +403,6 @@ const Player: React.FC<PlayerProps> = ({
             </p>
           </div>
 
-          {/* ボリューム */}
           <div className="flex items-center mr-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
