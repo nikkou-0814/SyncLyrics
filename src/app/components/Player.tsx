@@ -31,7 +31,7 @@ const Player: React.FC<PlayerProps> = ({
   const [volume, setVolume] = useState<number>(1);
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
 
-  const INTERLUDE_SCROLL_DURATION = 1500;
+  const INTERLUDE_SCROLL_DURATION = 2000;
   const NORMAL_SCROLL_DURATION = 1000;
 
   const cubicBezier = useCallback(
@@ -288,7 +288,7 @@ const Player: React.FC<PlayerProps> = ({
                 <p
                   key={index}
                   id={`lyric-${index}`}
-                  className={`text-center my-8 transition-all duration-300 px-2 ${
+                  className={`text-center my-8 transition-all duration-700 px-2 ${
                     isActive
                       ? 'text-white'
                       : 'text-gray-500 hover:text-gray-300 cursor-pointer'
@@ -308,7 +308,7 @@ const Player: React.FC<PlayerProps> = ({
                           : 'animate-fade-out-scale opacity-0 my-0 py-0'
                       }`}
                       style={{
-                        transition: 'margin 1s cubic-bezier(0.22, 1, 0.36, 1)'
+                        transition: 'margin 1.3s cubic-bezier(0.22, 1, 0.36, 1)'
                       }}                      
                     >
                       <span
