@@ -30,10 +30,8 @@ const Player: React.FC<PlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(1);
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
-
-  const INTERLUDE_SCROLL_DURATION = 2000;
+  const INTERLUDE_SCROLL_DURATION = 2500;
   const NORMAL_SCROLL_DURATION = 1000;
-
   const cubicBezier = useCallback(
     (p1x: number, p1y: number, p2x: number, p2y: number) => {
       const NEWTON_ITERATIONS = 4;
@@ -299,7 +297,7 @@ const Player: React.FC<PlayerProps> = ({
                     opacity: opacity,
                     fontSize: '2.5rem',
                     fontWeight: 'bold',
-                    transition: 'margin 0.3s, padding 0.3s, opacity 0.7s',
+                    transition: 'margin 0.3s, padding 0.3s, all 0.7s',
                   }}
                   onClick={() => handleLyricClick(line.time)}
                 >
