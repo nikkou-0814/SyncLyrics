@@ -279,24 +279,27 @@ const Player: React.FC<PlayerProps> = ({
             {lyricsData.map((line, index) => {
               const isActive = index === currentLineIndex;
               const isPast = index < currentLineIndex;
-
               const opacity = isLyricsHovered ? 1 : isActive ? 1 : isPast ? 0 : 1;
-
               const isInterlude = line.text.trim() === '';
-
+  
               return (
                 <p
                   key={index}
                   id={`lyric-${index}`}
-                  className={`text-center my-8 transition-all duration-700 px-2 ${
-                    isActive
-                      ? 'text-white'
-                      : 'text-gray-500 hover:text-gray-300 cursor-pointer'
+                  className={`text-center transition-all duration-700 px-2 ${
+                    isInterlude
+                      ? 'm-0 p-0'
+                      : `my-8 ${
+                          isActive
+                            ? 'text-white'
+                            : 'text-gray-500 hover:text-gray-300 cursor-pointer'
+                        }`
                   }`}
                   style={{
                     opacity: opacity,
-                    fontSize: '2.0rem',
+                    fontSize: '2.5rem',
                     fontWeight: 'bold',
+                    transition: 'margin 0.3s, padding 0.3s, opacity 0.7s',
                   }}
                   onClick={() => handleLyricClick(line.time)}
                 >
@@ -308,14 +311,12 @@ const Player: React.FC<PlayerProps> = ({
                           : 'animate-fade-out-scale opacity-0 my-0 py-0'
                       }`}
                       style={{
-                        transition: 'margin 1.3s cubic-bezier(0.22, 1, 0.36, 1)'
-                      }}                      
+                        transition: 'margin 1.3s cubic-bezier(0.22, 1, 0.36, 1)',
+                      }}
                     >
                       <span
                         className={`h-4 w-4 bg-white rounded-full animate-bounce ${
-                          isActive
-                            ? ''
-                            : 'my-0 p-0'
+                          isActive ? '' : 'my-0 p-0'
                         }`}
                         style={{
                           animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
@@ -324,9 +325,7 @@ const Player: React.FC<PlayerProps> = ({
                       ></span>
                       <span
                         className={`h-4 w-4 bg-white rounded-full animate-bounce ${
-                          isActive
-                            ? ''
-                            : 'my-0 p-0'
+                          isActive ? '' : 'my-0 p-0'
                         }`}
                         style={{
                           animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
@@ -335,9 +334,7 @@ const Player: React.FC<PlayerProps> = ({
                       ></span>
                       <span
                         className={`h-4 w-4 bg-white rounded-full animate-bounce ${
-                          isActive
-                            ? ''
-                            : 'my-0 p-0'
+                          isActive ? '' : 'my-0 p-0'
                         }`}
                         style={{
                           animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
@@ -355,7 +352,6 @@ const Player: React.FC<PlayerProps> = ({
           </div>
         </div>
       </div>
-
       <div className="fixed bottom-0 w-full bg-gray-800 h-[100px] flex flex-col justify-between">
         <div className="flex items-center justify-center px-2 mt-3 mx-3">
           <span className="text-sm text-white">{formatTime(currentTime)}</span>
@@ -395,14 +391,12 @@ const Player: React.FC<PlayerProps> = ({
               </svg>
             )}
           </button>
-
           <div className="absolute left-1/2 transform -translate-x-1/2 text-center flex flex-col items-center justify-center">
             <p className="text-white font-semibold pb-1">{trackName}</p>
             <p className="text-gray-400 text-sm mb-2">
               {albumName} - {artistName}
             </p>
           </div>
-
           <div className="flex items-center mr-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -429,11 +423,10 @@ const Player: React.FC<PlayerProps> = ({
             />
           </div>
         </div>
-
         <audio ref={audioRef} src={audioUrl} />
       </div>
     </>
   );
-};
+}  
 
 export default Player;
