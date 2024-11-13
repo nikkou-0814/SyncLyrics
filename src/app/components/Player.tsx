@@ -284,7 +284,7 @@ const Player: React.FC<PlayerProps> = ({
                 <p
                   key={index}
                   id={`lyric-${index}`}
-                  className={`text-center transition-all duration-700 px-2 ${
+                  className={`text-center transition-all duration-700 px-2 active:bg-[rgba(255,255,255,0.1)] rounded-lg ${
                     isInterlude
                       ? 'm-0 p-0'
                       : `my-8 ${
