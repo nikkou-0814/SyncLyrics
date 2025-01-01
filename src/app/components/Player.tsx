@@ -24,14 +24,26 @@ const Player: React.FC<PlayerProps> = ({
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
+
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [currentLineIndex, setCurrentLineIndex] = useState<number>(-1);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(1);
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
-  const INTERLUDE_SCROLL_DURATION = 2500;
-  const NORMAL_SCROLL_DURATION = 1000;
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const SCROLL_DURATION = 1000;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const cubicBezier = useCallback(
     (p1x: number, p1y: number, p2x: number, p2y: number) => {
       const NEWTON_ITERATIONS = 4;
@@ -82,7 +94,6 @@ const Player: React.FC<PlayerProps> = ({
           }
           t2 = (t1 + t0) / 2.0;
         }
-
         return t2;
       };
 
@@ -99,8 +110,8 @@ const Player: React.FC<PlayerProps> = ({
 
       const bezier = cubicBezier(0.22, 1, 0.36, 1);
 
-      const animateScroll = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
+      const animateScroll = (currentT: number) => {
+        const elapsed = currentT - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const ease = bezier(progress);
         element.scrollTop = start + change * ease;
@@ -108,7 +119,6 @@ const Player: React.FC<PlayerProps> = ({
           requestAnimationFrame(animateScroll);
         }
       };
-
       requestAnimationFrame(animateScroll);
     },
     [cubicBezier]
@@ -133,7 +143,6 @@ const Player: React.FC<PlayerProps> = ({
           break;
         }
       }
-
       setCurrentLineIndex(index);
     };
 
@@ -156,25 +165,7 @@ const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     if (!lyricsContainerRef.current) return;
     const container = lyricsContainerRef.current;
-    const isInterlude = lyricsData[currentLineIndex]?.text.trim() === '';
 
-    const scrollDuration = isInterlude ? INTERLUDE_SCROLL_DURATION : NORMAL_SCROLL_DURATION;
-
-    if (isInterlude) {
-      const prevLyricIndex = currentLineIndex - 1;
-      const prevLyric = document.getElementById(`lyric-${prevLyricIndex}`);
-      if (prevLyric) {
-        const prevLyricHeight = prevLyric.clientHeight;
-        let targetScrollTop = container.scrollTop + prevLyricHeight;
-        const additionalOffset = 20;
-        targetScrollTop += additionalOffset;
-        const contentHeight = container.scrollHeight;
-        const containerHeight = container.clientHeight;
-        targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
-
-        smoothScrollTo(container, targetScrollTop, scrollDuration);
-      }
-    } else {
       const activeLyric = document.getElementById(`lyric-${currentLineIndex}`);
       if (activeLyric) {
         const containerHeight = container.clientHeight;
@@ -182,12 +173,14 @@ const Player: React.FC<PlayerProps> = ({
         const lyricOffsetTop = activeLyric.offsetTop;
         const lyricHeight = activeLyric.clientHeight;
 
-        let targetScrollTop = lyricOffsetTop - containerHeight / 2 + lyricHeight / 2;
-
-        targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
-
-        smoothScrollTo(container, targetScrollTop, scrollDuration);
-      }
+        let targetScrollTop =
+          lyricOffsetTop - containerHeight / 2 + lyricHeight / 2;
+        targetScrollTop = Math.max(
+          0,
+          Math.min(targetScrollTop, contentHeight - containerHeight)
+        );
+        smoothScrollTo(container, targetScrollTop, SCROLL_DURATION);
+      
     }
   }, [currentLineIndex, lyricsData, smoothScrollTo]);
 
@@ -227,28 +220,115 @@ const Player: React.FC<PlayerProps> = ({
     }
   };
 
-  const handleLyricsMouseEnter = () => {
-    setIsLyricsHovered(true);
-  };
-
-  const handleLyricsMouseLeave = () => {
-    setIsLyricsHovered(false);
-  };
+  const handleLyricsMouseEnter = () => setIsLyricsHovered(true);
+  const handleLyricsMouseLeave = () => setIsLyricsHovered(false);
 
   const formatTime = (time: number): string => {
-    const minutes = Math.floor(time / 60)
-      .toString()
-      .padStart(2, '0');
-    const seconds = Math.floor(time % 60)
-      .toString()
-      .padStart(2, '0');
-    return `${minutes}:${seconds}`;
+    const m = Math.floor(time / 60).toString().padStart(2, '0');
+    const s = Math.floor(time % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   };
 
   const sliderBackground = () => {
     if (duration === 0) return '#4B5563';
     const percentage = (currentTime / duration) * 100;
     return `linear-gradient(to right, #1DB954 ${percentage}%, #4B5563 ${percentage}%)`;
+  };
+
+  const renderInterludeDots = (startTime: number, endTime: number) => {
+    const total = endTime - startTime;
+    if (total <= 0) return null;
+
+    const dt = currentTime - startTime;
+
+    if (dt < 0) return null;
+    if (dt >= total) return null;
+
+    const appearEnd = 2;
+    const exitStart = total - 1;
+
+    let parentScale = 1.0;
+    let opacity = 1.0;
+    let transformTransition = '4s cubic-bezier(0.19, 1, 0.22, 1)'; 
+    let opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+    let dotFills: [number, number, number] = [0, 0, 0];
+
+    if (dt < appearEnd) {
+      const ratio = dt / appearEnd;
+      opacity = ratio;
+      dotFills = [0, 0, 0];
+    }
+    else if (dt < exitStart) {
+      const dtMid = dt - appearEnd; 
+      const midDuration = Math.max(0, total - (appearEnd + 1));
+
+      let ratio = 0;
+      if (midDuration > 0) {
+        ratio = dtMid / midDuration;
+        if (ratio > 1) ratio = 1;
+      }
+      const leftFill = Math.min(1, ratio * 3);
+      const centerFill = ratio < 1 / 3 ? 0 : Math.min(1, (ratio - 1 / 3) * 3);
+      const rightFill = ratio < 2 / 3 ? 0 : Math.min(1, (ratio - 2 / 3) * 3);
+      dotFills = [leftFill, centerFill, rightFill];
+
+      const modT = dtMid % 4;
+      if (modT < 2) {
+        parentScale = 1.2;
+      } else {
+        parentScale = 1.0;
+      }
+
+      opacity = 1;
+    }
+    else {
+      const dtExit = dt - exitStart;
+
+      if (dtExit < 0.5) {
+        transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
+        parentScale = 1.3;
+        opacity = 1;
+      }
+      else if (dtExit < 1.3) {
+        transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
+        opacityTransition = '0.3s cubic-bezier(0.19, 1, 0.22, 1)';
+        parentScale = 0.8;
+        opacity = 0;
+      }
+
+      dotFills = [1, 1, 1];
+    }
+
+    const parentStyle: React.CSSProperties = {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      transform: `${isMobile ? `scale(${parentScale - 0.2})` : `translateX(-50%) scale(${parentScale})`}`,
+      opacity: opacity,
+      transition: `transform ${transformTransition}, opacity ${opacityTransition}`,
+      position: 'absolute',
+      left: isMobile ? '0' : '50%'
+    };
+
+    const dotStyle = (fill: number) => {
+      const alpha = 0.2 + 0.8 * fill;
+      return {
+        width: '16px',
+        height: '16px',
+        borderRadius: '50%',
+        backgroundColor: `rgba(255,255,255,${alpha})`,
+        margin: '0 6px',
+        transition: `background-color ${transformTransition}`,
+      } as React.CSSProperties;
+    };
+
+    return (
+      <div style={parentStyle}>
+        <span style={dotStyle(dotFills[0])} />
+        <span style={dotStyle(dotFills[1])} />
+        <span style={dotStyle(dotFills[2])} />
+      </div>
+    );
   };
 
   return (
@@ -269,87 +349,71 @@ const Player: React.FC<PlayerProps> = ({
               ? 'none'
               : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)',
             marginBottom: '98px',
+            padding: isMobile ? '20px' : '',
           }}
           ref={lyricsContainerRef}
         >
           <div className="relative">
-            <div className="h-96"></div>
-            {lyricsData.map((line, index) => {
-              const isActive = index === currentLineIndex;
-              const isPast = index < currentLineIndex;
-              const opacity = isLyricsHovered ? 1 : isActive ? 1 : isPast ? 0 : 1;
-              const isInterlude = line.text.trim() === '';
-  
-              return (
-                <p
-                  key={index}
-                  id={`lyric-${index}`}
-                  className={`text-center transition-all duration-700 px-2 active:bg-[rgba(255,255,255,0.1)] rounded-lg ${
-                    isInterlude
-                      ? 'm-0 p-0'
-                      : `my-8 ${
-                          isActive
-                            ? 'text-white'
-                            : 'text-gray-500 hover:text-gray-300 cursor-pointer'
-                        }`
-                  }`}
-                  style={{
-                    opacity: opacity,
-                    fontSize: '2.5rem',
-                    fontWeight: 'bold',
-                    transition: 'margin 0.3s, padding 0.3s, all 0.7s',
-                  }}
-                  onClick={() => handleLyricClick(line.time)}
-                >
-                  {isInterlude ? (
-                    <div
-                      className={`flex space-x-2 justify-center duration-500 ${
-                        isActive
-                          ? 'animate-fade-in-scale my-10'
-                          : 'animate-fade-out-scale opacity-0 my-0 py-0'
-                      }`}
-                      style={{
-                        transition: 'margin 1.3s cubic-bezier(0.22, 1, 0.36, 1)',
-                      }}
-                    >
-                      <span
-                        className={`h-4 w-4 bg-white rounded-full animate-bounce ${
-                          isActive ? '' : 'my-0 p-0'
-                        }`}
-                        style={{
-                          animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
-                          animationDelay: '0ms',
-                        }}
-                      ></span>
-                      <span
-                        className={`h-4 w-4 bg-white rounded-full animate-bounce ${
-                          isActive ? '' : 'my-0 p-0'
-                        }`}
-                        style={{
-                          animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
-                          animationDelay: '200ms',
-                        }}
-                      ></span>
-                      <span
-                        className={`h-4 w-4 bg-white rounded-full animate-bounce ${
-                          isActive ? '' : 'my-0 p-0'
-                        }`}
-                        style={{
-                          animationDuration: `${INTERLUDE_SCROLL_DURATION}ms`,
-                          animationDelay: '400ms',
-                        }}
-                      ></span>
-                    </div>
-                  ) : (
-                    line.text
-                  )}
-                </p>
-              );
-            })}
-            <div className="h-96"></div>
+            <div style={{ height: '500px' }}></div>
+
+              {lyricsData.map((line, index) => {
+                const isActive = index === currentLineIndex;
+                const isPast = index < currentLineIndex;
+                const isInterlude = line.text.trim() === '';
+                const isCurrentLineInterlude = lyricsData[currentLineIndex]?.text.trim() === '';
+
+                let nextTime = duration;
+                if (index + 1 < lyricsData.length) {
+                  nextTime = lyricsData[index + 1].time;
+                }
+
+                const opacity = isLyricsHovered
+                  ? 1
+                  : isActive
+                  ? 1
+                  : isPast
+                  ? 0
+                  : 1;
+
+                return (
+                  <p
+                    key={index}
+                    id={`lyric-${index}`}
+                    className={`transition-all duration-700 px-2 active:bg-[rgba(255,255,255,0.1)] rounded-lg ${
+                      isInterlude
+                        ? 'm-0 p-0'
+                        : `my-8 ${
+                            isActive
+                              ? 'text-white'
+                              : 'text-gray-500 hover:text-gray-300 cursor-pointer'
+                          }`
+                    }${isMobile ? ' text-left' : ' text-center'}`}
+                    style={{
+                      opacity,
+                      fontSize: isMobile ? '2.0rem' : '2.5rem',
+                      fontWeight: 'bold',
+                      transform:
+                        isCurrentLineInterlude && index > currentLineIndex
+                          ? 'translateY(55px)'
+                          : 'translateY(0)',
+                      transition:
+                        'transform 1s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s, margin 0.3s, padding 0.3s',
+                    }}
+                    onClick={() => handleLyricClick(line.time)}
+                  >
+                    {isInterlude && isActive
+                      ? renderInterludeDots(line.time, nextTime)
+                      : isInterlude
+                      ? null
+                      : line.text}
+                  </p>
+                );
+              })}
+            <div style={{ height: '500px' }}></div>
           </div>
         </div>
       </div>
+
       <div className="fixed bottom-0 w-full bg-gray-800 h-[100px] flex flex-col justify-between">
         <div className="flex items-center justify-center px-2 mt-3 mx-3">
           <span className="text-sm text-white">{formatTime(currentTime)}</span>
@@ -367,7 +431,8 @@ const Player: React.FC<PlayerProps> = ({
           />
           <span className="text-sm text-white">{formatTime(duration)}</span>
         </div>
-        <div className="flex items-center justify-between px-4 mb-4 ml-3">
+
+        <div className="flex items-center justify-between px-4 mb-4 ml-3 relative">
           <button onClick={togglePlayPause} className="text-white">
             {isPlaying ? (
               <svg
@@ -425,6 +490,6 @@ const Player: React.FC<PlayerProps> = ({
       </div>
     </>
   );
-}  
+};
 
 export default Player;
