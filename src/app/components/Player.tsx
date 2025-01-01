@@ -454,7 +454,7 @@ const Player: React.FC<PlayerProps> = ({
               </svg>
             )}
           </button>
-          <div className="absolute left-1/2 transform -translate-x-1/2 text-center flex flex-col items-center justify-center">
+          <div className="absolute left-1/2 transform -translate-x-1/2 text-center flex flex-col items-center justify-center text-nowrap">
             <p className="text-white font-semibold pb-1">{trackName}</p>
             <p className="text-gray-400 text-sm mb-2">
               {albumName} - {artistName}
