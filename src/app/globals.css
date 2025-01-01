@@ -6,10 +6,6 @@ html {
     scroll-behavior: smooth;
     user-select: none;
 }
-  
-.ease-custom {
-    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
 
 @layer utilities {
     .hidden-scrollbar {
