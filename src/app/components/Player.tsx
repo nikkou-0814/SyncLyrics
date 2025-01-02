@@ -289,7 +289,7 @@ const Player: React.FC<PlayerProps> = ({
         parentScale = 1.3;
         opacity = 1;
       }
-      else if (dtExit < 1.3) {
+      else if (dtExit < 1.5) {
         transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
         opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
         parentScale = 0.7;
@@ -397,7 +397,7 @@ const Player: React.FC<PlayerProps> = ({
                           ? 'translateY(55px)'
                           : 'translateY(0)',
                       transition:
-                        'transform 1s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s, margin 0.3s, padding 0.3s',
+                        'transform 1s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s, margin 1s, padding 1s, color 0.5s',
                     }}
                     onClick={() => handleLyricClick(line.time)}
                   >
