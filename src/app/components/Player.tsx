@@ -274,7 +274,7 @@ const Player: React.FC<PlayerProps> = ({
 
       const modT = dtMid % 4;
       if (modT < 2) {
-        parentScale = 1.2;
+        parentScale = 1.1;
       } else {
         parentScale = 1.0;
       }
@@ -291,8 +291,8 @@ const Player: React.FC<PlayerProps> = ({
       }
       else if (dtExit < 1.3) {
         transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
-        opacityTransition = '0.3s cubic-bezier(0.19, 1, 0.22, 1)';
-        parentScale = 0.8;
+        opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        parentScale = 0.7;
         opacity = 0;
       }
 
