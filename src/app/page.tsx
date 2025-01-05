@@ -19,13 +19,19 @@ interface SearchResult {
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [urlQuery, setUrlQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<SearchResult | null>(null);
   const [lyricsData, setLyricsData] = useState<LyricLine[] | null>(null);
-  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const extractVideoId = (url: string): string | null => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
 
   const handleSearch = async () => {
     if (!searchQuery) {
@@ -56,14 +62,21 @@ export default function Home() {
   };
 
   const handleSelectTrack = async (track: SearchResult) => {
-    if (!audioFile) {
-      setError('音楽ファイルをアップロードしてください');
+    if (!urlQuery) {
+      setError('YouTubeのURLを入力してください');
+      return;
+    }
+
+    const videoId = extractVideoId(urlQuery);
+    if (!videoId) {
+      setError('有効なYouTube URLを入力してください');
       return;
     }
 
     setIsProcessing(true);
     setError(null);
     setSelectedTrack(track);
+    setAudioUrl(videoId);
 
     try {
       const res = await fetch('/api/get-lyrics', {
@@ -88,9 +101,6 @@ export default function Home() {
       }
 
       setLyricsData(data.lyricsData);
-
-      const url = URL.createObjectURL(audioFile);
-      setAudioUrl(url);
     } catch (err) {
       console.error(err);
       setError('歌詞の取得中にエラーが発生しました');
@@ -99,26 +109,17 @@ export default function Home() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setAudioFile(e.target.files[0]);
-      setAudioUrl(URL.createObjectURL(e.target.files[0]));
-      setLyricsData(null);
-      setSelectedTrack(null);
-      setError(null);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4 relative">
+    <div className="w-full h-full min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4 relative">
       {!lyricsData && (
         <div className="w-full max-w-md">
-          <h1 className="text-2xl mb-4 text-center">音楽を挿入し曲名を検索してください</h1>
+          <h1 className="text-2xl mb-4 text-center">URLを挿入し曲名を検索してください</h1>
           <input
-            type="file"
-            accept="audio/*"
-            onChange={handleFileChange}
-            className="w-full mb-4"
+            type="text"
+            placeholder="YouTubeのURLを入力"
+            value={urlQuery}
+            onChange={(e) => setUrlQuery(e.target.value)}
+            className="w-full mb-4 p-2 rounded text-black"
           />
 
           <input
@@ -187,7 +188,7 @@ export default function Home() {
         </div>
       )}
 
-      {lyricsData && audioUrl && selectedTrack && (
+      {lyricsData && selectedTrack && audioUrl && (
         <Player
           lyricsData={lyricsData}
           audioUrl={audioUrl}
