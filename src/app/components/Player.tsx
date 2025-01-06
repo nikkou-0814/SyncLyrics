@@ -646,8 +646,8 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="space-y-2">
-                <p className={currentTheme.text}>Font Size</p>
-                <div className="flex gap-2">
+              <p className={currentTheme.text}>Font Size</p>
+              <div className="flex gap-2">
                 {[
                   { value: 'small', label: 'Small' },
                   { value: 'medium', label: 'Medium' },
@@ -666,7 +666,7 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="space-y-2">
-                <p className={currentTheme.text}>Lyric Position</p>
+              <p className={currentTheme.text}>Lyric Position</p>
               <div className="flex gap-2">
                 {[
                   { value: 'left', label: 'Left' },
@@ -686,7 +686,7 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="space-y-2">
-                <p className={currentTheme.text}>Background Blur</p>
+              <p className={currentTheme.text}>Background Blur</p>
               <div className="flex gap-2">
                 {[
                   { value: 'small', label: 'Low' },
@@ -728,20 +728,20 @@ const Player: React.FC<PlayerProps> = ({
       </Dialog>
 
       <Button
-        variant="secondary"
+        variant="ghost"
         size="icon"
         onClick={onBack}
         className="fixed top-4 left-4 z-50"
       >
-        <ArrowLeft size={20} />
+        <ArrowLeft size={30} style={{ width: '25px', height: '25px' }} />
       </Button>
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setShowSettings(true)}
-        className={`fixed top-4 right-4 z-50`}
-        >
-        <MoreHorizontal size={20} />
+        className="fixed top-4 right-4 z-50"
+      >
+        <MoreHorizontal size={30} style={{ width: '30px', height: '30px' }} />
       </Button>
     </>
   );
