@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import YouTube , { YouTubeProps } from 'react-youtube';  
+import YouTube , { YouTubeProps } from 'react-youtube';
 
 interface LyricLine {
   time: number;
@@ -317,7 +317,7 @@ const Player: React.FC<PlayerProps> = ({
       activelyrics: 'text-white',
       otherlyrics: 'text-white text-opacity-40',
       interludedots: 'rgba(255,255,255,',
-      settingbutton: 'bg-white hover:bg-opacity-20'
+      settingbutton: 'hover:bg-white hover:bg-opacity-20'
     },
     light: {
       background: 'bg-white',
@@ -332,7 +332,7 @@ const Player: React.FC<PlayerProps> = ({
       activelyrics: 'text-black',
       otherlyrics: 'text-black text-opacity-50',
       interludedots: 'rgba(0,0,0,',
-      settingbutton: 'bg-black hover:bg-opacity-15'
+      settingbutton: 'hover:bg-black hover:bg-opacity-15'
     }
   };
   const currentTheme = themeClasses[settings.theme];  
@@ -627,33 +627,33 @@ const Player: React.FC<PlayerProps> = ({
       </div>
 
       <div className="fixed flex items-center mr-3 top-5 right-5 z-50">
-            <button 
-            onClick={() => setShowSettings(true)}
-            className={`ml-4 p-2 rounded-full hover:${currentTheme.settingbutton} ${currentTheme.text}`}
-            style={{transition: 'background 0.2s ease'}}
-            >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-7 w-7" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-            </button>
-        </div>
+        <button 
+          onClick={() => setShowSettings(true)}
+          className={`ml-4 p-2 rounded-full ${currentTheme.settingbutton} ${currentTheme.text}`}
+          style={{transition: 'background 0.2s ease'}}
+          >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-7 w-7" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
+            <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          </button>
+      </div>
 
       {showSettings && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
