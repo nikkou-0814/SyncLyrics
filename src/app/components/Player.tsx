@@ -536,8 +536,8 @@ const Player: React.FC<PlayerProps> = ({
                     opacity,
                     fontSize: {
                       small: '2.0rem',
-                      medium: '2.5rem',
-                      large: '3.0rem'
+                      medium: '3.0rem',
+                      large: '4.0rem'
                     }[settings.fontSize],
                     fontWeight: 'bold',
                     textAlign: settings.lyricposition,
