@@ -23,8 +23,8 @@ interface SearchResult {
 }
 
 export default function Home() {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { setTheme } = useTheme();
+  const [theme, setThemeState] = useState<string>('dark');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [urlQuery, setUrlQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
@@ -36,16 +36,15 @@ export default function Home() {
   const [showPlayer, setShowPlayer] = useState<boolean>(false);
 
   useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setTheme(savedTheme);
+    const savedSettings = localStorage.getItem('playerSettings');
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      if (settings.theme) {
+        setTheme(settings.theme);
+        setThemeState(settings.theme);
+      }
     }
   }, [setTheme]);
-
-  if (!mounted) {
-    return <div className="w-full h-full min-h-screen bg-transparent"></div>;
-  }
 
   const extractVideoId = (url: string): string | null => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -58,20 +57,16 @@ export default function Home() {
       setError('曲名を入力してください');
       return;
     }
-
     setIsProcessing(true);
     setError(null);
-
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error || '検索に失敗しました');
         setIsProcessing(false);
         return;
       }
-
       setSearchResults(data.results);
     } catch (err) {
       console.error(err);
@@ -86,18 +81,15 @@ export default function Home() {
       setError('YouTubeのURLを入力してください');
       return;
     }
-
     const videoId = extractVideoId(urlQuery);
     if (!videoId) {
       setError('有効なYouTube URLを入力してください');
       return;
     }
-
     setIsProcessing(true);
     setError(null);
     setSelectedTrack(track);
     setAudioUrl(videoId);
-
     try {
       const res = await fetch('/api/get-lyrics', {
         method: 'POST',
@@ -111,15 +103,12 @@ export default function Home() {
           duration: track.duration,
         }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error || '歌詞の取得に失敗しました');
         setIsProcessing(false);
         return;
       }
-
       setLyricsData(data.lyricsData);
       setShowPlayer(true);
     } catch (err) {
@@ -184,7 +173,6 @@ export default function Home() {
           </div>
         </Card>
       )}
-
       {showPlayer && lyricsData && selectedTrack && audioUrl && (
         <Player
           lyricsData={lyricsData}
