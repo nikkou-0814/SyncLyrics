@@ -583,7 +583,7 @@ const Player: React.FC<PlayerProps> = ({
         } ${settings.fullplayer ? 'rounded-t-lg' : 'rounded-lg'} ${currentTheme.background} shadow-2xl`}
       >
         <div className="h-full flex flex-col justify-between p-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-3">
             <span className={`text-sm font-medium ${currentTheme.text}`}>
               {formatTime(currentTime)}
             </span>
@@ -615,7 +615,7 @@ const Player: React.FC<PlayerProps> = ({
                 <Slider
               value={[volume]}
               max={100}
-              className="w-24"
+              className="w-28"
               onValueChange={handleVolumeChange}
                 />
               </div>
@@ -623,11 +623,11 @@ const Player: React.FC<PlayerProps> = ({
 
             <div className={`text-right ml-5 ${currentTheme.text}`}>
               <p className="font-medium text-sm">
-                {trackName.length > 20 ? `${trackName.slice(0, 20)}...` : trackName}
+                {trackName.length > 40 ? `${trackName.slice(0, 40)}...` : trackName}
               </p>
               <p className={`text-xs ${currentTheme.secondaryText}`}>
-                {artistName.length > 20 ? `${artistName.slice(0, 20)}...` : artistName} - 
-                {albumName.length > 20 ? `${albumName.slice(0, 20)}...` : albumName}
+                {artistName.length > 30 ? `${artistName.slice(0, 30)}...` : artistName} - 
+                {albumName.length > 30 ? `${albumName.slice(0, 30)}...` : albumName}
               </p>
             </div>
 
