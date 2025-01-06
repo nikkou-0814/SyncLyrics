@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import YouTube , { YouTubeProps } from 'react-youtube';
-import { Pause, Play, Volume2, MoreHorizontal, ArrowLeft } from 'lucide-react';
+import { Pause, Play, Volume2, MoreHorizontal, ArrowLeft, SkipBack, SkipForward, Volume } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -67,6 +67,7 @@ const Player: React.FC<PlayerProps> = ({
   const SCROLL_DURATION = 1000;
   const { setTheme } = useTheme();
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [wasFullPlayerManuallySet, setWasFullPlayerManuallySet] = useState(false);
   const [settings, setSettings] = useState<Settings>(() => {
     const savedSettings = localStorage.getItem('playerSettings');
     return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
@@ -80,28 +81,40 @@ const Player: React.FC<PlayerProps> = ({
     });
   };  
 
-  const handleSettingChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    if (key === 'theme') {
-      if (typeof value === 'string') {
-        setTheme(value);
-      }
-    }
-    updateSettings({ ...settings, [key]: value });
-  };
-
   useEffect(() => {
     setVolume(settings.volume);
   }, [settings.volume]);  
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
+      const isCurrentlyMobile = window.innerWidth <= 768;
+      setIsMobile(isCurrentlyMobile);
 
+      if (!wasFullPlayerManuallySet) {
+        if (isCurrentlyMobile) {
+          updateSettings({ fullplayer: true });
+        } else {
+          updateSettings({ fullplayer: false });
+        }
+      }
+    };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [wasFullPlayerManuallySet]);
+  
+  const handleSettingChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
+    if (key === 'theme') {
+      if (typeof value === 'string') {
+        setTheme(value);
+      }
+    }
+
+    if (key === 'fullplayer') {
+      setWasFullPlayerManuallySet(true);
+    }
+    updateSettings({ [key]: value });
+  };
 
   const cubicBezier = useCallback(
     (p1x: number, p1y: number, p2x: number, p2y: number) => {
@@ -284,6 +297,28 @@ const Player: React.FC<PlayerProps> = ({
       audio.pauseVideo();
     } else {
       audio.playVideo();
+    }
+  };
+
+  const handleSkipBack = () => {
+    const audio = youtubeRef.current;
+    if (!audio) return;
+    const Time = 0;
+    setCurrentTime(Time);
+    audio.seekTo(Time);
+    if (lyricsContainerRef.current) {
+      smoothScrollTo(lyricsContainerRef.current, 0, SCROLL_DURATION);
+    }
+  };
+  
+  const handleSkipForward = () => {
+    const audio = youtubeRef.current;
+    if (!audio) return;
+    const newTime = duration;
+    setCurrentTime(newTime);
+    audio.seekTo(newTime);
+    if (lyricsContainerRef.current) {
+      smoothScrollTo(lyricsContainerRef.current, newTime, SCROLL_DURATION);
     }
   };
 
@@ -571,69 +606,181 @@ const Player: React.FC<PlayerProps> = ({
       </div>
 
       <motion.div
-        initial={{ width: settings.fullplayer ? '100%' : '', margin: settings.fullplayer ? '0' : '20px', bottom: settings.showplayercontrol ? '0' : '-150px' }}
-        animate={{ width: settings.fullplayer ? '100%' : '', margin: settings.fullplayer ? '0' : '20px', bottom: settings.showplayercontrol ? '0' : '-150px' }}
+        initial={{
+          width: settings.fullplayer || isMobile ? "100%" : "",
+          margin: settings.fullplayer || isMobile ? "0" : "20px",
+          bottom: !settings.showplayercontrol
+            ? isMobile
+              ? "-300px"
+              : "-150px"
+            : "0",
+        }}
+        animate={{
+          width: settings.fullplayer || isMobile ? "100%" : "",
+          margin: settings.fullplayer || isMobile ? "0" : "20px",
+          bottom: !settings.showplayercontrol
+            ? isMobile
+              ? "-300px"
+              : "-150px"
+            : "0",
+        }}
         transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
         className={`fixed z-50 ${
-          settings.playerposition === 'left' 
-        ? 'left-0' 
-        : settings.playerposition === 'right' 
-          ? 'right-0' 
-          : 'left-1/2 transform -translate-x-1/2'
-        } ${settings.fullplayer ? 'rounded-t-lg' : 'rounded-lg'} ${currentTheme.background} shadow-2xl`}
+          settings.playerposition === "left"
+            ? "left-0"
+            : settings.playerposition === "right"
+            ? "right-0"
+            : "left-1/2 transform -translate-x-1/2"
+        } ${settings.fullplayer ? "rounded-t-lg" : "rounded-lg"} ${
+          currentTheme.background
+        } shadow-2xl`}
       >
         <div className="h-full flex flex-col justify-between p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className={`text-sm font-medium ${currentTheme.text}`}>
-              {formatTime(currentTime)}
-            </span>
-            <Slider
-              value={[currentTime]}
-              max={duration}
-              step={0.1}
-              className="flex-1"
-              onValueChange={handleProgressChange}
-            />
-            <span className={`text-sm font-medium ${currentTheme.text}`}>
-              {formatTime(duration)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={togglePlayPause}
-                className={currentTheme.text}
-              >
-                {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <Volume2 className={`h-4 w-4 ${currentTheme.text}`} />
-                <Slider
-              value={[volume]}
-              max={100}
-              className="w-28"
-              onValueChange={handleVolumeChange}
-                />
+          {isMobile ? (
+            <>
+              <div className={`${currentTheme.text} mb-3`}>
+                <p className="font-medium text-sm overflow-hidden text-nowrap text-ellipsis">
+                  {trackName.length > 40 ? `${trackName.slice(0, 40)}...` : trackName}
+                </p>
+                <p className={`text-xs overflow-hidden text-nowrap text-ellipsis ${currentTheme.secondaryText}`}>
+                  {artistName.length > 40 ? `${artistName.slice(0, 40)}...` : artistName} - 
+                  {albumName.length > 40 ? `${albumName.slice(0, 40)}...` : albumName}
+                </p>
               </div>
-            </div>
-
-            <div className={`text-right ml-5 ${currentTheme.text}`}>
-              <p className="font-medium text-sm">
-                {trackName.length > 40 ? `${trackName.slice(0, 40)}...` : trackName}
-              </p>
-              <p className={`text-xs ${currentTheme.secondaryText}`}>
-                {artistName.length > 30 ? `${artistName.slice(0, 30)}...` : artistName} - 
-                {albumName.length > 30 ? `${albumName.slice(0, 30)}...` : albumName}
-              </p>
-            </div>
-
-          </div>
+              <div className="flex items-center justify-between my-3">
+                <span className={`text-xs font-medium ${currentTheme.text}`}>
+                  {formatTime(currentTime)}
+                </span>
+                <Slider
+                  value={[currentTime]}
+                  max={duration}
+                  step={0.1}
+                  className="flex-1 mx-2"
+                  onValueChange={handleProgressChange}
+                />
+                <span className={`text-xs font-medium ${currentTheme.text}`}>
+                  {formatTime(duration)}
+                </span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center gap-10 my-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSkipBack}
+                      className={currentTheme.text}
+                    >
+                      <SkipBack size={20} style={{ width: '50px', height: '50px' }} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={togglePlayPause}
+                      className={currentTheme.text}
+                    >
+                      {isPlaying ? <Pause size={20} style={{ width: '50px', height: '50px' }} /> : <Play size={20} style={{ width: '50px', height: '50px' }} />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSkipForward}
+                      className={currentTheme.text}
+                    >
+                      <SkipForward size={20} style={{ width: '50px', height: '50px' }} />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 my-3">
+                  <Volume className={`h-4 w-4 ${currentTheme.text}`} style={{ width: '20px', height: '20px' }} />
+                  <Slider
+                    value={[volume]}
+                    max={100}
+                    className="flex-1 mx-2"
+                    onValueChange={handleVolumeChange}
+                  />
+                  <Volume2 className={`h-4 w-4 ${currentTheme.text}`} style={{ width: '20px', height: '20px' }} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <span className={`text-sm font-medium ${currentTheme.text}`}>
+                  {formatTime(currentTime)}
+                </span>
+                <Slider
+                  value={[currentTime]}
+                  max={duration}
+                  step={0.1}
+                  className="flex-1"
+                  onValueChange={handleProgressChange}
+                />
+                <span className={`text-sm font-medium ${currentTheme.text}`}>
+                  {formatTime(duration)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSkipBack}
+                      className={currentTheme.text}
+                    >
+                      <SkipBack size={24} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={togglePlayPause}
+                      className={currentTheme.text}
+                    >
+                      {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSkipForward}
+                      className={currentTheme.text}
+                    >
+                      <SkipForward size={24} />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Volume2 className={`h-4 w-4 ${currentTheme.text}`} />
+                    <Slider
+                      value={[volume]}
+                      max={100}
+                      className="w-28"
+                      onValueChange={handleVolumeChange}
+                    />
+                  </div>
+                </div>
+                <div className={`text-right ml-5 ${currentTheme.text}`}>
+                  <p className="font-medium text-sm overflow-hidden text-nowrap text-ellipsis">
+                  {trackName.length > (settings.fullplayer ? 60 : 40)
+                    ? `${trackName.slice(0, settings.fullplayer ? 60 : 40)}...`
+                    : trackName}
+                  </p>
+                  <p
+                  className={`text-xs overflow-hidden text-nowrap text-ellipsis ${currentTheme.secondaryText}`}
+                  >
+                  {artistName.length > (settings.fullplayer ? 50 : 30)
+                    ? `${artistName.slice(0, settings.fullplayer ? 50 : 30)}...`
+                    : artistName}{" "}
+                  -{" "}
+                  {albumName.length > (settings.fullplayer ? 40 : 20)
+                    ? `${albumName.slice(0, settings.fullplayer ? 40 : 20)}...`
+                    : albumName}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
-      </motion.div>
+      </motion.div>;
 
       <div className='fixed z-0 w-full h-full'>
         <div className={`w-full h-full fixed top-0 left-0 ${settings.theme === 'dark' ? 'bg-black bg-opacity-70' : 'bg-white bg-opacity-30'} ${settings.backgroundblur === 'small' ? 'backdrop-blur-sm' : settings.backgroundblur === 'medium' ? 'backdrop-blur-md' : 'backdrop-blur-lg'}`}></div>
@@ -664,10 +811,11 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="flex items-center justify-between">
-                <span className={currentTheme.text}>Full Player</span>
+              <span className={currentTheme.text}>Full Player</span>
               <Switch
-                checked={settings.fullplayer}
-                onCheckedChange={(checked) => handleSettingChange('fullplayer', checked)}
+                checked={isMobile ? true : settings.fullplayer}
+                onCheckedChange={(checked) => !isMobile && handleSettingChange('fullplayer', checked)}
+                disabled={isMobile}
               />
             </div>
 
