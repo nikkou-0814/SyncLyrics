@@ -345,7 +345,7 @@ const Player: React.FC<PlayerProps> = ({
       activelyrics: 'text-white',
       otherlyrics: 'text-white text-opacity-40',
       interludedots: 'rgba(255,255,255,',
-      settingbutton: 'hover:bg-white hover:bg-opacity-20'
+      settingbutton: 'hover:hover:bg-white hover:bg-opacity-20'
     },
     light: {
       background: 'bg-white',
@@ -360,7 +360,7 @@ const Player: React.FC<PlayerProps> = ({
       activelyrics: 'text-black',
       otherlyrics: 'text-black text-opacity-50',
       interludedots: 'rgba(0,0,0,',
-      settingbutton: 'hover:bg-black hover:bg-opacity-15'
+      settingbutton: 'hover:hover:bg-black hover:bg-opacity-15'
     }
   };
   const currentTheme = themeClasses[settings.theme];  
