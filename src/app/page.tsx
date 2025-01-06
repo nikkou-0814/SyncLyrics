@@ -1,8 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Player from './components/Player';
 import '../app/globals.css';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
+import { useTheme } from 'next-themes';
 
 interface LyricLine {
   time: number;
@@ -18,14 +23,29 @@ interface SearchResult {
 }
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [urlQuery, setUrlQuery] = useState<string>('');
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>('pikasonic');
+  const [urlQuery, setUrlQuery] = useState<string>('https://www.youtube.com/watch?v=iprl3wJnWoo&pp=ygUMbG9zdCBteSBtaW5k');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<SearchResult | null>(null);
   const [lyricsData, setLyricsData] = useState<LyricLine[] | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPlayer, setShowPlayer] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, [setTheme]);
+
+  if (!mounted) {
+    return <div className="w-full h-full min-h-screen bg-transparent"></div>;
+  }
 
   const extractVideoId = (url: string): string | null => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -101,6 +121,7 @@ export default function Home() {
       }
 
       setLyricsData(data.lyricsData);
+      setShowPlayer(true);
     } catch (err) {
       console.error(err);
       setError('歌詞の取得中にエラーが発生しました');
@@ -109,92 +130,69 @@ export default function Home() {
     }
   };
 
+  const handleBack = () => {
+    setShowPlayer(false);
+    setSelectedTrack(null);
+    setLyricsData(null);
+  };
+
   return (
-    <div className="w-full h-full min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4 relative">
-      {!lyricsData && (
-        <div className="w-full max-w-md">
-          <h1 className="text-2xl mb-4 text-center">URLを挿入し曲名を検索してください</h1>
-          <input
-            type="text"
-            placeholder="YouTubeのURLを入力"
-            value={urlQuery}
-            onChange={(e) => setUrlQuery(e.target.value)}
-            className="w-full mb-4 p-2 rounded text-black"
-          />
-
-          <input
-            type="text"
-            placeholder="曲名を入力"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full mb-4 p-2 rounded text-black"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={!searchQuery || isProcessing}
-            className={`w-full py-2 px-4 rounded transition-all ${
-              !searchQuery || isProcessing
-                ? 'bg-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {isProcessing ? '検索中...' : '検索'}
-          </button>
-          {error && <p className="mt-4 text-red-500 text-center">{error}</p>}
-
-          {searchResults && (
-            <div className="mt-4">
-              <h2 className="text-xl mb-2">検索結果:</h2>
-              <ul>
-                {searchResults.map((track) => (
-                  <li
-                    key={track.id}
-                    className="mb-2 p-2 bg-gray-800 rounded cursor-pointer hover:bg-gray-700 transition-all"
-                    onClick={() => handleSelectTrack(track)}
-                  >
-                    <p className="text-lg">{track.trackName}</p>
-                    <p className="text-sm text-gray-400">{track.artistName}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+    <div className={`w-full h-full min-h-screen flex flex-col items-center justify-center p-4 relative ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
+      {!showPlayer && (
+        <Card className="w-full max-w-md">
+          <div className="p-4">
+            <h1 className="text-2xl mb-4 text-center">URLを挿入し曲名を検索してください</h1>
+            <Input
+              type="text"
+              placeholder="YouTubeのURLを入力"
+              value={urlQuery}
+              onChange={(e) => setUrlQuery(e.target.value)}
+              className="w-full mb-4"
+            />
+            <Input
+              type="text"
+              placeholder="曲名を入力"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full mb-4"
+            />
+            <Button
+              onClick={handleSearch}
+              disabled={!searchQuery || isProcessing}
+              className="w-full mb-4"
+            >
+              {isProcessing ? '処理中...' : '検索'}
+            </Button>
+            {error && <Alert variant="destructive" className="mt-4">{error}</Alert>}
+            {searchResults && (
+              <div className="mt-4">
+                <h2 className="text-xl mb-2">検索結果:</h2>
+                <ul>
+                  {searchResults.map((track) => (
+                    <li
+                      key={track.id}
+                      className={`mb-2 p-2 rounded cursor-pointer transition-all ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'}`}
+                      onClick={() => handleSelectTrack(track)}
+                    >
+                      <p className="text-lg">{track.trackName}</p>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{track.artistName}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </Card>
       )}
 
-      {isProcessing && !lyricsData && (
-        <div className="mt-8 flex items-center justify-center">
-          <svg
-            className="animate-spin h-8 w-8 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v8H4z"
-            ></path>
-          </svg>
-          <span className="ml-2">処理中...</span>
-        </div>
-      )}
-
-      {lyricsData && selectedTrack && audioUrl && (
+      {showPlayer && lyricsData && selectedTrack && audioUrl && (
         <Player
           lyricsData={lyricsData}
           audioUrl={audioUrl}
           trackName={selectedTrack.trackName}
           albumName={selectedTrack.albumName}
           artistName={selectedTrack.artistName}
+          onBack={handleBack}
         />
       )}
     </div>

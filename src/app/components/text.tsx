@@ -2,12 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import YouTube , { YouTubeProps } from 'react-youtube';
-import { Pause, Play, Volume2, MoreHorizontal, ArrowLeft } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
-import { useTheme } from 'next-themes';
+import { Pause, Play, Volume2, X, MoreHorizontal, ArrowLeft } from 'lucide-react';
 
 interface LyricLine {
   time: number;
@@ -29,7 +24,6 @@ interface Settings {
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: 'small' | 'medium' | 'large';
   theme: 'dark' | 'light';
-  volume: number;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -37,8 +31,7 @@ const DEFAULT_SETTINGS: Settings = {
   fontSize: 'medium',
   lyricposition: 'left', 
   backgroundblur: 'large',
-  theme: 'dark',
-  volume: 50
+  theme: 'dark'
 };
 
 const Player: React.FC<PlayerProps> = ({
@@ -60,33 +53,20 @@ const Player: React.FC<PlayerProps> = ({
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const SCROLL_DURATION = 1000;
-  const { theme, setTheme } = useTheme();
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [settings, setSettings] = useState<Settings>(() => {
-    const savedSettings = localStorage.getItem('playerSettings');
-    return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
+  const savedSettings = localStorage.getItem('playerSettings');
+  return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
   });
 
-  const updateSettings = (newSettings: Partial<Settings>) => {
-    setSettings((prevSettings) => {
-      const updatedSettings = { ...prevSettings, ...newSettings };
-      localStorage.setItem('playerSettings', JSON.stringify(updatedSettings));
-      return updatedSettings;
-    });
-  };  
-
-  const handleSettingChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    if (key === 'theme') {
-      if (typeof value === 'string') {
-        setTheme(value);
-      }
-    }
-    updateSettings({ ...settings, [key]: value });
+  const updateSettings = (newSettings: Settings) => {
+    setSettings(newSettings);
+    localStorage.setItem('playerSettings', JSON.stringify(newSettings));
   };
 
-  useEffect(() => {
-    setVolume(settings.volume);
-  }, [settings.volume]);  
+  const handleSettingChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
+    updateSettings({ ...settings, [key]: value });
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -159,9 +139,7 @@ const Player: React.FC<PlayerProps> = ({
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     youtubeRef.current = event.target;
     setDuration(event.target.getDuration());
-    event.target.setVolume(settings.volume);
-  };
-  
+  }
   const updateTime = () => {
     if (youtubeRef.current) {
       const time = youtubeRef.current.getCurrentTime();
@@ -282,19 +260,18 @@ const Player: React.FC<PlayerProps> = ({
     }
   };
 
-  const handleVolumeChange = (value: number[]) => {
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const audio = youtubeRef.current;
     if (!audio) return;
-    const newVolume = value[0];
+    const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
     audio.setVolume(newVolume);
-    updateSettings({ volume: newVolume });
-  };  
+  };
 
-  const handleProgressChange = (value: number[]) => {
+  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const audio = youtubeRef.current;
     if (!audio) return;
-    const newTime = value[0];
+    const newTime = parseFloat(e.target.value);
     setCurrentTime(newTime);
     audio.seekTo(newTime);
   };
@@ -323,13 +300,11 @@ const Player: React.FC<PlayerProps> = ({
     return `${m}:${s}`;
   };
 
-  useEffect(() => {
-    const audio = youtubeRef.current;
-    if (audio) {
-      audio.setVolume(settings.volume);
-      setVolume(settings.volume);
-    }
-  }, [settings.volume]);  
+  const sliderBackground = () => {
+    if (duration === 0) return '#4B5563';
+    const percentage = (currentTime / duration) * 100;
+    return `linear-gradient(to right, #1DB954 ${percentage}%, #4B5563 ${percentage}%)`;
+  };
 
   const themeClasses = {
     dark: {
@@ -563,60 +538,58 @@ const Player: React.FC<PlayerProps> = ({
         </div>
       </div>
 
-      <div
-        className={`fixed z-50 bottom-0 w-full ${
-          settings.showplayercontrol ? 'h-24' : 'h-0'
-        } transition-all duration-300 ease-in-out ${currentTheme.background} shadow-lg`}
-      >
-        <div className="h-full flex flex-col justify-between p-4">
-          <div className="flex items-center gap-2">
-            <span className={`text-sm font-medium ${currentTheme.text}`}>
-              {formatTime(currentTime)}
-            </span>
-            <Slider
-              value={[currentTime]}
-              max={duration}
-              step={0.1}
-              className="flex-1"
-              onValueChange={handleProgressChange}
-            />
-            <span className={`text-sm font-medium ${currentTheme.text}`}>
-              {formatTime(duration)}
-            </span>
+      <div className={`fixed z-50 bottom-0 w-full h-[100px] flex flex-col justify-between ${settings.showplayercontrol ? 'visible' : 'hidden'} ${currentTheme.background}`}>
+        <div className="flex items-center justify-center px-2 mt-3 mx-3">
+          <span className={`text-sm ${currentTheme.text}`}>{formatTime(currentTime)}</span>
+          <input
+            type="range"
+            min="0"
+            max={duration}
+            value={currentTime}
+            onChange={handleProgressChange}
+            className="flex-1 mx-3 h-1 rounded-full appearance-none cursor-pointer"
+            style={{
+              background: sliderBackground(),
+              transition: 'background 0.3s ease',
+            }}
+          />
+          <span className={`text-sm ${currentTheme.text}`}>{formatTime(duration)}</span>
+        </div>
+
+        <div className={`flex items-center justify-between px-4 mb-4 ml-3 relative`}>
+          <button onClick={togglePlayPause} className={`${currentTheme.text}`}>
+            {isPlaying ? (
+              <Pause size={32} />
+            ) : (
+              <Play size={32} />
+            )}
+          </button>
+          <div className={`absolute left-1/2 transform -translate-x-1/2 text-center flex flex-col items-center justify-center text-nowrap ${currentTheme.text}`}>
+            <p className="font-semibold pb-1">{trackName}</p>
+            <p className={`text-sm mb-2 ${currentTheme.secondaryText}`}>
+              {albumName} - {artistName}
+            </p>
           </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={togglePlayPause}
-                className={currentTheme.text}
-              >
-                {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <Volume2 className={`h-4 w-4 ${currentTheme.text}`} />
-                <Slider
-                  value={[volume]}
-                  max={100}
-                  className="w-24"
-                  onValueChange={handleVolumeChange}
-                />
-              </div>
-            </div>
-
-            <div className={`text-right ${currentTheme.text}`}>
-              <p className="font-medium text-sm">{trackName}</p>
-              <p className={`text-xs ${currentTheme.secondaryText}`}>
-                {artistName} - {albumName}
-              </p>
-            </div>
+          <div className="flex items-center mr-3">
+            <Volume2 className={`h-5 w-5 mr-1 ${currentTheme.text}`} />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.01"
+              value={volume}
+              onChange={handleVolumeChange}
+              className="w-24 h-1 rounded-full appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #1DB954 ${
+                  volume * 100
+                }%, ${currentTheme.inputBg} ${volume * 100}%)`,
+                transition: 'background 0.3s ease',
+              }}
+            />
           </div>
         </div>
       </div>
-
       <div className='fixed z-0 w-full h-full'>
         <div className={`w-full h-full fixed top-0 left-0 ${settings.theme === 'dark' ? 'bg-black bg-opacity-70' : 'bg-white bg-opacity-30'} ${settings.backgroundblur === 'small' ? 'backdrop-blur-sm' : settings.backgroundblur === 'medium' ? 'backdrop-blur-md' : 'backdrop-blur-lg'}`}></div>
         <YouTube 
@@ -630,119 +603,148 @@ const Player: React.FC<PlayerProps> = ({
         />
       </div>
 
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className={`${currentTheme.modalBg} border-0`}>
-          <DialogHeader>
-            <DialogTitle className={currentTheme.text}>Settings</DialogTitle>
-          </DialogHeader>
+      <div className="fixed flex items-center mr-3 top-5 right-5 z-50">
+        <button 
+          onClick={() => setShowSettings(true)}
+          className={`ml-4 p-2 rounded-full ${currentTheme.settingbutton} ${currentTheme.text}`}
+          style={{transition: 'background 0.2s ease'}}
+        >
+          <MoreHorizontal size={28} />
+        </button>
+      </div>
 
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <span className={currentTheme.text}>Show Player Controls</span>
-              <Switch
-                checked={settings.showplayercontrol}
-                onCheckedChange={(checked) => handleSettingChange('showplayercontrol', checked)}
-              />
+      {showSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className={`rounded-lg p-6 max-w-md w-full mx-4 ${currentTheme.modalBg}`}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className={`text-xl font-bold ${currentTheme.text}`}>Settings</h2>
+              <button 
+                onClick={() => setShowSettings(false)}
+                className={`${currentTheme.text}`}
+                style={{transition: 'color 0.2s ease'}}
+              >
+                <X size={24} />
+              </button>
             </div>
+            <button onClick={onBack} className="fixed top-5 left-5 z-50 bg-gray-700 text-white p-2 rounded-lg hover:bg-gray-600 transition-colors">
+              <ArrowLeft size={24} />
+            </button>
 
-            <div className="space-y-2">
-                <p className={currentTheme.text}>Font Size</p>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <span className={`${currentTheme.text}`}>Show PlayerControl</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={settings.showplayercontrol}
+                    onChange={e => handleSettingChange('showplayercontrol', e.target.checked)}
+                  />
+                  <div 
+                    className={`w-11 h-6 rounded-full peer 
+                      transition-colors duration-300 ease-in-out 
+                      ${settings.theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'} 
+                      peer-checked:bg-green-500`}
+                  ></div>
+                  <div 
+                    className={`absolute w-4 h-4 bg-white rounded-full transform transition-transform duration-300 ease-in-out
+                      peer-checked:translate-x-6
+                      translate-x-1`}
+                  ></div>
+                </label>
+              </div>
+
+              <div className="space-y-2">
+                <p className={`${currentTheme.text}`}>Lyric FontSize</p>
                 <div className="flex gap-2">
-                {[
-                  { value: 'small', label: 'Small' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'large', label: 'Large' }
-                ].map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={settings.fontSize === option.value ? 'default' : 'secondary'}
-                    onClick={() => handleSettingChange('fontSize', option.value as 'small' | 'medium' | 'large')}
-                    className="flex-1"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
+                  {['small', 'medium', 'large'].map((size) => (
+                    <button
+                      key={size}
+                      className={`px-4 py-2 rounded transition-all duration-300 ease-in-out ${
+                        settings.fontSize === size 
+                          ? `${currentTheme.buttonActiveBg} text-white` 
+                          : `${currentTheme.buttonBg} ${
+                              settings.theme === 'dark' ? 'text-gray-300' : 'text-black'
+                            }`
+                      }`}
+                      onClick={() => handleSettingChange('fontSize', size as Settings['fontSize'])}
+                    >
+                      {size.charAt(0).toUpperCase() + size.slice(1)}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-                <p className={currentTheme.text}>Lyric Position</p>
-              <div className="flex gap-2">
-                {[
-                  { value: 'left', label: 'Left' },
-                  { value: 'center', label: 'Center' },
-                  { value: 'right', label: 'Right' }
-                ].map((option) => (
-                  <Button
-                  key={option.value}
-                  variant={settings.lyricposition === option.value ? 'default' : 'secondary'}
-                  onClick={() => handleSettingChange('lyricposition', option.value as 'left' | 'center' | 'right')}
-                  className="flex-1"
-                  >
-                  {option.label}
-                  </Button>
-                ))}
+              <div className="space-y-2">
+                <p className={`${currentTheme.text}`}>Lyric Position</p>
+                <div className="flex gap-2">
+                  {[
+                    { code: 'left', label: 'Left' },
+                    { code: 'center', label: 'Center' },
+                    { code: 'right', label: 'Right' }
+                  ].map((item) => (
+                    <button
+                      key={item.code}
+                      className={`px-4 py-2 rounded transition-all duration-300 ease-in-out ${
+                        settings.lyricposition === item.code 
+                          ? `${currentTheme.buttonActiveBg} text-white` 
+                          : `${currentTheme.buttonBg} ${
+                              settings.theme === 'dark' ? 'text-gray-300' : 'text-black'
+                            }`
+                      }`}
+                      onClick={() => handleSettingChange('lyricposition', item.code as Settings['lyricposition'])}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-                <p className={currentTheme.text}>Background Blur</p>
-              <div className="flex gap-2">
-                {[
-                  { value: 'small', label: 'Low' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'large', label: 'High' }
-                ].map((option) => (
-                  <Button
-                  key={option.value}
-                  variant={settings.backgroundblur === option.value ? 'default' : 'secondary'}
-                  onClick={() => handleSettingChange('backgroundblur', option.value as 'small' | 'medium' | 'large')}
-                  className="flex-1"
-                  >
-                  {option.label}
-                  </Button>
-                ))}
+              <div className="space-y-2">
+                <p className={`${currentTheme.text}`}>BackGround Blur</p>
+                <div className="flex gap-2">
+                  {['small', 'medium', 'large'].map((size) => (
+                    <button
+                      key={size}
+                      className={`px-4 py-2 rounded transition-all duration-300 ease-in-out ${
+                        settings.backgroundblur === size 
+                          ? `${currentTheme.buttonActiveBg} text-white` 
+                          : `${currentTheme.buttonBg} ${
+                              settings.theme === 'dark' ? 'text-gray-300' : 'text-black'
+                            }`
+                      }`}
+                      onClick={() => handleSettingChange('backgroundblur', size as Settings['backgroundblur'])}
+                    >
+                      {size.charAt(0).toUpperCase() + size.slice(1)}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <p className={currentTheme.text}>Player Theme</p>
-              <div className="flex gap-2">
-                {[
-                  { value: 'dark', label: 'Dark' },
-                  { value: 'light', label: 'Light' }
-                ].map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={settings.theme === option.value ? 'default' : 'secondary'}
-                    onClick={() => handleSettingChange('theme', option.value as 'dark' | 'light')}
-                    className="flex-1"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
+              <div className="space-y-2">
+                <p className={`${currentTheme.text}`}>Player Theme</p>
+                <div className="flex gap-2">
+                  {['dark', 'light'].map((theme) => (
+                    <button
+                      key={theme}
+                      className={`px-4 py-2 rounded transition-all duration-300 ease-in-out ${
+                        settings.theme === theme 
+                          ? `${currentTheme.buttonActiveBg} text-white` 
+                          : `${currentTheme.buttonBg} ${
+                              settings.theme === 'dark' ? 'text-gray-300' : 'text-black'
+                            }`
+                      }`}
+                      onClick={() => handleSettingChange('theme', theme as Settings['theme'])}
+                    >
+                      {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <Button
-        variant="secondary"
-        size="icon"
-        onClick={onBack}
-        className="fixed top-4 left-4 z-50"
-      >
-        <ArrowLeft size={20} />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setShowSettings(true)}
-        className={`fixed top-4 right-4 z-50`}
-        >
-        <MoreHorizontal size={20} />
-      </Button>
+        </div>
+      )}
     </>
   );
 };

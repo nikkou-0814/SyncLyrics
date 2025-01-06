@@ -1,8 +1,9 @@
 import './globals.css';
+import { ThemeProvider } from 'next-themes';
 
 export const metadata = {
   title: 'SyncLyrics',
-  description: '音楽ファイルを挿入、歌詞を検索し歌詞の同期をします。',
+  description: '同期歌詞で楽しむ',
 };
 
 export default function RootLayout({
@@ -12,7 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="dark">
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
