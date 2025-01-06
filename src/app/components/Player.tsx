@@ -60,7 +60,7 @@ const Player: React.FC<PlayerProps> = ({
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const SCROLL_DURATION = 1000;
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [settings, setSettings] = useState<Settings>(() => {
     const savedSettings = localStorage.getItem('playerSettings');
