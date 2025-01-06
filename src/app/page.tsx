@@ -25,8 +25,8 @@ interface SearchResult {
 export default function Home() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [searchQuery, setSearchQuery] = useState<string>('pikasonic');
-  const [urlQuery, setUrlQuery] = useState<string>('https://www.youtube.com/watch?v=iprl3wJnWoo&pp=ygUMbG9zdCBteSBtaW5k');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [urlQuery, setUrlQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<SearchResult | null>(null);
   const [lyricsData, setLyricsData] = useState<LyricLine[] | null>(null);
