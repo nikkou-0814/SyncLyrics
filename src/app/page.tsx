@@ -174,8 +174,8 @@ export default function Home() {
                       className={`mb-2 p-2 rounded cursor-pointer transition-all ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'}`}
                       onClick={() => handleSelectTrack(track)}
                     >
-                      <p className="text-lg">{track.trackName}</p>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{track.artistName}</p>
+                      <p className="text-lg text-nowrap overflow-hidden text-ellipsis">{track.trackName}</p>
+                      <p className={`text-sm text-nowrap overflow-hidden text-ellipsis ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{track.artistName}</p>
                     </li>
                   ))}
                 </ul>

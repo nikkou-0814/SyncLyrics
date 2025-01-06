@@ -552,6 +552,8 @@ const Player: React.FC<PlayerProps> = ({
                         : 'translateY(0)',
                     transition:
                       'transform 1s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s, margin 1s, padding 1s, color 0.5s',
+                    wordWrap: 'break-word',
+                    wordBreak: 'break-word',
                   }}
                   onClick={() => handleLyricClick(line.time)}
                 >
@@ -620,11 +622,15 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className={`text-right ml-5 ${currentTheme.text}`}>
-              <p className="font-medium text-sm">{trackName}</p>
+              <p className="font-medium text-sm">
+                {trackName.length > 20 ? `${trackName.slice(0, 20)}...` : trackName}
+              </p>
               <p className={`text-xs ${currentTheme.secondaryText}`}>
-                {artistName} - {albumName}
+                {artistName.length > 20 ? `${artistName.slice(0, 20)}...` : artistName} - 
+                {albumName.length > 20 ? `${albumName.slice(0, 20)}...` : albumName}
               </p>
             </div>
+
           </div>
         </div>
       </motion.div>
