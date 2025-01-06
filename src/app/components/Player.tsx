@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from 'next-themes';
+import { motion } from 'framer-motion';
 
 interface LyricLine {
   time: number;
@@ -25,19 +26,23 @@ interface PlayerProps {
 
 interface Settings {
   showplayercontrol: boolean;
+  fullplayer: boolean;
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: 'small' | 'medium' | 'large';
   theme: 'dark' | 'light';
+  playerposition: 'left' | 'center' | 'right';
   volume: number;
 }
 
 const DEFAULT_SETTINGS: Settings = {
   showplayercontrol: true,
+  fullplayer: false,
   fontSize: 'medium',
   lyricposition: 'left', 
   backgroundblur: 'large',
   theme: 'dark',
+  playerposition: 'right',
   volume: 50
 };
 
@@ -358,12 +363,12 @@ const Player: React.FC<PlayerProps> = ({
       buttonBg: 'bg-gray-300',
       buttonActiveBg: 'bg-green-500',
       activelyrics: 'text-black',
-      otherlyrics: 'text-black text-opacity-50',
+      otherlyrics: 'text-black text-opacity-50', 
       interludedots: 'rgba(0,0,0,',
       settingbutton: 'hover:hover:bg-black hover:bg-opacity-15'
     }
   };
-  const currentTheme = themeClasses[settings.theme];  
+  const currentTheme = themeClasses[settings.theme];
 
   const renderInterludeDots = (startTime: number, endTime: number) => {
     const total = endTime - startTime;
@@ -481,14 +486,14 @@ const Player: React.FC<PlayerProps> = ({
             settings.theme === 'dark' ? 'text-white' : 'text-gray-900'
           }`}
           style={{
-            height: settings.showplayercontrol ? '89vh' : '100vh',
+            height: settings.fullplayer ? (settings.showplayercontrol ? '92vh' : '100%') : '100%',
             maskImage: isLyricsHovered
               ? 'none'
               : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)',
             WebkitMaskImage: isLyricsHovered
               ? 'none'
               : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)',
-            marginBottom: settings.showplayercontrol ? '98px' : '0',
+            marginBottom: settings.fullplayer ? (settings.showplayercontrol ? '92px' : '0') : '0',
             padding: isMobile ? '20px' : ''
           }}
           ref={lyricsContainerRef}
@@ -563,10 +568,17 @@ const Player: React.FC<PlayerProps> = ({
         </div>
       </div>
 
-      <div
-        className={`fixed z-50 bottom-0 w-full ${
-          settings.showplayercontrol ? 'h-24' : 'h-0'
-        } transition-all duration-300 ease-in-out ${currentTheme.background} shadow-lg`}
+      <motion.div
+        initial={{ width: settings.fullplayer ? '100%' : '', margin: settings.fullplayer ? '0' : '20px', bottom: settings.showplayercontrol ? '0' : '-150px' }}
+        animate={{ width: settings.fullplayer ? '100%' : '', margin: settings.fullplayer ? '0' : '20px', bottom: settings.showplayercontrol ? '0' : '-150px' }}
+        transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
+        className={`fixed z-50 ${
+          settings.playerposition === 'left' 
+        ? 'left-0' 
+        : settings.playerposition === 'right' 
+          ? 'right-0' 
+          : 'left-1/2 transform -translate-x-1/2'
+        } ${settings.fullplayer ? 'rounded-t-lg' : 'rounded-lg'} ${currentTheme.background} shadow-2xl`}
       >
         <div className="h-full flex flex-col justify-between p-4">
           <div className="flex items-center gap-2">
@@ -599,15 +611,15 @@ const Player: React.FC<PlayerProps> = ({
               <div className="flex items-center gap-2">
                 <Volume2 className={`h-4 w-4 ${currentTheme.text}`} />
                 <Slider
-                  value={[volume]}
-                  max={100}
-                  className="w-24"
-                  onValueChange={handleVolumeChange}
+              value={[volume]}
+              max={100}
+              className="w-24"
+              onValueChange={handleVolumeChange}
                 />
               </div>
             </div>
 
-            <div className={`text-right ${currentTheme.text}`}>
+            <div className={`text-right ml-5 ${currentTheme.text}`}>
               <p className="font-medium text-sm">{trackName}</p>
               <p className={`text-xs ${currentTheme.secondaryText}`}>
                 {artistName} - {albumName}
@@ -615,7 +627,7 @@ const Player: React.FC<PlayerProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <div className='fixed z-0 w-full h-full'>
         <div className={`w-full h-full fixed top-0 left-0 ${settings.theme === 'dark' ? 'bg-black bg-opacity-70' : 'bg-white bg-opacity-30'} ${settings.backgroundblur === 'small' ? 'backdrop-blur-sm' : settings.backgroundblur === 'medium' ? 'backdrop-blur-md' : 'backdrop-blur-lg'}`}></div>
@@ -642,6 +654,14 @@ const Player: React.FC<PlayerProps> = ({
               <Switch
                 checked={settings.showplayercontrol}
                 onCheckedChange={(checked) => handleSettingChange('showplayercontrol', checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+                <span className={currentTheme.text}>Full Player</span>
+              <Switch
+                checked={settings.fullplayer}
+                onCheckedChange={(checked) => handleSettingChange('fullplayer', checked)}
               />
             </div>
 
@@ -706,7 +726,7 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="space-y-2">
-              <p className={currentTheme.text}>Player Theme</p>
+              <p className={currentTheme.text}>Theme</p>
               <div className="flex gap-2">
                 {[
                   { value: 'dark', label: 'Dark' },
@@ -721,6 +741,27 @@ const Player: React.FC<PlayerProps> = ({
                     {option.label}
                   </Button>
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className={currentTheme.text}>Player Position</p>
+              <div className="flex gap-2">
+              {[
+                { value: 'left', label: 'Left' },
+                { value: 'center', label: 'Center' },
+                { value: 'right', label: 'Right' }
+              ].map((option) => (
+                <Button
+                key={option.value}
+                variant={settings.playerposition === option.value ? 'default' : 'secondary'}
+                onClick={() => !settings.fullplayer && handleSettingChange('playerposition', option.value as 'left' | 'center' | 'right')}
+                className="flex-1"
+                disabled={settings.fullplayer}
+                >
+                {option.label}
+                </Button>
+              ))}
               </div>
             </div>
           </div>
