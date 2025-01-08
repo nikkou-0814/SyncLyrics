@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
+import LineBreaker from '@/components/linebreak';
 
 interface LyricLine {
   time: number;
@@ -589,7 +590,7 @@ const Player: React.FC<PlayerProps> = ({
                     ? renderInterludeDots(line.time, EndTime)
                     : isInterlude
                     ? null
-                    : line.text}
+                    : <LineBreaker text={line.text} />}
                 </p>
               );
             })}

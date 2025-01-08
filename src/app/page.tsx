@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Player from './components/Player';
+import Player from '@/components/Player';
 import '../app/globals.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
