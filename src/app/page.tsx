@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Player from '@/components/Player';
+import dynamic from 'next/dynamic';
 import '../app/globals.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { useTheme } from 'next-themes';
+const Player = dynamic(() => import('@/components/player'), { ssr: false });
 
 interface LyricLine {
   time: number;
@@ -36,12 +37,14 @@ export default function Home() {
   const [showPlayer, setShowPlayer] = useState<boolean>(false);
 
   useEffect(() => {
-    const savedSettings = localStorage.getItem('playerSettings');
-    if (savedSettings) {
-      const settings = JSON.parse(savedSettings);
-      if (settings.theme) {
-        setTheme(settings.theme);
-        setThemeState(settings.theme);
+    if (typeof window !== 'undefined') {
+      const savedSettings = localStorage.getItem('playerSettings');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        if (settings.theme) {
+          setTheme(settings.theme);
+          setThemeState(settings.theme);
+        }
       }
     }
   }, [setTheme]);
@@ -72,7 +75,7 @@ export default function Home() {
         setSearchResults(null);
       } else {
         setSearchResults(data.results);
-      }      
+      }
     } catch (err) {
       console.error(err);
       setError('検索中にエラーが発生しました');
