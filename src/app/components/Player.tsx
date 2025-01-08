@@ -29,7 +29,7 @@ interface Settings {
   fullplayer: boolean;
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
-  backgroundblur: 'small' | 'medium' | 'large';
+  backgroundblur: 'none' | 'small' | 'medium' | 'large';
   theme: 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;
@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS: Settings = {
   fullplayer: false,
   fontSize: 'medium',
   lyricposition: 'left', 
-  backgroundblur: 'large',
+  backgroundblur: 'medium',
   theme: 'dark',
   playerposition: 'right',
   volume: 50
@@ -391,7 +391,7 @@ const Player: React.FC<PlayerProps> = ({
       background: 'bg-white',
       text: 'text-gray-900',
       secondaryText: 'text-gray-600',
-      hoverText: 'hover:text-gray-800',
+      hoverText: 'hover:text-gray-900',
       inputBg: '#D1D5DB',
       inputHoverBg: '#1DB954',
       modalBg: 'bg-white',
@@ -513,8 +513,6 @@ const Player: React.FC<PlayerProps> = ({
             ? `items-end ${isMobile ? 'right-0' : 'right-20'}`
             : `items-start ${isMobile ? 'left-0' : 'left-20'}`
         }`}
-        onMouseEnter={handleLyricsMouseEnter}
-        onMouseLeave={handleLyricsMouseLeave}
       >
         <div
           className={`overflow-y-auto w-full max-w-4xl hidden-scrollbar ${
@@ -532,6 +530,8 @@ const Player: React.FC<PlayerProps> = ({
             padding: isMobile ? '20px' : ''
           }}
           ref={lyricsContainerRef}
+          onMouseEnter={handleLyricsMouseEnter}
+          onMouseLeave={handleLyricsMouseLeave}
         >
           <div className="relative">
             <div style={{ height: '500px' }}></div>
@@ -563,7 +563,7 @@ const Player: React.FC<PlayerProps> = ({
                 <p
                   key={index}
                   id={`lyric-${index}`}
-                  className={`transition-all duration-700 px-2 active:bg-[rgba(255,255,255,0.1)] rounded-lg ${
+                  className={`transition-all duration-700 px-2 active:bg-[rgba(255,255,255,0.3)] rounded-lg ${
                     isInterlude
                       ? 'm-0 p-0'
                       : `my-8 ${
@@ -783,15 +783,27 @@ const Player: React.FC<PlayerProps> = ({
       </motion.div>;
 
       <div className='fixed z-0 w-full h-full'>
-        <div className={`w-full h-full fixed top-0 left-0 ${settings.theme === 'dark' ? 'bg-black bg-opacity-70' : 'bg-white bg-opacity-30'} ${settings.backgroundblur === 'small' ? 'backdrop-blur-sm' : settings.backgroundblur === 'medium' ? 'backdrop-blur-md' : 'backdrop-blur-lg'}`}></div>
-        <YouTube 
-          videoId={audioUrl} 
-          onReady={onPlayerReady} 
-          onPlay={()=>{setIsPlaying(true)}} 
-          onPause={()=>{setIsPlaying(false)}} 
-          onStateChange={onStateChange} 
-          style={{width:"100%",height:"100%"}}
-          iframeClassName="w-full h-full" 
+        <div className={`w-full h-full fixed top-0 left-0 ${
+          settings.theme === 'dark'
+            ? 'bg-black bg-opacity-70'
+            : 'bg-white bg-opacity-30'
+        } ${
+          settings.backgroundblur === 'small'
+            ? 'backdrop-blur-sm'
+            : settings.backgroundblur === 'medium'
+            ? 'backdrop-blur-md'
+            : settings.backgroundblur === 'large'
+            ? 'backdrop-blur-lg'
+            : ''
+        }`}></div>
+        <YouTube
+          videoId={audioUrl}
+          onReady={onPlayerReady}
+          onPlay={() => {setIsPlaying(true)}}
+          onPause={() => {setIsPlaying(false)}}
+          onStateChange={onStateChange}
+          style={{ width: "100%", height: "100%" }}
+          iframeClassName="w-full h-full"
         />
       </div>
 
@@ -863,6 +875,7 @@ const Player: React.FC<PlayerProps> = ({
               <p className={currentTheme.text}>Background Blur</p>
               <div className="flex gap-2">
                 {[
+                  { value: 'none', label: 'None' },
                   { value: 'small', label: 'Low' },
                   { value: 'medium', label: 'Medium' },
                   { value: 'large', label: 'High' }
@@ -870,7 +883,7 @@ const Player: React.FC<PlayerProps> = ({
                   <Button
                   key={option.value}
                   variant={settings.backgroundblur === option.value ? 'default' : 'secondary'}
-                  onClick={() => handleSettingChange('backgroundblur', option.value as 'small' | 'medium' | 'large')}
+                  onClick={() => handleSettingChange('backgroundblur', option.value as 'none' | 'small' | 'medium' | 'large')}
                   className="flex-1"
                   >
                   {option.label}

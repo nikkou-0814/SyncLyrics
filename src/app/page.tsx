@@ -67,7 +67,12 @@ export default function Home() {
         setIsProcessing(false);
         return;
       }
-      setSearchResults(data.results);
+      if (data.results.length === 0) {
+        setError('一致する検索結果はありませんでした');
+        setSearchResults(null);
+      } else {
+        setSearchResults(data.results);
+      }      
     } catch (err) {
       console.error(err);
       setError('検索中にエラーが発生しました');
@@ -130,7 +135,7 @@ export default function Home() {
       {!showPlayer && (
         <Card className="w-full max-w-md">
           <div className="p-4">
-            <h1 className="text-2xl mb-4 text-center">URLを挿入し曲名を検索してください</h1>
+            <h1 className="text-2xl mb-4 text-center">URLを挿入し曲を検索してください</h1>
             <Input
               type="text"
               placeholder="YouTubeのURLを入力"
@@ -152,10 +157,17 @@ export default function Home() {
             >
               {isProcessing ? '処理中...' : '検索'}
             </Button>
-            {error && <Alert variant="destructive" className="mt-4">{error}</Alert>}
+            {error && (
+              <Alert variant="destructive" className="mt-4">
+                <p>{error}</p>
+                <p className="text-sm mt-2">
+                  別のキーワードを試してみるか、英語などにしてみてください。
+                </p>
+              </Alert>
+            )}
             {searchResults && (
               <div className="mt-4">
-                <h2 className="text-xl mb-2">検索結果:</h2>
+                <h2 className="text-xl mb-2">検索結果</h2>
                 <ul>
                   {searchResults.map((track) => (
                     <li
