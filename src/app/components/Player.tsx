@@ -271,24 +271,27 @@ const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     if (!lyricsContainerRef.current) return;
     const container = lyricsContainerRef.current;
-
-      const activeLyric = document.getElementById(`lyric-${currentLineIndex}`);
-      if (activeLyric) {
-        const containerHeight = container.clientHeight;
-        const contentHeight = container.scrollHeight;
-        const lyricOffsetTop = activeLyric.offsetTop;
-        const lyricHeight = activeLyric.clientHeight;
-
-        let targetScrollTop =
-          lyricOffsetTop - containerHeight / 2 + lyricHeight / 2;
-        targetScrollTop = Math.max(
-          0,
-          Math.min(targetScrollTop, contentHeight - containerHeight)
-        );
-        smoothScrollTo(container, targetScrollTop, SCROLL_DURATION);
-      
+    const activeLyric = document.getElementById(`lyric-${currentLineIndex}`);
+    if (activeLyric) {
+      const containerHeight = container.clientHeight;
+      const contentHeight = container.scrollHeight;
+      const lyricOffsetTop = activeLyric.offsetTop;
+      const lyricHeight = activeLyric.clientHeight;
+      let targetScrollTop;
+      if (isMobile) {
+        const displayHeight = window.innerHeight;
+        const offsetFromTop = displayHeight * 0.3;
+        targetScrollTop = lyricOffsetTop - offsetFromTop + lyricHeight / 2;
+      } else {
+        targetScrollTop = lyricOffsetTop - containerHeight / 2 + lyricHeight / 2;
+      }
+      targetScrollTop = Math.max(
+        0,
+        Math.min(targetScrollTop, contentHeight - containerHeight)
+      );
+      smoothScrollTo(container, targetScrollTop, SCROLL_DURATION);
     }
-  }, [currentLineIndex, lyricsData, smoothScrollTo]);
+  }, [currentLineIndex, lyricsData, smoothScrollTo, isMobile]);  
 
   const togglePlayPause = () => {
     const audio = youtubeRef.current;
@@ -377,30 +380,20 @@ const Player: React.FC<PlayerProps> = ({
       text: 'text-white',
       secondaryText: 'text-gray-400',
       hoverText: 'hover:text-gray-300',
-      inputBg: '#4B5563',
-      inputHoverBg: '#1DB954',
       modalBg: 'bg-gray-800',
-      buttonBg: 'bg-gray-700',
-      buttonActiveBg: 'bg-green-500',
       activelyrics: 'text-white',
       otherlyrics: 'text-white text-opacity-40',
-      interludedots: 'rgba(255,255,255,',
-      settingbutton: 'hover:hover:bg-white hover:bg-opacity-20'
+      interludedots: 'rgba(255,255,255,'
     },
     light: {
       background: 'bg-white',
       text: 'text-gray-900',
       secondaryText: 'text-gray-600',
       hoverText: 'hover:text-gray-900',
-      inputBg: '#D1D5DB',
-      inputHoverBg: '#1DB954',
       modalBg: 'bg-white',
-      buttonBg: 'bg-gray-300',
-      buttonActiveBg: 'bg-green-500',
       activelyrics: 'text-black',
       otherlyrics: 'text-black text-opacity-50', 
-      interludedots: 'rgba(0,0,0,',
-      settingbutton: 'hover:hover:bg-black hover:bg-opacity-15'
+      interludedots: 'rgba(0,0,0,'
     }
   };
   const currentTheme = themeClasses[settings.theme];
@@ -520,11 +513,11 @@ const Player: React.FC<PlayerProps> = ({
           }`}
           style={{
             height: settings.fullplayer ? (settings.showplayercontrol ? '92vh' : '100%') : '100%',
-            maskImage: isLyricsHovered
-              ? 'none'
+            maskImage: isMobile || isLyricsHovered
+              ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)'
               : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)',
-            WebkitMaskImage: isLyricsHovered
-              ? 'none'
+            WebkitMaskImage: isMobile || isLyricsHovered
+              ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)'
               : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)',
             marginBottom: settings.fullplayer ? (settings.showplayercontrol ? '92px' : '0') : '0',
             padding: isMobile ? '20px' : ''
@@ -808,7 +801,7 @@ const Player: React.FC<PlayerProps> = ({
       </div>
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className={`${currentTheme.modalBg} border-0`}>
+        <DialogContent className={`${currentTheme.modalBg} border-0 overflow-scroll`} style={{ maxHeight: '80vh' }}>
           <DialogHeader>
             <DialogTitle className={currentTheme.text}>Settings</DialogTitle>
           </DialogHeader>
