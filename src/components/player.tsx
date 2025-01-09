@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import YouTube , { YouTubeProps } from 'react-youtube';
-import { Pause, Play, Volume2, MoreHorizontal, ArrowLeft, SkipBack, SkipForward, Volume } from 'lucide-react';
+import YouTube, { YouTubeProps } from 'react-youtube';
+import { Pause, Play, Volume, Volume1, Volume2, MoreHorizontal, ArrowLeft, SkipBack, SkipForward } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -31,7 +31,7 @@ interface Settings {
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: 'none' | 'small' | 'medium' | 'large';
-  theme: 'dark' | 'light';
+  theme: 'system' | 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;
 }
@@ -42,7 +42,7 @@ const DEFAULT_SETTINGS: Settings = {
   fontSize: 'medium',
   lyricposition: 'left', 
   backgroundblur: 'medium',
-  theme: 'dark',
+  theme: 'system',
   playerposition: 'right',
   volume: 50
 };
@@ -66,7 +66,7 @@ const Player: React.FC<PlayerProps> = ({
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const SCROLL_DURATION = 1000;
-  const { setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [wasFullPlayerManuallySet, setWasFullPlayerManuallySet] = useState(false);
   const [settings, setSettings] = useState<Settings>(() => {
@@ -106,16 +106,19 @@ const Player: React.FC<PlayerProps> = ({
   
   const handleSettingChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     if (key === 'theme') {
-      if (typeof value === 'string') {
+      if (value === 'dark' || value === 'light' || value === 'system') {
         setTheme(value);
+      } else {
+        console.error("Invalid theme value");
       }
     }
-
+  
     if (key === 'fullplayer') {
       setWasFullPlayerManuallySet(true);
     }
+  
     updateSettings({ [key]: value });
-  };
+  };  
 
   const cubicBezier = useCallback(
     (p1x: number, p1y: number, p2x: number, p2y: number) => {
@@ -205,7 +208,7 @@ const Player: React.FC<PlayerProps> = ({
       const stopUpdating = () => {
         clearInterval(interval);
       };
-      youtubeRef.current.addEventListener("onStateChange", stopUpdating);
+      youtubeRef.current?.addEventListener("onStateChange", stopUpdating);
     }
   };
 
@@ -375,29 +378,9 @@ const Player: React.FC<PlayerProps> = ({
     }
   }, [settings.volume]);  
 
-  const themeClasses = {
-    dark: {
-      background: 'bg-gray-800',
-      text: 'text-white',
-      secondaryText: 'text-gray-400',
-      hoverText: 'hover:text-gray-300',
-      modalBg: 'bg-gray-800',
-      activelyrics: 'text-white',
-      otherlyrics: 'text-white text-opacity-40',
-      interludedots: 'rgba(255,255,255,'
-    },
-    light: {
-      background: 'bg-white',
-      text: 'text-gray-900',
-      secondaryText: 'text-gray-600',
-      hoverText: 'hover:text-gray-900',
-      modalBg: 'bg-white',
-      activelyrics: 'text-black',
-      otherlyrics: 'text-black text-opacity-50', 
-      interludedots: 'rgba(0,0,0,'
-    }
+  const getInterludeDotsColor = (): string => {
+    return resolvedTheme === 'dark' ? 'rgba(255,255,255,' : 'rgba(0,0,0,';
   };
-  const currentTheme = themeClasses[settings.theme];
 
   const renderInterludeDots = (startTime: number, endTime: number) => {
     const total = endTime - startTime;
@@ -479,20 +462,20 @@ const Player: React.FC<PlayerProps> = ({
     const dotStyle = (fill: number) => {
       const alpha = 0.2 + 0.8 * fill;
       return {
-      width: '16px',
-      height: '16px',
-      borderRadius: '50%',
-      backgroundColor: `${currentTheme.interludedots}${alpha})`,
-      margin: '0 6px',
-      transition: `background-color ${transformTransition}`,
+        width: '16px',
+        height: '16px',
+        borderRadius: '50%',
+        backgroundColor: `${getInterludeDotsColor()}${alpha})`,
+        margin: '0 6px',
+        transition: `background-color ${transformTransition}`,
       } as React.CSSProperties;
     };
 
     return (
       <div style={parentStyle}>
-      <span style={dotStyle(dotFills[0])} />
-      <span style={dotStyle(dotFills[1])} />
-      <span style={dotStyle(dotFills[2])} />
+        <span style={dotStyle(dotFills[0])} />
+        <span style={dotStyle(dotFills[1])} />
+        <span style={dotStyle(dotFills[2])} />
       </div>
     );
   };
@@ -500,20 +483,23 @@ const Player: React.FC<PlayerProps> = ({
   return (
     <>
       <div
-        className={`fixed inset-0 flex flex-col justify-center z-50 ${
-          settings.lyricposition === 'center'
-            ? 'items-center text-center'
-            : settings.lyricposition === 'right'
-            ? `items-end ${isMobile ? 'right-0' : 'right-20'}`
-            : `items-start ${isMobile ? 'left-0' : 'left-20'}`
-        }`}
+        className={`fixed inset-0 flex flex-col justify-center z-50 
+          ${settings.lyricposition === 'center' ? 'items-center text-center' : 
+            settings.lyricposition === 'right' ? `items-end ${isMobile ? 'right-0' : 'right-20'}` : 
+            `items-start ${isMobile ? 'left-0' : 'left-20'}`}
+          text-gray-900 dark:text-white
+        `}
       >
         <div
-          className={`overflow-y-auto w-full max-w-4xl hidden-scrollbar ${
-            settings.theme === 'dark' ? 'text-white' : 'text-gray-900'
-          }`}
+          className={`overflow-y-auto w-full max-w-4xl hidden-scrollbar
+            ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}
+            ${settings.fullplayer ? 'h-[92vh]' : 'h-full'}
+            ${settings.fullplayer && settings.showplayercontrol ? 'mb-20' : ''}
+            ${isMobile ? 'p-5' : ''}
+            mask-image: linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%);
+            -webkit-mask-image: linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%);
+          `}
           style={{
-            height: settings.fullplayer ? (settings.showplayercontrol ? '92vh' : '100%') : '100%',
             maskImage: isMobile || isLyricsHovered
               ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)'
               : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)',
@@ -557,15 +543,15 @@ const Player: React.FC<PlayerProps> = ({
                 <p
                   key={index}
                   id={`lyric-${index}`}
-                  className={`transition-all duration-700 px-2 active:bg-[rgba(255,255,255,0.3)] rounded-lg ${
-                    isInterlude
+                  className={`transition-all duration-700 px-2 rounded-lg 
+                    ${isInterlude
                       ? 'm-0 p-0'
-                      : `my-8 ${
-                          isActive
-                            ? currentTheme.activelyrics
-                            : `${currentTheme.otherlyrics} ${currentTheme.hoverText} cursor-pointer`
-                        }`
-                  }`}
+                      : `my-8 
+                          ${isActive 
+                            ? 'text-black dark:text-white font-bold' 
+                            : 'text-black text-opacity-50 dark:text-white dark:text-opacity-40 hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer'
+                          }`
+                    }`}
                   style={{
                     opacity,
                     fontSize: {
@@ -619,30 +605,31 @@ const Player: React.FC<PlayerProps> = ({
             : "0",
         }}
         transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
-        className={`fixed z-50 ${
-          settings.playerposition === "left"
+        className={`fixed z-50 
+          ${settings.playerposition === "left"
             ? "left-0"
             : settings.playerposition === "right"
             ? "right-0"
             : "left-1/2 transform -translate-x-1/2"
-        } ${settings.fullplayer ? "rounded-t-lg" : "rounded-lg"} ${
-          currentTheme.background
-        } shadow-2xl`}
+          } 
+          ${isMobile ? "rounded-t-lg" : settings.fullplayer ? "rounded-t-lg" : "rounded-lg"} 
+          bg-white dark:bg-gray-800 
+          shadow-2xl`}        
       >
         <div className="h-full flex flex-col justify-between p-4">
           {isMobile ? (
             <>
-              <div className={`${currentTheme.text} mb-3`}>
+              <div className="text-gray-900 dark:text-white mb-3">
                 <p className="font-medium text-sm overflow-hidden text-nowrap text-ellipsis">
                   {trackName.length > 40 ? `${trackName.slice(0, 40)}...` : trackName}
                 </p>
-                <p className={`text-xs overflow-hidden text-nowrap text-ellipsis ${currentTheme.secondaryText}`}>
+                <p className="text-xs overflow-hidden text-nowrap text-ellipsis text-gray-600 dark:text-gray-400">
                   {artistName.length > 40 ? `${artistName.slice(0, 40)}...` : artistName} - 
                   {albumName.length > 40 ? `${albumName.slice(0, 40)}...` : albumName}
                 </p>
               </div>
               <div className="flex items-center justify-between my-3">
-                <span className={`text-xs font-medium ${currentTheme.text}`}>
+                <span className="text-xs font-medium text-gray-900 dark:text-white">
                   {formatTime(currentTime)}
                 </span>
                 <Slider
@@ -652,7 +639,7 @@ const Player: React.FC<PlayerProps> = ({
                   className="flex-1 mx-2"
                   onValueChange={handleProgressChange}
                 />
-                <span className={`text-xs font-medium ${currentTheme.text}`}>
+                <span className="text-xs font-medium text-gray-900 dark:text-white">
                   {formatTime(duration)}
                 </span>
               </div>
@@ -663,44 +650,78 @@ const Player: React.FC<PlayerProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={handleSkipBack}
-                      className={currentTheme.text}
+                      className="text-gray-900 dark:text-white"
                     >
-                      <SkipBack size={20} style={{ width: '50px', height: '50px' }} />
+                      <SkipBack 
+                        size={20}
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          fill: 'currentColor',
+                        }}
+                      />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={togglePlayPause}
-                      className={currentTheme.text}
+                      className="text-gray-900 dark:text-white"
                     >
-                      {isPlaying ? <Pause size={20} style={{ width: '50px', height: '50px' }} /> : <Play size={20} style={{ width: '50px', height: '50px' }} />}
+                      {isPlaying ? (
+                        <Pause
+                          size={20}
+                          style={{
+                            width: '50px',
+                            height: '50px',
+                            fill: 'currentColor',
+                            stroke: 'none',
+                          }}
+                        />
+                      ) : (
+                        <Play
+                          size={20}
+                          style={{
+                            width: '50px',
+                            height: '50px',
+                            fill: 'currentColor',
+                            stroke: 'none',
+                          }}
+                        />
+                      )}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={handleSkipForward}
-                      className={currentTheme.text}
+                      className="text-gray-900 dark:text-white"
                     >
-                      <SkipForward size={20} style={{ width: '50px', height: '50px' }} />
+                      <SkipForward 
+                        size={20}
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          fill: 'currentColor',
+                        }}
+                      />
                     </Button>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 my-3">
-                  <Volume className={`h-4 w-4 ${currentTheme.text}`} style={{ width: '20px', height: '20px' }} />
+                  <Volume className="h-4 w-4 text-gray-900 dark:text-white" style={{ width: '20px', height: '20px', fill: 'currentColor' }} />
                   <Slider
                     value={[volume]}
                     max={100}
                     className="flex-1 mx-2"
                     onValueChange={handleVolumeChange}
                   />
-                  <Volume2 className={`h-4 w-4 ${currentTheme.text}`} style={{ width: '20px', height: '20px' }} />
+                  <Volume2 className="h-4 w-4 text-gray-900 dark:text-white" style={{ width: '20px', height: '20px', fill: 'currentColor' }} />
                 </div>
               </div>
             </>
           ) : (
             <>
               <div className="flex items-center gap-2 mb-3">
-                <span className={`text-sm font-medium ${currentTheme.text}`}>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {formatTime(currentTime)}
                 </span>
                 <Slider
@@ -710,7 +731,7 @@ const Player: React.FC<PlayerProps> = ({
                   className="flex-1"
                   onValueChange={handleProgressChange}
                 />
-                <span className={`text-sm font-medium ${currentTheme.text}`}>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
                   {formatTime(duration)}
                 </span>
               </div>
@@ -721,29 +742,37 @@ const Player: React.FC<PlayerProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={handleSkipBack}
-                      className={currentTheme.text}
+                      className="text-gray-900 dark:text-white"
                     >
-                      <SkipBack size={24} />
+                      <SkipBack size={24} style={{ fill: 'currentColor' }} />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={togglePlayPause}
-                      className={currentTheme.text}
+                      className="text-gray-900 dark:text-white"
                     >
-                      {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                      {isPlaying ? <Pause size={24} style={{ fill: 'currentColor' }} /> : <Play size={24} style={{ fill: 'currentColor' }} />}
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={handleSkipForward}
-                      className={currentTheme.text}
+                      className="text-gray-900 dark:text-white"
                     >
-                      <SkipForward size={24} />
+                      <SkipForward size={24} style={{ fill: 'currentColor' }} />
                     </Button>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Volume2 className={`h-4 w-4 ${currentTheme.text}`} />
+                    {volume === 0 && (
+                      <Volume className="h-4 w-4 text-gray-900 dark:text-white" style={{ fill: 'currentColor' }} />
+                    )}
+                    {volume > 0 && volume <= 50 && (
+                      <Volume1 className="h-4 w-4 text-gray-900 dark:text-white" style={{ fill: 'currentColor' }} />
+                    )}
+                    {volume > 50 && (
+                      <Volume2 className="h-4 w-4 text-gray-900 dark:text-white" style={{ fill: 'currentColor' }} />
+                    )}
                     <Slider
                       value={[volume]}
                       max={100}
@@ -752,22 +781,20 @@ const Player: React.FC<PlayerProps> = ({
                     />
                   </div>
                 </div>
-                <div className={`text-right ml-5 ${currentTheme.text}`}>
+                <div className={`text-right ml-5 text-gray-900 dark:text-white`}>
                   <p className="font-medium text-sm overflow-hidden text-nowrap text-ellipsis">
-                  {trackName.length > (settings.fullplayer ? 60 : 40)
-                    ? `${trackName.slice(0, settings.fullplayer ? 60 : 40)}...`
-                    : trackName}
+                    {trackName.length > (settings.fullplayer ? 60 : 40)
+                      ? `${trackName.slice(0, settings.fullplayer ? 60 : 40)}...`
+                      : trackName}
                   </p>
-                  <p
-                  className={`text-xs overflow-hidden text-nowrap text-ellipsis ${currentTheme.secondaryText}`}
-                  >
-                  {artistName.length > (settings.fullplayer ? 50 : 30)
-                    ? `${artistName.slice(0, settings.fullplayer ? 50 : 30)}...`
-                    : artistName}{" "}
-                  -{" "}
-                  {albumName.length > (settings.fullplayer ? 40 : 20)
-                    ? `${albumName.slice(0, settings.fullplayer ? 40 : 20)}...`
-                    : albumName}
+                  <p className="text-xs overflow-hidden text-nowrap text-ellipsis text-gray-600 dark:text-gray-400">
+                    {artistName.length > (settings.fullplayer ? 50 : 30)
+                      ? `${artistName.slice(0, settings.fullplayer ? 50 : 30)}...`
+                      : artistName}{" "}
+                    -{" "}
+                    {albumName.length > (settings.fullplayer ? 40 : 20)
+                      ? `${albumName.slice(0, settings.fullplayer ? 40 : 20)}...`
+                      : albumName}
                   </p>
                 </div>
               </div>
@@ -777,19 +804,20 @@ const Player: React.FC<PlayerProps> = ({
       </motion.div>;
 
       <div className='fixed z-0 w-full h-full'>
-        <div className={`w-full h-full fixed top-0 left-0 ${
-          settings.theme === 'dark'
+        <div className={`w-full h-full fixed top-0 left-0 
+          ${resolvedTheme === 'dark'
             ? 'bg-black bg-opacity-70'
             : 'bg-white bg-opacity-30'
-        } ${
-          settings.backgroundblur === 'small'
+          } 
+          ${settings.backgroundblur === 'small'
             ? 'backdrop-blur-sm'
             : settings.backgroundblur === 'medium'
             ? 'backdrop-blur-md'
             : settings.backgroundblur === 'large'
             ? 'backdrop-blur-lg'
             : ''
-        }`}></div>
+          }`}>
+        </div>
         <YouTube
           videoId={audioUrl}
           onReady={onPlayerReady}
@@ -802,14 +830,14 @@ const Player: React.FC<PlayerProps> = ({
       </div>
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className={`${currentTheme.modalBg} border-0 overflow-scroll`} style={{ maxHeight: '80vh' }}>
+        <DialogContent className="bg-white dark:bg-gray-800 border-0 overflow-scroll" style={{ maxHeight: '80vh' }}>
           <DialogHeader>
-            <DialogTitle className={currentTheme.text}>Settings</DialogTitle>
+            <DialogTitle className="text-gray-900 dark:text-white">Settings</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <span className={currentTheme.text}>Show Player Controls</span>
+              <span className="text-gray-900 dark:text-white">Show Player Controls</span>
               <Switch
                 checked={settings.showplayercontrol}
                 onCheckedChange={(checked) => handleSettingChange('showplayercontrol', checked)}
@@ -817,7 +845,7 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="flex items-center justify-between">
-              <span className={currentTheme.text}>Full Player</span>
+              <span className="text-gray-900 dark:text-white">Full Player</span>
               <Switch
                 checked={isMobile ? true : settings.fullplayer}
                 onCheckedChange={(checked) => !isMobile && handleSettingChange('fullplayer', checked)}
@@ -826,7 +854,7 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="space-y-2">
-              <p className={currentTheme.text}>Font Size</p>
+              <p className="text-gray-900 dark:text-white">Font Size</p>
               <div className="flex gap-2">
                 {[
                   { value: 'small', label: 'Small' },
@@ -846,7 +874,7 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="space-y-2">
-              <p className={currentTheme.text}>Lyric Position</p>
+              <p className="text-gray-900 dark:text-white">Lyric Position</p>
               <div className="flex gap-2">
                 {[
                   { value: 'left', label: 'Left' },
@@ -854,49 +882,9 @@ const Player: React.FC<PlayerProps> = ({
                   { value: 'right', label: 'Right' }
                 ].map((option) => (
                   <Button
-                  key={option.value}
-                  variant={settings.lyricposition === option.value ? 'default' : 'secondary'}
-                  onClick={() => handleSettingChange('lyricposition', option.value as 'left' | 'center' | 'right')}
-                  className="flex-1"
-                  >
-                  {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className={currentTheme.text}>Background Blur</p>
-              <div className="flex gap-2">
-                {[
-                  { value: 'none', label: 'None' },
-                  { value: 'small', label: 'Low' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'large', label: 'High' }
-                ].map((option) => (
-                  <Button
-                  key={option.value}
-                  variant={settings.backgroundblur === option.value ? 'default' : 'secondary'}
-                  onClick={() => handleSettingChange('backgroundblur', option.value as 'none' | 'small' | 'medium' | 'large')}
-                  className="flex-1"
-                  >
-                  {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className={currentTheme.text}>Theme</p>
-              <div className="flex gap-2">
-                {[
-                  { value: 'dark', label: 'Dark' },
-                  { value: 'light', label: 'Light' }
-                ].map((option) => (
-                  <Button
                     key={option.value}
-                    variant={settings.theme === option.value ? 'default' : 'secondary'}
-                    onClick={() => handleSettingChange('theme', option.value as 'dark' | 'light')}
+                    variant={settings.lyricposition === option.value ? 'default' : 'secondary'}
+                    onClick={() => handleSettingChange('lyricposition', option.value as 'left' | 'center' | 'right')}
                     className="flex-1"
                   >
                     {option.label}
@@ -906,23 +894,64 @@ const Player: React.FC<PlayerProps> = ({
             </div>
 
             <div className="space-y-2">
-              <p className={currentTheme.text}>Player Position</p>
+              <p className="text-gray-900 dark:text-white">Background Blur</p>
               <div className="flex gap-2">
-              {[
-                { value: 'left', label: 'Left' },
-                { value: 'center', label: 'Center' },
-                { value: 'right', label: 'Right' }
-              ].map((option) => (
-                <Button
-                key={option.value}
-                variant={settings.playerposition === option.value ? 'default' : 'secondary'}
-                onClick={() => !settings.fullplayer && handleSettingChange('playerposition', option.value as 'left' | 'center' | 'right')}
-                className="flex-1"
-                disabled={settings.fullplayer}
-                >
-                {option.label}
-                </Button>
-              ))}
+                {[
+                  { value: 'none', label: 'None' },
+                  { value: 'small', label: 'Low' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'large', label: 'High' }
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={settings.backgroundblur === option.value ? 'default' : 'secondary'}
+                    onClick={() => handleSettingChange('backgroundblur', option.value as 'none' | 'small' | 'medium' | 'large')}
+                    className="flex-1"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-gray-900 dark:text-white">Theme</p>
+              <div className="flex gap-2">
+                {[
+                  { value: 'dark', label: 'Dark' },
+                  { value: 'light', label: 'Light' },
+                  { value: 'system', label: 'System' }
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={settings.theme === option.value ? 'default' : 'secondary'}
+                    onClick={() => handleSettingChange('theme', option.value as 'dark' | 'light' | 'system')}
+                    className="flex-1"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-gray-900 dark:text-white">Player Position</p>
+              <div className="flex gap-2">
+                {[
+                  { value: 'left', label: 'Left' },
+                  { value: 'center', label: 'Center' },
+                  { value: 'right', label: 'Right' }
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={settings.playerposition === option.value ? 'default' : 'secondary'}
+                    onClick={() => !settings.fullplayer && handleSettingChange('playerposition', option.value as 'left' | 'center' | 'right')}
+                    className="flex-1"
+                    disabled={settings.fullplayer}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
               </div>
             </div>
           </div>
@@ -933,7 +962,7 @@ const Player: React.FC<PlayerProps> = ({
         variant="ghost"
         size="icon"
         onClick={onBack}
-        className="fixed top-4 left-4 z-50"
+        className="fixed top-4 left-4 z-50 text-gray-900 dark:text-white"
       >
         <ArrowLeft size={30} style={{ width: '25px', height: '25px' }} />
       </Button>
@@ -941,7 +970,7 @@ const Player: React.FC<PlayerProps> = ({
         variant="ghost"
         size="icon"
         onClick={() => setShowSettings(true)}
-        className="fixed top-4 right-4 z-50"
+        className="fixed top-4 right-4 z-50 text-gray-900 dark:text-white"
       >
         <MoreHorizontal size={30} style={{ width: '30px', height: '30px' }} />
       </Button>

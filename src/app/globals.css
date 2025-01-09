@@ -81,3 +81,15 @@ html {
     @apply bg-background text-foreground;
     }
 }
+
+.active-lyric {
+  @apply font-bold text-black dark:text-white;
+}
+
+.other-lyric {
+  @apply text-black text-opacity-50 dark:text-white dark:text-opacity-40;
+}
+
+.other-lyric:hover {
+  @apply hover:text-gray-900 dark:hover:text-gray-300;
+}

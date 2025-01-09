@@ -24,8 +24,8 @@ interface SearchResult {
 }
 
 export default function Home() {
-  const { setTheme } = useTheme();
-  const [theme, setThemeState] = useState<string>('dark');
+  const { setTheme, resolvedTheme } = useTheme();
+  const [,setThemeState] = useState<string>('dark');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [urlQuery, setUrlQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
@@ -134,7 +134,9 @@ export default function Home() {
   };
 
   return (
-    <div className={`w-full h-full min-h-screen flex flex-col items-center justify-center p-4 relative ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
+    <div className={`w-full h-full min-h-screen flex flex-col items-center justify-center p-4 relative 
+      ${resolvedTheme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}
+    `}>
       {!showPlayer && (
         <Card className="w-full max-w-md">
           <div className="p-4">
@@ -175,11 +177,17 @@ export default function Home() {
                   {searchResults.map((track) => (
                     <li
                       key={track.id}
-                      className={`mb-2 p-2 rounded cursor-pointer transition-all ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'}`}
+                      className={`mb-2 p-2 rounded cursor-pointer transition-all 
+                        ${resolvedTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'}
+                      `}
                       onClick={() => handleSelectTrack(track)}
                     >
                       <p className="text-lg text-nowrap overflow-hidden text-ellipsis">{track.trackName}</p>
-                      <p className={`text-sm text-nowrap overflow-hidden text-ellipsis ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{track.artistName}</p>
+                      <p className={`text-sm text-nowrap overflow-hidden text-ellipsis 
+                        ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                      `}>
+                        {track.artistName}
+                      </p>
                     </li>
                   ))}
                 </ul>
