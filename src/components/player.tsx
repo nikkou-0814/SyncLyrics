@@ -491,7 +491,7 @@ const Player: React.FC<PlayerProps> = ({
         `}
       >
         <div
-          className={`overflow-y-auto w-full max-w-4xl hidden-scrollbar
+          className={`overflow-y-auto w-5/6 hidden-scrollbar
             ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}
             ${settings.fullplayer ? 'h-[92vh]' : 'h-full'}
             ${settings.fullplayer && settings.showplayercontrol ? 'mb-20' : ''}
