@@ -514,7 +514,7 @@ const Player: React.FC<PlayerProps> = ({
           onMouseLeave={handleLyricsMouseLeave}
         >
           <div className="relative">
-            <div style={{ height: '500px' }}></div>
+            <div style={{ height: window.innerHeight }}></div>
 
             {lyricsData.map((line, index) => {
               const isActive = index === currentLineIndex;
@@ -580,7 +580,7 @@ const Player: React.FC<PlayerProps> = ({
                 </p>
               );
             })}
-            <div style={{ height: '500px' }}></div>
+            <div style={{ height: window.innerHeight }}></div>
           </div>
         </div>
       </div>
