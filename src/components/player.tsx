@@ -363,7 +363,9 @@ const Player: React.FC<PlayerProps> = ({
       opacity,
       transition: `transform ${transformTransition}, opacity ${opacityTransition}`,
       position: 'absolute',
-      marginTop: '10px',
+      marginTop: `${settings.fontSize === 'small' ? '5px'
+                    : settings.fontSize === 'medium' ? '10px'
+                    : '15px'}`,
       left:
         settings.lyricposition === 'center'
           ? '50%'

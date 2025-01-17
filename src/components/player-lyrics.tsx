@@ -99,22 +99,18 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
   return (
     <div
       className={`fixed inset-0 flex flex-col justify-center z-50 
-        ${
-          settings.lyricposition === 'center'
-            ? 'items-center text-center'
-            : settings.lyricposition === 'right'
-            ? 'items-end right-20'
-            : 'items-start left-20'
-        }
+        ${settings.lyricposition === 'center' ? 'items-center text-center' : 
+          settings.lyricposition === 'right' ? `items-end ${isMobile ? 'right-0' : 'right-20'}` : 
+          `items-start ${isMobile ? 'left-0' : 'left-20'}`}
         text-gray-900 dark:text-white
       `}
     >
       <div
-        className={`overflow-y-auto w-5/6 hidden-scrollbar
+        className={`overflow-y-auto hidden-scrollbar
           ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}
           ${settings.fullplayer ? 'h-[92vh]' : 'h-full'}
           ${settings.fullplayer && settings.showplayercontrol ? 'mb-20' : ''}
-          ${isMobile ? 'p-5' : ''}
+          ${isMobile ? 'p-5 w-5/6' : 'w-4/5'}
         `}
         style={{
           maskImage: isMobile || isLyricsHovered
@@ -190,7 +186,9 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
                   textAlign: settings.lyricposition,
                   transform:
                     isCurrentLineInterlude && index > currentLineIndex
-                      ? 'translateY(70px)'
+                      ? `${settings.fontSize === 'small' ? 'translateY(55px)'
+                        : settings.fontSize === 'medium' ? 'translateY(70px)'
+                        : 'translateY(80px)'}`
                       : 'translateY(0)',
                   transition:
                     'transform 1s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s, margin 1s, padding 1s, color 0.5s',
