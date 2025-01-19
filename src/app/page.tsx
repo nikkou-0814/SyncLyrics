@@ -175,7 +175,7 @@ export default function Home() {
         console.error('予期しないエラー:', err);
         setError({
           message: '予期しないエラーが発生しました。',
-          advice: '詳細はコンソールをご確認ください。',
+          advice: '再読み込みなどをしてみてください。',
         });
       }
     } finally {
