@@ -23,9 +23,14 @@ interface SearchResult {
   duration: number;
 }
 
+interface ErrorState {
+  message: string;
+  advice: string;
+}
+
 export default function Home() {
   const { setTheme, resolvedTheme } = useTheme();
-  const [,setThemeState] = useState<string>('dark');
+  const [, setThemeState] = useState<string>('dark');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [urlQuery, setUrlQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
@@ -33,7 +38,7 @@ export default function Home() {
   const [lyricsData, setLyricsData] = useState<LyricLine[] | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorState | null>(null);
   const [showPlayer, setShowPlayer] = useState<boolean>(false);
 
   useEffect(() => {
@@ -46,8 +51,21 @@ export default function Home() {
           setThemeState(settings.theme);
         }
       }
+
+      const savedUrl = localStorage.getItem('savedUrlQuery');
+      const savedQuery = localStorage.getItem('savedSearchQuery');
+      if (savedUrl) setUrlQuery(savedUrl);
+      if (savedQuery) setSearchQuery(savedQuery);
     }
   }, [setTheme]);
+  
+  useEffect(() => {
+    localStorage.setItem('savedUrlQuery', urlQuery);
+  }, [urlQuery]);
+  
+  useEffect(() => {
+    localStorage.setItem('savedSearchQuery', searchQuery);
+  }, [searchQuery]);  
 
   const extractVideoId = (url: string): string | null => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -57,41 +75,65 @@ export default function Home() {
 
   const handleSearch = async () => {
     if (!searchQuery) {
-      setError('曲名を入力してください');
+      setError({
+        message: '曲名を入力してください。',
+        advice: '曲名が空白になっています。曲名を入力してください。',
+      });
       return;
     }
     setIsProcessing(true);
     setError(null);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-      const data = await res.json();
+      const data: { results: SearchResult[] } = await res.json();
       if (!res.ok) {
-        setError(data.error || '検索に失敗しました');
+        setError({
+          message: '検索に失敗しました。',
+          advice: `${res.status} (${res.statusText})`,
+        });
         setIsProcessing(false);
         return;
       }
       if (data.results.length === 0) {
-        setError('一致する検索結果はありませんでした');
+        setError({
+          message: '一致する検索結果はありませんでした。',
+          advice: '別のキーワードを試してみるか、英語などにしてみてください。',
+        });
         setSearchResults(null);
       } else {
         setSearchResults(data.results);
       }
     } catch (err) {
-      console.error(err);
-      setError('検索中にエラーが発生しました');
-    } finally {
-      setIsProcessing(false);
-    }
+      if (err instanceof Error) {
+        console.error(err);
+        setError({
+          message: '検索中にエラーが発生しました。',
+          advice: `詳細: ${err.message}`,
+        });
+      } else {
+        console.error('予期しないエラー:', err);
+        setError({
+          message: '予期しないエラーが発生しました。',
+          advice: '再読み込みなどをしてみてください。',
+        });
+      }
+    }    
   };
 
   const handleSelectTrack = async (track: SearchResult) => {
     if (!urlQuery) {
-      setError('YouTubeのURLを入力してください');
+      setError({
+        message: 'YouTubeのURLを入力してください。',
+        advice: '有効なYouTube URLを入力してください。',
+      });
       return;
     }
     const videoId = extractVideoId(urlQuery);
     if (!videoId) {
-      setError('有効なYouTube URLを入力してください');
+      setError({
+        message: '有効なYouTube URLではありません。',
+        advice: 'URLを確認し、有効なYouTubeリンクを入力してください。',
+      });
       return;
     }
     setIsProcessing(true);
@@ -111,20 +153,34 @@ export default function Home() {
           duration: track.duration,
         }),
       });
-      const data = await res.json();
+      const data: { lyricsData: LyricLine[] } = await res.json();
       if (!res.ok) {
-        setError(data.error || '歌詞の取得に失敗しました');
+        setError({
+          message: '歌詞の取得に失敗しました。',
+          advice: `${res.status} (${res.statusText})`,
+        });
         setIsProcessing(false);
         return;
       }
       setLyricsData(data.lyricsData);
       setShowPlayer(true);
-    } catch (err) {
-      console.error(err);
-      setError('歌詞の取得中にエラーが発生しました');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error(err);
+        setError({
+          message: '歌詞の取得中にエラーが発生しました。',
+          advice: err.message,
+        });
+      } else {
+        console.error('予期しないエラー:', err);
+        setError({
+          message: '予期しないエラーが発生しました。',
+          advice: '詳細はコンソールをご確認ください。',
+        });
+      }
     } finally {
       setIsProcessing(false);
-    }
+    }    
   };
 
   const handleBack = () => {
@@ -134,9 +190,11 @@ export default function Home() {
   };
 
   return (
-    <div className={`w-full h-full min-h-screen flex flex-col items-center justify-center p-4 relative 
-      ${resolvedTheme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}
-    `}>
+    <div
+      className={`w-full h-full min-h-screen flex flex-col items-center justify-center p-4 relative 
+        ${resolvedTheme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}
+      `}
+    >
       {!showPlayer && (
         <Card className="w-full max-w-md">
           <div className="p-4">
@@ -164,10 +222,8 @@ export default function Home() {
             </Button>
             {error && (
               <Alert variant="destructive" className="mt-4">
-                <p>{error}</p>
-                <p className="text-sm mt-2">
-                  別のキーワードを試してみるか、英語などにしてみてください。
-                </p>
+                <p>{error.message}</p>
+                <p className="text-sm mt-2">{error.advice}</p>
               </Alert>
             )}
             {searchResults && (
@@ -182,10 +238,14 @@ export default function Home() {
                       `}
                       onClick={() => handleSelectTrack(track)}
                     >
-                      <p className="text-lg text-nowrap overflow-hidden text-ellipsis">{track.trackName}</p>
-                      <p className={`text-sm text-nowrap overflow-hidden text-ellipsis 
-                        ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
-                      `}>
+                      <p className="text-lg whitespace-nowrap overflow-hidden text-ellipsis">
+                        {track.trackName}
+                      </p>
+                      <p
+                        className={`text-sm whitespace-nowrap overflow-hidden text-ellipsis 
+                          ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                        `}
+                      >
                         {track.artistName}
                       </p>
                     </li>

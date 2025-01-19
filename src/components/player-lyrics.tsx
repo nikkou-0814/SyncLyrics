@@ -125,6 +125,7 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
               : '0'
             : '0',
           padding: isMobile ? '20px' : '',
+          maxWidth: '1000px'
         }}
         ref={lyricsContainerRef}
         onMouseEnter={handleLyricsMouseEnter}
@@ -164,7 +165,7 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
               <p
                 key={index}
                 id={`lyric-${index}`}
-                className={`transition-all duration-700 px-2 rounded-lg 
+                className={`transition-all duration-700 px-2 rounded-lg
                   ${
                     isInterlude
                       ? 'm-0 p-0'

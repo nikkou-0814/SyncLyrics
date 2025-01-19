@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo, } from 'react';
 import YouTube, { YouTubeProps } from 'react-youtube';
 import { ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -69,6 +69,14 @@ const Player: React.FC<PlayerProps> = ({
     const savedSettings = localStorage.getItem('playerSettings');
     return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
   });
+
+  // 最初の歌詞まで5秒以上ある場合に間奏とする
+  const processedLyricsData = useMemo(() => {
+    if (lyricsData.length > 0 && lyricsData[0].time >= 5) {
+      return [{ time: 0, text: '' }, ...lyricsData];
+    }
+    return lyricsData;
+  }, [lyricsData]);
 
   // 設定をlocalStorageに保存
   const updateSettings = (newSettings: Partial<Settings>) => {
@@ -255,6 +263,7 @@ const Player: React.FC<PlayerProps> = ({
     [cubicBezier]
   );
 
+  // YouTubeプレーヤー関連
   const onPlayerReady: YouTubeProps['onReady'] = (event) => {
     youtubeRef.current = event.target;
     setDuration(event.target.getDuration());
@@ -273,15 +282,15 @@ const Player: React.FC<PlayerProps> = ({
     }
   };
 
-  // 毎フレーム現在時刻を取得
+  // 現在時刻を取得し歌詞の現在行を更新
   const updateTime = () => {
     if (!youtubeRef.current) return;
     const time = youtubeRef.current.getCurrentTime();
     setCurrentTime(time);
 
     let index = -1;
-    for (let i = 0; i < lyricsData.length; i++) {
-      if (lyricsData[i].time <= time) {
+    for (let i = 0; i < processedLyricsData.length; i++) {
+      if (processedLyricsData[i].time <= time) {
         index = i;
       } else {
         break;
@@ -353,9 +362,8 @@ const Player: React.FC<PlayerProps> = ({
       dotFills = [1, 1, 1];
     }
 
-    const fontSizeScale = settings.fontSize === 'small' ? -0.1
-      : settings.fontSize === 'large' ? 0.2
-      : 0;
+    const fontSizeScale =
+      settings.fontSize === 'small' ? -0.1 : settings.fontSize === 'large' ? 0.2 : 0;
     const parentStyle: React.CSSProperties = {
       display: 'flex',
       justifyContent: 'center',
@@ -363,9 +371,12 @@ const Player: React.FC<PlayerProps> = ({
       opacity,
       transition: `transform ${transformTransition}, opacity ${opacityTransition}`,
       position: 'absolute',
-      marginTop: `${settings.fontSize === 'small' ? '5px'
-                    : settings.fontSize === 'medium' ? '10px'
-                    : '15px'}`,
+      marginTop:
+        settings.fontSize === 'small'
+          ? '5px'
+          : settings.fontSize === 'medium'
+          ? '10px'
+          : '15px',
       left:
         settings.lyricposition === 'center'
           ? '50%'
@@ -414,7 +425,7 @@ const Player: React.FC<PlayerProps> = ({
   return (
     <>
       <PlayerLyrics
-        lyricsData={lyricsData}
+        lyricsData={processedLyricsData}
         currentTime={currentTime}
         duration={duration}
         currentLineIndex={currentLineIndex}
