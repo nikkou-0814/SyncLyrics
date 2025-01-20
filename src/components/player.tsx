@@ -60,7 +60,6 @@ const Player: React.FC<PlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(50);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const SCROLL_DURATION = 1000; // スクロール秒数
   const { setTheme, resolvedTheme } = useTheme();
   const theme = resolvedTheme || 'system';
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -434,7 +433,6 @@ const Player: React.FC<PlayerProps> = ({
         resolvedTheme={theme}
         onLyricClick={handleLyricClick}
         renderInterludeDots={renderInterludeDots}
-        SCROLL_DURATION={SCROLL_DURATION}
         smoothScrollTo={smoothScrollTo}
       />
 

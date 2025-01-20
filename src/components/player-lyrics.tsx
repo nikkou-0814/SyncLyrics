@@ -29,7 +29,6 @@ interface PlayerLyricsProps {
   resolvedTheme: string;
   onLyricClick: (time: number) => void;
   renderInterludeDots: (startTime: number, endTime: number) => JSX.Element | null;
-  SCROLL_DURATION: number;
   smoothScrollTo: (
     element: HTMLElement,
     to: number,
@@ -45,7 +44,6 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
   settings,
   onLyricClick,
   renderInterludeDots,
-  SCROLL_DURATION,
   smoothScrollTo,
 }) => {
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
@@ -54,39 +52,48 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
   // 自動スクロール
   useEffect(() => {
     if (!lyricsContainerRef.current) return;
+    if (currentLineIndex < 0 || currentLineIndex >= lyricsData.length) return;
+  
     const container = lyricsContainerRef.current;
     const activeLyric = document.getElementById(`lyric-${currentLineIndex}`);
+
+    // 次の歌詞との時間差を計算
+    const currentLyricTime = lyricsData[currentLineIndex].time;
+    const nextLyricTime =
+      currentLineIndex + 1 < lyricsData.length
+        ? lyricsData[currentLineIndex + 1].time
+        : duration;
+  
+    const timeDiff = nextLyricTime - currentLyricTime;
+
+    const scrollDuration = timeDiff < 0.5 ? 300 : timeDiff < 1 ? 500 : 1000;
+  
     if (activeLyric) {
       const containerHeight = container.clientHeight;
       const contentHeight = container.scrollHeight;
       const lyricOffsetTop = activeLyric.offsetTop;
       const lyricHeight = activeLyric.clientHeight;
-      let targetScrollTop;
+  
+      // モバイルは画面上部、PCなどは中央寄せ
+      let targetScrollTop: number;
       if (isMobile) {
-        // モバイルは画面の画面上部に配置
         const displayHeight = window.innerHeight;
         const offsetFromTop = displayHeight * 0.3;
         targetScrollTop = lyricOffsetTop - offsetFromTop + lyricHeight / 2;
       } else {
-        // その他は中央に配置
         targetScrollTop =
           lyricOffsetTop - containerHeight / 2 + lyricHeight / 2;
       }
-
+  
+      // スクロール範囲を超えないように調整
       targetScrollTop = Math.max(
         0,
         Math.min(targetScrollTop, contentHeight - containerHeight)
       );
-
-      smoothScrollTo(container, targetScrollTop, SCROLL_DURATION);
+  
+      smoothScrollTo(container, targetScrollTop, scrollDuration);
     }
-  }, [
-    currentLineIndex,
-    lyricsData,
-    smoothScrollTo,
-    isMobile,
-    SCROLL_DURATION,
-  ]);
+  }, [currentLineIndex, lyricsData, duration, isMobile, smoothScrollTo]);  
 
   const handleLyricsMouseEnter = () => {
     setIsLyricsHovered(true);
