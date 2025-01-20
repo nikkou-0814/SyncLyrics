@@ -421,6 +421,13 @@ const Player: React.FC<PlayerProps> = ({
     );
   };
 
+  // YouTubeのコントロールを非表示に
+  const opts = {
+    playerVars: {
+      controls: 0,
+    },
+  };  
+
   return (
     <>
       <PlayerLyrics
@@ -472,6 +479,7 @@ const Player: React.FC<PlayerProps> = ({
         />
         <YouTube
           videoId={audioUrl}
+          opts={opts}
           onReady={onPlayerReady}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
