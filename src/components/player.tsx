@@ -469,11 +469,11 @@ const Player: React.FC<PlayerProps> = ({
           resolvedTheme === 'dark'
             ? `${
                 settings.backgroundtransparency === 'small'
-                  ? 'bg-opacity-20'
+                  ? 'bg-opacity-40'
                   : settings.backgroundtransparency === 'medium'
                   ? 'bg-opacity-70'
                   : settings.backgroundtransparency === 'large'
-                  ? 'bg-opacity-90'
+                  ? 'bg-opacity-80'
                   : 'bg-opacity-0'
               } bg-black`
             : `${
