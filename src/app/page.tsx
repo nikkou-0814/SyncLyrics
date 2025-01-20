@@ -91,7 +91,6 @@ export default function Home() {
           message: '検索に失敗しました。',
           advice: `${res.status} (${res.statusText})`,
         });
-        setIsProcessing(false);
         return;
       }
       if (data.results.length === 0) {
@@ -117,7 +116,9 @@ export default function Home() {
           advice: '再読み込みなどをしてみてください。',
         });
       }
-    }    
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleSelectTrack = async (track: SearchResult) => {
@@ -159,7 +160,6 @@ export default function Home() {
           message: '歌詞の取得に失敗しました。',
           advice: `${res.status} (${res.statusText})`,
         });
-        setIsProcessing(false);
         return;
       }
       setLyricsData(data.lyricsData);
