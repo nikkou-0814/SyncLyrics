@@ -314,6 +314,7 @@ const Player: React.FC<PlayerProps> = ({
   // 間奏
   const renderInterludeDots = (startTime: number, endTime: number) => {
     const total = endTime - startTime;
+    if (total < 1) return null;
     if (total <= 0) return null;
     const dt = currentTime - startTime;
     if (dt < 0 || dt >= total) return null;
