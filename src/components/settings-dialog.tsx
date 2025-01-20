@@ -11,6 +11,7 @@ interface Settings {
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: 'none' | 'small' | 'medium' | 'large';
+  backgroundtransparency:  'none' | 'small' | 'medium' | 'large';
   theme: 'system' | 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;
@@ -109,6 +110,27 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
                   key={option.value}
                   variant={settings.backgroundblur === option.value ? 'default' : 'secondary'}
                   onClick={() => handleSettingChange('backgroundblur', option.value as 'none' | 'small' | 'medium' | 'large')}
+                  className="flex-1"
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-gray-900 dark:text-white">Background Transparency</p>
+            <div className="flex gap-2">
+              {[
+                { value: 'none', label: 'None' },
+                { value: 'small', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'large', label: 'High' }
+              ].map((option) => (
+                <Button
+                  key={option.value}
+                  variant={settings.backgroundtransparency === option.value ? 'default' : 'secondary'}
+                  onClick={() => handleSettingChange('backgroundtransparency', option.value as 'none' | 'small' | 'medium' | 'large')}
                   className="flex-1"
                 >
                   {option.label}

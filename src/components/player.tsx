@@ -29,6 +29,7 @@ interface Settings {
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: 'none' | 'small' | 'medium' | 'large';
+  backgroundtransparency:  'none' | 'small' | 'medium' | 'large';
   theme: 'system' | 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;
@@ -40,6 +41,7 @@ const DEFAULT_SETTINGS: Settings = {
   fontSize: 'medium',
   lyricposition: 'left',
   backgroundblur: 'medium',
+  backgroundtransparency: 'medium',
   theme: 'system',
   playerposition: 'right',
   volume: 50,
@@ -462,21 +464,37 @@ const Player: React.FC<PlayerProps> = ({
       />
 
       <div className="fixed z-0 w-full h-full">
-        <div
-          className={`w-full h-full fixed top-0 left-0 ${
-            resolvedTheme === 'dark'
-              ? 'bg-black bg-opacity-70'
-              : 'bg-white bg-opacity-30'
-          } ${
-            settings.backgroundblur === 'small'
-              ? 'backdrop-blur-sm'
-              : settings.backgroundblur === 'medium'
-              ? 'backdrop-blur-md'
-              : settings.backgroundblur === 'large'
-              ? 'backdrop-blur-lg'
-              : ''
-          }`}
-        />
+      <div
+        className={`w-full h-full fixed top-0 left-0 ${
+          resolvedTheme === 'dark'
+            ? `${
+                settings.backgroundtransparency === 'small'
+                  ? 'bg-opacity-20'
+                  : settings.backgroundtransparency === 'medium'
+                  ? 'bg-opacity-70'
+                  : settings.backgroundtransparency === 'large'
+                  ? 'bg-opacity-90'
+                  : 'bg-opacity-0'
+              } bg-black`
+            : `${
+                settings.backgroundtransparency === 'small'
+                  ? 'bg-opacity-20'
+                  : settings.backgroundtransparency === 'medium'
+                  ? 'bg-opacity-30'
+                  : settings.backgroundtransparency === 'large'
+                  ? 'bg-opacity-50'
+                  : 'bg-opacity-0'
+              } bg-white`
+        } ${
+          settings.backgroundblur === 'small'
+            ? 'backdrop-blur-sm'
+            : settings.backgroundblur === 'medium'
+            ? 'backdrop-blur-md'
+            : settings.backgroundblur === 'large'
+            ? 'backdrop-blur-lg'
+            : ''
+        }`}
+      />
         <YouTube
           videoId={audioUrl}
           opts={opts}
