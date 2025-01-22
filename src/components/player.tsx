@@ -8,6 +8,7 @@ import { useTheme } from 'next-themes';
 import PlayerLyrics from '@/components/player-lyrics';
 import PlayerControls from '@/components/player-controls';
 import SettingsDialog from '@/components/settings-dialog';
+import { toast } from "sonner"
 
 interface LyricLine {
   time: number;
@@ -68,6 +69,7 @@ const Player: React.FC<PlayerProps> = ({
   const theme = resolvedTheme || 'system';
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [wasFullPlayerManuallySet, setWasFullPlayerManuallySet] = useState(false);
+  const didShowToastRef = useRef(false);
   const [settings, setSettings] = useState<Settings>(() => {
     const savedSettings = localStorage.getItem('playerSettings');
     return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
@@ -91,6 +93,13 @@ const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     setVolume(settings.volume);
   }, [settings.volume]);
+
+  useEffect(() => {
+    if (settings.lyricOffset !== 0 && !didShowToastRef.current) {
+      toast.error(`The offset is set to ${settings.lyricOffset} seconds.`);
+      didShowToastRef.current = true;
+    }
+  }, [settings.lyricOffset]);
 
   // 画面サイズによって自動でfullplayerへ切り替え
   useEffect(() => {

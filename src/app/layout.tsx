@@ -1,5 +1,6 @@
 import './globals.css';
 import { ThemeProvider } from 'next-themes';
+import { Toaster } from "@/components/ui/sonner"
 
 export const metadata = {
   title: 'SyncLyrics',
@@ -16,6 +17,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider attribute="class" defaultTheme="system">
           {children}
+          <Toaster position="top-right" />
         </ThemeProvider>
       </body>
     </html>
