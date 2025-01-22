@@ -325,51 +325,56 @@ const Player: React.FC<PlayerProps> = ({
     if (dt < 0 || dt >= total) return null;
 
     const appearEnd = 2;
-    const exitStart = total - 1;
+    const exitStart = total - 1.5;
     let parentScale = 1.0;
     let opacity = 1.0;
     let transformTransition = '4s cubic-bezier(0.19, 1, 0.22, 1)';
     let opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
     let dotFills: [number, number, number] = [0, 0, 0];
 
-    if (dt < appearEnd) {
-      const ratio = dt / appearEnd;
-      opacity = ratio;
-    }
+    if (dt < exitStart - 1) {
+      const appearRatio = dt < appearEnd ? dt / appearEnd : 1;
+      opacity = appearRatio;
 
-    if (dt < exitStart) {
-      const midDuration = Math.max(0, total - (0 + 1));
-      let ratio = 0;
-      if (midDuration > 0) {
-        ratio = (dt - 0) / midDuration;
-        if (ratio > 1) ratio = 1;
-      }
+      const modT = dt % 4;
+      parentScale = modT < 2 ? 1.1 : 1.0;
+
+      const midDuration = Math.max(0, total - 1);
+      let ratio = dt / midDuration;
+      if (ratio > 1) ratio = 1;
       const leftFill = Math.min(1, ratio * 3);
       const centerFill = ratio < 1 / 3 ? 0 : Math.min(1, (ratio - 1 / 3) * 3);
       const rightFill = ratio < 2 / 3 ? 0 : Math.min(1, (ratio - 2 / 3) * 3);
       dotFills = [leftFill, centerFill, rightFill];
-
-      const modT = (dt - 0) % 4;
-      parentScale = modT < 2 ? 1.1 : 1.0;
+    }
+    else if (dt >= exitStart - 1 && dt < exitStart) {
+      dotFills = [1, 1, 1];
+      parentScale = 1.0;
     }
 
     if (dt >= exitStart) {
       const dtExit = dt - exitStart;
-      if (dtExit < 0.5) {
-        transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
-        parentScale = 1.3;
+      dotFills = [1, 1, 1];
+
+      if (dtExit < 0.8) {
+        transformTransition = '2s cubic-bezier(0.19, 1, 0.22, 1)';
+        parentScale = 1.2;
         opacity = 1;
       } else if (dtExit < 1.5) {
         transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
-        opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
-        parentScale = 0.8;
+        opacityTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
+        parentScale = 0.7;
         opacity = 0;
       }
-      dotFills = [1, 1, 1];
     }
 
     const fontSizeScale =
-      settings.fontSize === 'small' ? -0.1 : settings.fontSize === 'large' ? 0.2 : 0;
+      settings.fontSize === 'small'
+        ? -0.1
+        : settings.fontSize === 'large'
+        ? 0.2
+        : 0;
+
     const parentStyle: React.CSSProperties = {
       display: 'flex',
       justifyContent: 'center',
