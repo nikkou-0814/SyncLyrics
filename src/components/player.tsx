@@ -358,12 +358,12 @@ const Player: React.FC<PlayerProps> = ({
 
       if (dtExit < 0.8) {
         transformTransition = '2s cubic-bezier(0.19, 1, 0.22, 1)';
-        parentScale = 1.2;
+        parentScale = 1.3;
         opacity = 1;
-      } else if (dtExit < 1.5) {
+      } else if (dtExit < 1.0) {
         transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
-        opacityTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
-        parentScale = 0.7;
+        opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        parentScale = 0.8;
         opacity = 0;
       }
     }
