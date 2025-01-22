@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback, useMemo, } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import YouTube, { YouTubeProps } from 'react-youtube';
 import { ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,10 +29,11 @@ interface Settings {
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: 'none' | 'small' | 'medium' | 'large';
-  backgroundtransparency:  'none' | 'small' | 'medium' | 'large';
+  backgroundtransparency: 'none' | 'small' | 'medium' | 'large';
   theme: 'system' | 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;
+  lyricOffset: number;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -45,6 +46,7 @@ const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   playerposition: 'right',
   volume: 50,
+  lyricOffset: 0,
 };
 
 const Player: React.FC<PlayerProps> = ({
@@ -71,7 +73,6 @@ const Player: React.FC<PlayerProps> = ({
     return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
   });
 
-  // 最初の歌詞まで5秒以上ある場合に間奏とする
   const processedLyricsData = useMemo(() => {
     if (lyricsData.length > 0 && lyricsData[0].time >= 5) {
       return [{ time: 0, text: '' }, ...lyricsData];
@@ -79,7 +80,6 @@ const Player: React.FC<PlayerProps> = ({
     return lyricsData;
   }, [lyricsData]);
 
-  // 設定をlocalStorageに保存
   const updateSettings = (newSettings: Partial<Settings>) => {
     setSettings((prevSettings) => {
       const updatedSettings = { ...prevSettings, ...newSettings };
@@ -112,10 +112,7 @@ const Player: React.FC<PlayerProps> = ({
   }, [wasFullPlayerManuallySet]);
 
   // 設定変更
-  const handleSettingChange = <K extends keyof Settings>(
-    key: K,
-    value: Settings[K]
-  ) => {
+  const handleSettingChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     if (key === 'theme') {
       if (value === 'dark' || value === 'light' || value === 'system') {
         setTheme(value);
@@ -175,8 +172,9 @@ const Player: React.FC<PlayerProps> = ({
   // クリックで指定時刻に移動
   const handleLyricClick = (time: number) => {
     if (!youtubeRef.current) return;
-    youtubeRef.current.seekTo(time);
-    setCurrentTime(time);
+    const adjustedTime = time - settings.lyricOffset;
+    youtubeRef.current.seekTo(adjustedTime);
+    setCurrentTime(adjustedTime);
     if (!isPlaying) {
       youtubeRef.current.playVideo();
       setIsPlaying(true);
@@ -283,20 +281,19 @@ const Player: React.FC<PlayerProps> = ({
     }
   };
 
-  // 現在時刻を取得し歌詞の現在行を更新
   const updateTime = () => {
     if (!youtubeRef.current) return;
     const time = youtubeRef.current.getCurrentTime();
-    setCurrentTime(time);
-
+    const adjustedTime = time + settings.lyricOffset;
     let index = -1;
     for (let i = 0; i < processedLyricsData.length; i++) {
-      if (processedLyricsData[i].time <= time) {
+      if (processedLyricsData[i].time <= adjustedTime) {
         index = i;
       } else {
         break;
       }
     }
+    setCurrentTime(time);
     setCurrentLineIndex(index);
   };
 
@@ -311,12 +308,11 @@ const Player: React.FC<PlayerProps> = ({
     return resolvedTheme === 'dark' ? 'rgba(255,255,255,' : 'rgba(0,0,0,';
   };
 
-  // 間奏
   const renderInterludeDots = (startTime: number, endTime: number) => {
     const total = endTime - startTime;
     if (total < 1) return null;
     if (total <= 0) return null;
-    const dt = currentTime - startTime;
+    const dt = (currentTime + settings.lyricOffset) - startTime;
     if (dt < 0 || dt >= total) return null;
 
     const appearEnd = 2;
@@ -360,7 +356,6 @@ const Player: React.FC<PlayerProps> = ({
         parentScale = 0.8;
         opacity = 0;
       }
-
       dotFills = [1, 1, 1];
     }
 
@@ -429,7 +424,7 @@ const Player: React.FC<PlayerProps> = ({
     playerVars: {
       controls: 0,
     },
-  };  
+  };
 
   return (
     <>
@@ -465,37 +460,37 @@ const Player: React.FC<PlayerProps> = ({
       />
 
       <div className="fixed z-0 w-full h-full">
-      <div
-        className={`w-full h-full fixed top-0 left-0 ${
-          resolvedTheme === 'dark'
-            ? `${
-                settings.backgroundtransparency === 'small'
-                  ? 'bg-opacity-40'
-                  : settings.backgroundtransparency === 'medium'
-                  ? 'bg-opacity-70'
-                  : settings.backgroundtransparency === 'large'
-                  ? 'bg-opacity-80'
-                  : 'bg-opacity-0'
-              } bg-black`
-            : `${
-                settings.backgroundtransparency === 'small'
-                  ? 'bg-opacity-20'
-                  : settings.backgroundtransparency === 'medium'
-                  ? 'bg-opacity-30'
-                  : settings.backgroundtransparency === 'large'
-                  ? 'bg-opacity-50'
-                  : 'bg-opacity-0'
-              } bg-white`
-        } ${
-          settings.backgroundblur === 'small'
-            ? 'backdrop-blur-sm'
-            : settings.backgroundblur === 'medium'
-            ? 'backdrop-blur-md'
-            : settings.backgroundblur === 'large'
-            ? 'backdrop-blur-lg'
-            : ''
-        }`}
-      />
+        <div
+          className={`w-full h-full fixed top-0 left-0 ${
+            resolvedTheme === 'dark'
+              ? `${
+                  settings.backgroundtransparency === 'small'
+                    ? 'bg-opacity-40'
+                    : settings.backgroundtransparency === 'medium'
+                    ? 'bg-opacity-70'
+                    : settings.backgroundtransparency === 'large'
+                    ? 'bg-opacity-80'
+                    : 'bg-opacity-0'
+                } bg-black`
+              : `${
+                  settings.backgroundtransparency === 'small'
+                    ? 'bg-opacity-20'
+                    : settings.backgroundtransparency === 'medium'
+                    ? 'bg-opacity-30'
+                    : settings.backgroundtransparency === 'large'
+                    ? 'bg-opacity-50'
+                    : 'bg-opacity-0'
+                } bg-white`
+          } ${
+            settings.backgroundblur === 'small'
+              ? 'backdrop-blur-sm'
+              : settings.backgroundblur === 'medium'
+              ? 'backdrop-blur-md'
+              : settings.backgroundblur === 'large'
+              ? 'backdrop-blur-lg'
+              : ''
+          }`}
+        />
         <YouTube
           videoId={audioUrl}
           opts={opts}

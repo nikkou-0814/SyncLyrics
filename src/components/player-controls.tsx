@@ -186,36 +186,14 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-2 my-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleMute}
-                  className="text-gray-900 dark:text-white"
-                >
-                  {volume === 0 ? (
-                    <VolumeOff
-                      className="h-4 w-4"
-                      style={{ width: "20px", height: "20px", fill: "currentColor" }}
-                    />
-                  ) : volume > 50 ? (
-                    <Volume2
-                      className="h-4 w-4"
-                      style={{ width: "20px", height: "20px", fill: "currentColor" }}
-                    />
-                  ) : (
-                    <Volume1
-                      className="h-4 w-4"
-                      style={{ width: "20px", height: "20px", fill: "currentColor" }}
-                    />
-                  )}
-                </Button>
-
+                <Volume className="h-4 w-4 text-gray-900 dark:text-white" style={{ width: '20px', height: '20px', fill: 'currentColor' }} />
                 <Slider
                   value={[volume]}
                   max={100}
                   className="flex-1 mx-2"
-                  onValueChange={onLocalVolumeChange}
+                  onValueChange={handleVolumeChange}
                 />
+                <Volume2 className="h-4 w-4 text-gray-900 dark:text-white" style={{ width: '20px', height: '20px', fill: 'currentColor' }} />
               </div>
             </div>
           </>

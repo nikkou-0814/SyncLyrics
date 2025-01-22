@@ -14,10 +14,11 @@ interface Settings {
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: 'none' | 'small' | 'medium' | 'large';
-  backgroundtransparency:  'none' | 'small' | 'medium' | 'large';
+  backgroundtransparency: 'none' | 'small' | 'medium' | 'large';
   theme: 'system' | 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;
+  lyricOffset: number;
 }
 
 interface PlayerLyricsProps {

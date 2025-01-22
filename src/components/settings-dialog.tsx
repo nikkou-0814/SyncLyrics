@@ -11,10 +11,11 @@ interface Settings {
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: 'none' | 'small' | 'medium' | 'large';
-  backgroundtransparency:  'none' | 'small' | 'medium' | 'large';
+  backgroundtransparency: 'none' | 'small' | 'medium' | 'large';
   theme: 'system' | 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;
+  lyricOffset: number;
 }
 
 interface SettingsDialogProps {
@@ -170,7 +171,9 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
                 <Button
                   key={option.value}
                   variant={settings.playerposition === option.value ? 'default' : 'secondary'}
-                  onClick={() => !settings.fullplayer && handleSettingChange('playerposition', option.value as 'left' | 'center' | 'right')}
+                  onClick={() =>
+                    !settings.fullplayer && handleSettingChange('playerposition', option.value as 'left' | 'center' | 'right')
+                  }
                   className="flex-1"
                   disabled={settings.fullplayer}
                 >
@@ -178,6 +181,26 @@ const SettingsDialog: React.FC<SettingsDialogProps> = ({
                 </Button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-gray-900 dark:text-white">Lyric Timing Offset (seconds)</p>
+            <input
+              type="number"
+              step="0.1"
+              className="w-full p-2 text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 rounded"
+              value={settings.lyricOffset}
+              onChange={(e) => {
+                const newOffset = Number(e.target.value);
+                handleSettingChange('lyricOffset', newOffset);
+              }}
+            />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Positive: Lyrics appear earlier
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Negative: Lyrics appear later
+            </p>
           </div>
         </div>
       </DialogContent>
