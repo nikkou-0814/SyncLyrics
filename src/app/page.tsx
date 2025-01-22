@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
-import { useTheme } from 'next-themes';
 const Player = dynamic(() => import('@/components/player'), { ssr: false });
 
 interface LyricLine {
@@ -29,8 +28,6 @@ interface ErrorState {
 }
 
 export default function Home() {
-  const { setTheme, resolvedTheme } = useTheme();
-  const [, setThemeState] = useState<string>('dark');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [urlQuery, setUrlQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
@@ -43,21 +40,12 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedSettings = localStorage.getItem('playerSettings');
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings);
-        if (settings.theme) {
-          setTheme(settings.theme);
-          setThemeState(settings.theme);
-        }
-      }
-
       const savedUrl = localStorage.getItem('savedUrlQuery');
       const savedQuery = localStorage.getItem('savedSearchQuery');
       if (savedUrl) setUrlQuery(savedUrl);
       if (savedQuery) setSearchQuery(savedQuery);
     }
-  }, [setTheme]);
+  }, []);  
   
   useEffect(() => {
     localStorage.setItem('savedUrlQuery', urlQuery);
@@ -192,7 +180,7 @@ export default function Home() {
   return (
     <div
       className={`w-full h-full min-h-screen flex flex-col items-center justify-center p-4 relative 
-        ${resolvedTheme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}
+        dark:bg-gray-900 dark:text-white bg-white text-gray-900
       `}
     >
       {!showPlayer && (
@@ -234,7 +222,7 @@ export default function Home() {
                     <li
                       key={track.id}
                       className={`mb-2 p-2 rounded cursor-pointer transition-all 
-                        ${resolvedTheme === 'dark' ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'}
+                        dark:bg-gray-800 dark:hover:bg-gray-700 bg-gray-200 hover:bg-gray-300'}
                       `}
                       onClick={() => handleSelectTrack(track)}
                     >
@@ -243,7 +231,7 @@ export default function Home() {
                       </p>
                       <p
                         className={`text-sm whitespace-nowrap overflow-hidden text-ellipsis 
-                          ${resolvedTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'}
+                          dark:text-gray-400 text-gray-600
                         `}
                       >
                         {track.artistName}
