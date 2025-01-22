@@ -325,7 +325,7 @@ const Player: React.FC<PlayerProps> = ({
     if (dt < 0 || dt >= total) return null;
 
     const appearEnd = 2;
-    const exitStart = total - 1.5;
+    const exitStart = total - 1.2;
     let parentScale = 1.0;
     let opacity = 1.0;
     let transformTransition = '4s cubic-bezier(0.19, 1, 0.22, 1)';
