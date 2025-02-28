@@ -5,8 +5,32 @@ import dynamic from 'next/dynamic';
 import '../app/globals.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { Alert } from '@/components/ui/alert';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter
+} from '@/components/ui/card';
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription
+} from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertCircle,
+  Search,
+  Link
+} from "lucide-react";
+
 const Player = dynamic(() => import('@/components/player'), { ssr: false });
 
 interface LyricLine {
@@ -20,6 +44,8 @@ interface SearchResult {
   artistName: string;
   albumName: string;
   duration: number;
+  hash?: string | null;
+  album_id?: string | null;
 }
 
 interface ErrorState {
@@ -37,6 +63,7 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [error, setError] = useState<ErrorState | null>(null);
   const [showPlayer, setShowPlayer] = useState<boolean>(false);
+  const [selectedService, setSelectedService] = useState<'lrclib' | 'KuGou'>('lrclib');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -72,7 +99,7 @@ export default function Home() {
     setIsProcessing(true);
     setError(null);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&service=${selectedService}`);
       const data: { results: SearchResult[] } = await res.json();
       if (!res.ok) {
         setError({
@@ -140,6 +167,9 @@ export default function Home() {
           artist_name: track.artistName,
           album_name: track.albumName,
           duration: track.duration,
+          service: selectedService,
+          hash: track.hash,
+          album_id: track.album_id,
         }),
       });
       const data: { lyricsData: LyricLine[] } = await res.json();
@@ -168,8 +198,8 @@ export default function Home() {
       }
     } finally {
       setIsProcessing(false);
-    }    
-  };
+    }
+  };  
 
   const handleBack = () => {
     setShowPlayer(false);
@@ -178,72 +208,97 @@ export default function Home() {
   };
 
   return (
-    <div
-      className={`w-full h-full min-h-screen flex flex-col items-center justify-center p-4 relative 
-        dark:bg-gray-900 dark:text-white bg-white text-gray-900
-      `}
-    >
+    <div className="w-full min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
       {!showPlayer && (
-        <Card className="w-full max-w-md">
-          <div className="p-4">
-            <h1 className="text-2xl mb-4 text-center">URLを挿入し曲を検索してください</h1>
-            <Input
-              type="text"
-              placeholder="YouTubeのURLを入力"
-              value={urlQuery}
-              onChange={(e) => setUrlQuery(e.target.value)}
-              className="w-full mb-4"
-            />
-            <Input
-              type="text"
-              placeholder="曲名を入力"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full mb-4"
-            />
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-2xl font-bold text-center">
+              URLを挿入し曲を検索してください
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="relative">
+                <Link className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="YouTubeのURLを入力"
+                  value={urlQuery}
+                  onChange={(e) => setUrlQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="曲名を入力"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+            
+            <Select
+              value={selectedService}
+              onValueChange={(value) => setSelectedService(value as 'lrclib' | 'KuGou')}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="サービスを選択" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lrclib">lrclib</SelectItem>
+                <SelectItem value="KuGou">KuGou</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Button
               onClick={handleSearch}
               disabled={!searchQuery || isProcessing}
-              className="w-full mb-4"
+              className="w-full"
             >
               {isProcessing ? '処理中...' : '検索'}
             </Button>
+
             {error && (
-              <Alert variant="destructive" className="mt-4">
-                <p>{error.message}</p>
-                <p className="text-sm mt-2">{error.advice}</p>
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>{error.message}</AlertTitle>
+                <AlertDescription>{error.advice}</AlertDescription>
               </Alert>
             )}
-            {searchResults && (
-              <div className="mt-4">
-                <h2 className="text-xl mb-2">検索結果</h2>
-                <ul>
+          </CardContent>
+
+          {searchResults && (
+            <CardFooter className="flex-col">
+              <h2 className="text-xl font-semibold w-full mb-2">検索結果</h2>
+              <ScrollArea className="max-h-64 w-full rounded-md border overflow-y-scroll">
+                <div className="p-2">
                   {searchResults.map((track) => (
-                    <li
+                    <Button
                       key={track.id}
-                      className={`mb-2 p-2 rounded cursor-pointer transition-all 
-                        dark:bg-gray-800 dark:hover:bg-gray-700 bg-gray-200 hover:bg-gray-300'}
-                      `}
+                      variant="ghost"
+                      className="w-full justify-start h-auto text-left hover:bg-accent"
                       onClick={() => handleSelectTrack(track)}
                     >
-                      <p className="text-lg whitespace-nowrap overflow-hidden text-ellipsis">
-                        {track.trackName}
-                      </p>
-                      <p
-                        className={`text-sm whitespace-nowrap overflow-hidden text-ellipsis 
-                          dark:text-gray-400 text-gray-600
-                        `}
-                      >
-                        {track.artistName}
-                      </p>
-                    </li>
+                      <div className="overflow-hidden">
+                        <p className="font-medium text-base whitespace-nowrap overflow-hidden text-ellipsis">
+                          {track.trackName}
+                        </p>
+                        <p className="text-sm text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+                          {track.artistName}
+                        </p>
+                      </div>
+                    </Button>
                   ))}
-                </ul>
-              </div>
-            )}
-          </div>
+                </div>
+              </ScrollArea>
+            </CardFooter>
+          )}
         </Card>
       )}
+      
       {showPlayer && lyricsData && selectedTrack && audioUrl && (
         <Player
           lyricsData={lyricsData}

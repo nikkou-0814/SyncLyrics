@@ -68,7 +68,7 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
   
     const timeDiff = nextLyricTime - currentLyricTime;
 
-    const scrollDuration = timeDiff < 0.5 ? 300 : timeDiff < 1 ? 500 : 1000;
+    const scrollDuration = timeDiff < 0.2 ? 150 : timeDiff < 0.3 ? 200 : timeDiff < 0.4 ? 250 : timeDiff < 0.5 ? 300 : timeDiff < 0.6 ? 350 : timeDiff < 0.7 ? 400 : timeDiff < 0.8 ? 450 : timeDiff < 0.9 ? 500 : timeDiff < 1 ? 600 : 1000;
   
     if (activeLyric) {
       const containerHeight = container.clientHeight;

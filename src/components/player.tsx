@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import PlayerLyrics from '@/components/player-lyrics';
 import PlayerControls from '@/components/player-controls';
-import SettingsDialog from '@/components/settings-dialog';
+import SettingsSidebar from '@/components/settings-dialog';
 import { toast } from "sonner"
 
 interface LyricLine {
@@ -95,8 +95,8 @@ const Player: React.FC<PlayerProps> = ({
   }, [settings.volume]);
 
   useEffect(() => {
-    if (settings.lyricOffset !== 0 && !didShowToastRef.current) {
-      toast.error(`The offset is set to ${settings.lyricOffset} seconds.`);
+    if (settings?.lyricOffset !== 0 && !didShowToastRef.current) {
+      toast.error(`タイミング調整が ${settings.lyricOffset} 秒に設定されています。`);
       didShowToastRef.current = true;
     }
   }, [settings.lyricOffset]);
@@ -337,7 +337,7 @@ const Player: React.FC<PlayerProps> = ({
       opacity = appearRatio;
 
       const modT = dt % 4;
-      parentScale = modT < 2 ? 1.1 : 1.0;
+      parentScale = modT < 2 ? 1.1 : 0.9;
 
       const midDuration = Math.max(0, total - 1);
       let ratio = dt / midDuration;
@@ -349,7 +349,7 @@ const Player: React.FC<PlayerProps> = ({
     }
     else if (dt >= exitStart - 1 && dt < exitStart) {
       dotFills = [1, 1, 1];
-      parentScale = 1.0;
+      parentScale = 0.9;
     }
 
     if (dt >= exitStart) {
@@ -363,7 +363,7 @@ const Player: React.FC<PlayerProps> = ({
       } else if (dtExit < 1.0) {
         transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
         opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
-        parentScale = 0.8;
+        parentScale = 0.6;
         opacity = 0;
       }
     }
@@ -517,7 +517,7 @@ const Player: React.FC<PlayerProps> = ({
         />
       </div>
 
-      <SettingsDialog
+      <SettingsSidebar
         showSettings={showSettings}
         setShowSettings={setShowSettings}
         settings={settings}

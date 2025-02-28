@@ -1,10 +1,23 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { Pause, Play, Volume, Volume1, Volume2, VolumeOff, SkipBack, SkipForward } from 'lucide-react';
+import { 
+  Pause, 
+  Play, 
+  Volume, 
+  Volume1, 
+  Volume2, 
+  VolumeX, 
+  SkipBack, 
+  SkipForward 
+} from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion'
+import { motion } from 'framer-motion';
+import { 
+  Card,
+  CardContent
+} from '@/components/ui/card';
 
 interface PlayerControlsProps {
   isPlaying: boolean;
@@ -47,6 +60,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   formatTime,
 }) => {
   const prevVolumeRef = useRef(volume);
+  
   const toggleMute = () => {
     if (volume === 0) {
       handleVolumeChange([prevVolumeRef.current || 50]);
@@ -62,6 +76,26 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
     }
     handleVolumeChange(val);
   };
+
+  // Determine volume icon based on volume level
+  const VolumeIcon = () => {
+    if (volume === 0) return <VolumeX className="h-4 w-4" />;
+    if (volume > 50) return <Volume2 className="h-4 w-4" />;
+    if (volume > 0) return <Volume1 className="h-4 w-4" />;
+    return <Volume className="h-4 w-4" />;
+  };
+
+  const positionClass = 
+    settings.playerposition === "left"
+      ? "left-0"
+      : settings.playerposition === "right"
+      ? "right-0"
+      : "left-1/2 transform -translate-x-1/2";
+
+  const roundedClass = 
+    isMobile || settings.fullplayer 
+      ? "rounded-t-lg" 
+      : "rounded-lg";
 
   return (
     <motion.div
@@ -84,213 +118,185 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           : "0",
       }}
       transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
-      className={`fixed z-50 
-        ${settings.playerposition === "left"
-          ? "left-0"
-          : settings.playerposition === "right"
-          ? "right-0"
-          : "left-1/2 transform -translate-x-1/2"
-        } 
-        ${isMobile ? "rounded-t-lg" : settings.fullplayer ? "rounded-t-lg" : "rounded-lg"} 
-        bg-white dark:bg-gray-800 
-        shadow-2xl`}        
+      className={`fixed z-50 ${positionClass} ${roundedClass} shadow-lg`}
     >
-      <div className="h-full flex flex-col justify-between p-4">
-        {isMobile ? (
-          <>
-            <div className="text-gray-900 dark:text-white mb-3">
-              <p className="font-medium text-sm overflow-hidden text-nowrap text-ellipsis">
-                {trackName.length > 40 ? `${trackName.slice(0, 40)}...` : trackName}
-              </p>
-              <p className="text-xs overflow-hidden text-nowrap text-ellipsis text-gray-600 dark:text-gray-400">
-              {artistName.length > 40 ? `${artistName.slice(0, 40)}...` : artistName} - 
-              {albumName.length > 40 ? `${albumName.slice(0, 40)}...` : albumName}
-            </p>
-            </div>
-            <div className="flex items-center justify-between my-3">
-              <span className="text-xs font-medium text-gray-900 dark:text-white">
-                {formatTime(currentTime)}
-              </span>
-              <Slider
-                value={[currentTime]}
-                max={duration}
-                step={0.1}
-                className="flex-1 mx-2"
-                onValueChange={handleProgressChange}
-              />
-              <span className="text-xs font-medium text-gray-900 dark:text-white">
-                {formatTime(duration)}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-center">
-                <div className="flex items-center gap-10 my-3">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleSkipBack}
-                    className="text-gray-900 dark:text-white"
-                  >
-                    <SkipBack
-                      size={20}
-                      style={{
-                        width: '50px',
-                        height: '50px',
-                        fill: 'currentColor',
-                      }}
-                    />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={togglePlayPause}
-                    className="text-gray-900 dark:text-white"
-                  >
-                    {isPlaying ? (
-                    <Pause
-                      size={20}
-                      style={{
-                        width: '50px',
-                        height: '50px',
-                        fill: 'currentColor',
-                        stroke: 'none',
-                      }}
-                    />
-                  ) : (
-                    <Play
-                      size={20}
-                      style={{
-                        width: '50px',
-                        height: '50px',
-                        fill: 'currentColor',
-                        stroke: 'none',
-                      }}
-                    />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleSkipForward}
-                    className="text-gray-900 dark:text-white"
-                  >
-                    <SkipForward
-                      size={20}
-                      style={{
-                        width: '50px',
-                        height: '50px',
-                        fill: 'currentColor',
-                      }}
-                    />
-                  </Button>
-                </div>
+      <Card className="border-0 shadow-none">
+        <CardContent className="p-4">
+          {isMobile ? (
+            <div className="flex flex-col space-y-4">
+              {/* Track Info */}
+              <div className="space-y-1">
+                <p className="font-medium text-sm overflow-hidden text-nowrap text-ellipsis">
+                  {trackName.length > 40 ? `${trackName.slice(0, 40)}...` : trackName}
+                </p>
+                <p className="text-xs overflow-hidden text-nowrap text-ellipsis text-muted-foreground">
+                  {artistName.length > 40 ? `${artistName.slice(0, 40)}...` : artistName} - 
+                  {albumName.length > 40 ? `${albumName.slice(0, 40)}...` : albumName}
+                </p>
               </div>
-              <div className="flex items-center gap-2 my-3">
-                <Volume className="h-4 w-4 text-gray-900 dark:text-white" style={{ width: '20px', height: '20px', fill: 'currentColor' }} />
+
+              {/* Progress Bar */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium min-w-8 text-center">
+                  {formatTime(currentTime)}
+                </span>
+                <Slider
+                  value={[currentTime]}
+                  max={duration}
+                  step={0.1}
+                  className="flex-1"
+                  onValueChange={handleProgressChange}
+                />
+                <span className="text-xs font-medium min-w-8 text-center">
+                  {formatTime(duration)}
+                </span>
+              </div>
+
+              {/* Playback Controls */}
+              <div className="flex justify-center items-center gap-4 py-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSkipBack}
+                  className="h-12 w-12"
+                >
+                  <SkipBack className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={togglePlayPause}
+                  className="h-12 w-12"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-8 w-8" />
+                  ) : (
+                    <Play className="h-8 w-8 ml-1" />
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSkipForward}
+                  className="h-12 w-12"
+                >
+                  <SkipForward className="h-6 w-6" />
+                </Button>
+              </div>
+
+              {/* Volume Control */}
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleMute}
+                  className="h-8 w-8"
+                >
+                  <VolumeIcon />
+                </Button>
                 <Slider
                   value={[volume]}
                   max={100}
-                  className="flex-1 mx-2"
-                  onValueChange={handleVolumeChange}
+                  className="flex-1"
+                  onValueChange={onLocalVolumeChange}
                 />
-                <Volume2 className="h-4 w-4 text-gray-900 dark:text-white" style={{ width: '20px', height: '20px', fill: 'currentColor' }} />
               </div>
             </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {formatTime(currentTime)}
-              </span>
-              <Slider
-                value={[currentTime]}
-                max={duration}
-                step={0.1}
-                className="flex-1"
-                onValueChange={handleProgressChange}
-              />
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {formatTime(duration)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleSkipBack}
-                    className="text-gray-900 dark:text-white"
-                  >
-                    <SkipBack size={24} style={{ fill: 'currentColor' }} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={togglePlayPause}
-                    className="text-gray-900 dark:text-white"
-                  >
-                    {isPlaying ? (
-                      <Pause size={24} style={{ fill: 'currentColor' }} />
-                    ) : (
-                      <Play size={24} style={{ fill: 'currentColor' }} />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleSkipForward}
-                    className="text-gray-900 dark:text-white"
-                  >
-                    <SkipForward size={24} style={{ fill: 'currentColor' }} />
-                  </Button>
+          ) : (
+            <div className="flex flex-col space-y-3">
+              {/* Progress Bar */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium min-w-12 text-center">
+                  {formatTime(currentTime)}
+                </span>
+                <Slider
+                  value={[currentTime]}
+                  max={duration}
+                  step={0.1}
+                  className="flex-1"
+                  onValueChange={handleProgressChange}
+                />
+                <span className="text-xs font-medium min-w-12 text-center">
+                  {formatTime(duration)}
+                </span>
+              </div>
+
+              {/* Controls and Info */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {/* Playback Controls */}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSkipBack}
+                      className="h-9 w-9"
+                    >
+                      <SkipBack className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={togglePlayPause}
+                      className="h-9 w-9"
+                    >
+                      {isPlaying ? (
+                        <Pause className="h-5 w-5" />
+                      ) : (
+                        <Play className="h-5 w-5 ml-0.5" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSkipForward}
+                      className="h-9 w-9"
+                    >
+                      <SkipForward className="h-5 w-5" />
+                    </Button>
+                  </div>
+
+                  {/* Volume Control */}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleMute}
+                      className="h-8 w-8"
+                    >
+                      <VolumeIcon />
+                    </Button>
+                    <Slider
+                      value={[volume]}
+                      max={100}
+                      className="w-24"
+                      onValueChange={onLocalVolumeChange}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleMute}
-                    className="text-gray-900 dark:text-white"
-                  >
-                    {volume === 0 ? (
-                      <VolumeOff style={{ fill: 'currentColor' }} />
-                    ) : volume > 50 ? (
-                      <Volume2 style={{ fill: 'currentColor' }} />
-                    ) : volume > 0 ? (
-                      <Volume1 style={{ fill: 'currentColor' }} />
-                    ) : (
-                      <Volume style={{ fill: 'currentColor' }} />
-                    )}
-                  </Button>
-                  <Slider
-                    value={[volume]}
-                    max={100}
-                    className="w-28"
-                    onValueChange={onLocalVolumeChange}
-                  />
+
+                {/* Track Info */}
+                <div className="text-right flex-shrink ml-4 max-w-60 md:max-w-xs">
+                  <p className="font-medium text-sm overflow-hidden text-nowrap text-ellipsis">
+                    {trackName.length > (settings.fullplayer ? 60 : 40)
+                      ? `${trackName.slice(0, settings.fullplayer ? 60 : 40)}...`
+                      : trackName}
+                  </p>
+                  <p className="text-xs overflow-hidden text-nowrap text-ellipsis text-muted-foreground">
+                    {artistName.length > (settings.fullplayer ? 50 : 30)
+                      ? `${artistName.slice(0, settings.fullplayer ? 50 : 30)}...`
+                      : artistName}{" "}
+                    -{" "}
+                    {albumName.length > (settings.fullplayer ? 40 : 20)
+                      ? `${albumName.slice(0, settings.fullplayer ? 40 : 20)}...`
+                      : albumName}
+                  </p>
                 </div>
               </div>
-              <div className="text-right ml-5 text-gray-900 dark:text-white">
-                <p className="font-medium text-sm overflow-hidden text-nowrap text-ellipsis">
-                  {trackName.length > (settings.fullplayer ? 60 : 40)
-                    ? `${trackName.slice(0, settings.fullplayer ? 60 : 40)}...`
-                    : trackName}
-                </p>
-                <p className="text-xs overflow-hidden text-nowrap text-ellipsis text-gray-600 dark:text-gray-400">
-                  {artistName.length > (settings.fullplayer ? 50 : 30)
-                    ? `${artistName.slice(0, settings.fullplayer ? 50 : 30)}...`
-                    : artistName}{" "}
-                  -{" "}
-                  {albumName.length > (settings.fullplayer ? 40 : 20)
-                    ? `${albumName.slice(0, settings.fullplayer ? 40 : 20)}...`
-                    : albumName}
-                </p>
-              </div>
             </div>
-          </>
-        )}
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };
