@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Type, Music, Sliders, X, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal } from 'lucide-react';
+import { Settings as SettingsIcon, Type, Music, X, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
