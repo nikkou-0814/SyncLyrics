@@ -358,21 +358,10 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
         <div className="absolute top-0 left-0 right-0 flex justify-center py-2">
           <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30" />
         </div>
-        
-        <div className="pt-6 pb-2 flex items-center justify-between">
-          <SheetTitle className="flex items-center gap-2 text-xl">
-            <SettingsIcon className="h-5 w-5" />
-            設定
-          </SheetTitle>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="rounded-full" 
-            onClick={() => setShowSettings(false)}
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <SheetTitle className="flex items-center gap-2 text-xl">
+          <SettingsIcon className="h-5 w-5" />
+          設定
+        </SheetTitle>
         
         <div className="overflow-y-auto h-full pb-8">
           <Tabs defaultValue="display" className="w-full">
