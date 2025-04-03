@@ -1,24 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next/types';
 import axios from 'axios';
-
-interface SearchRequestBody {
-  track_name: string;
-  artist_name: string;
-  album_name?: string;
-  duration: number;
-  service?: string;
-  hash?: string | null;
-  album_id?: string | null;
-}
-
-interface LyricLine {
-  time: number;
-  text: string;
-}
-
-interface LrcLibResponse {
-  syncedLyrics: string;
-}
+import { SearchRequestBody, LyricLine, LrcLibResponse } from '@/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

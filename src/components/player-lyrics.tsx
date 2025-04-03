@@ -2,57 +2,181 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import LineBreaker from '@/components/linebreak';
+import { PlayerLyricsProps, KaraokeLyricLineProps } from '@/types';
 
-interface LyricLine {
-  time: number;
-  text: string;
-}
+const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
+  text,
+  progressPercentage,
+  resolvedTheme,
+  isActive,
+  progressDirection,
+}) => {
+  const isDark = resolvedTheme === 'dark';
+  const activeColor = isDark ? '#FFFFFF' : '#000000';
+  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
-interface Settings {
-  showplayercontrol: boolean;
-  fullplayer: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-  lyricposition: 'left' | 'center' | 'right';
-  backgroundblur: 'none' | 'small' | 'medium' | 'large';
-  backgroundtransparency: 'none' | 'small' | 'medium' | 'large';
-  theme: 'system' | 'dark' | 'light';
-  playerposition: 'left' | 'center' | 'right';
-  volume: number;
-  lyricOffset: number;
-}
+  useEffect(() => {
+    let animationFrameId: number | null = null;
+    let timerId: NodeJS.Timeout | null = null;
 
-interface PlayerLyricsProps {
-  lyricsData: LyricLine[];
-  currentTime: number;
-  duration: number;
-  currentLineIndex: number;
-  isMobile: boolean;
-  settings: Settings;
-  resolvedTheme: string;
-  onLyricClick: (time: number) => void;
-  renderInterludeDots: (startTime: number, endTime: number) => JSX.Element | null;
-  smoothScrollTo: (
-    element: HTMLElement,
-    to: number,
-    duration: number
-  ) => void;
-}
+    if (progressDirection === 'ttb' || progressDirection === 'btt') {
+      animationFrameId = requestAnimationFrame(() => setShouldAnimate(true));
+    } else {
+      timerId = setTimeout(() => setShouldAnimate(true), 50);
+    }
+
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [isActive, progressDirection]);
+
+  if (progressDirection === 'ttb' || progressDirection === 'btt') {
+    const getClipPath = (): string => {
+      switch (progressDirection) {
+        case 'btt':
+          return `inset(${100 - progressPercentage}% 0 0 0)`;
+        case 'ttb':
+          return `inset(0 0 ${100 - progressPercentage}% 0)`;
+        default:
+          return `inset(0 0 ${100 - progressPercentage}% 0)`;
+      }
+    };
+
+    return (
+      <span style={{ position: 'relative', display: 'inline-block', whiteSpace: 'pre-wrap' }}>
+        <span style={{ color: inactiveColor, pointerEvents: 'none' }}>
+          <LineBreaker text={text} />
+        </span>
+        <span
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            color: activeColor,
+            clipPath: getClipPath(),
+            transition: shouldAnimate ? 'clip-path 0.1s linear' : 'none',
+            whiteSpace: 'pre-wrap',
+            pointerEvents: 'none',
+          }}
+        >
+          <LineBreaker text={text} />
+        </span>
+      </span>
+    );
+  }
+
+  const getGradient = (): string => {
+    switch (progressDirection) {
+      case 'rtl':
+        return `linear-gradient(to left, ${activeColor}, ${activeColor} 50%, ${inactiveColor} 50%, ${inactiveColor})`;
+      case 'ltr':
+      default:
+        return `linear-gradient(to right, ${activeColor}, ${activeColor} 50%, ${inactiveColor} 50%, ${inactiveColor})`;
+    }
+  };
+
+  const getBackgroundSize = (): string => '200% 100%';
+
+  const getBackgroundPosition = (): string => {
+    const progress = progressPercentage / 100;
+    switch (progressDirection) {
+      case 'rtl':
+        return `${progress * 100}% 0`;
+      case 'ltr':
+      default:
+        return `${(1 - progress) * 100}% 0`;
+    }
+  };
+
+  return (
+    <span
+      style={{
+        display: 'inline',
+        whiteSpace: 'pre-wrap',
+        color: 'transparent',
+        backgroundImage: getGradient(),
+        backgroundSize: getBackgroundSize(),
+        backgroundPosition: getBackgroundPosition(),
+        backgroundClip: 'text',
+        WebkitBackgroundClip: 'text',
+        transition: shouldAnimate ? 'background-position 0.1s linear' : 'none',
+        pointerEvents: 'none'
+      }}
+    >
+      <LineBreaker text={text} />
+    </span>
+  );
+};
 
 const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
   lyricsData,
+  currentTime,
   duration,
   currentLineIndex,
   isMobile,
   settings,
+  resolvedTheme,
   onLyricClick,
   renderInterludeDots,
   smoothScrollTo,
 }) => {
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
+  const [progressPercentage, setProgressPercentage] = useState<number>(0);
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState<boolean>(true);
+  const scrollDisableTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isProgrammaticScrollingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (currentLineIndex < 0 || currentLineIndex >= lyricsData.length) return;
+    
+    const currentLyricTime = lyricsData[currentLineIndex].time;
+    const nextLyricTime = 
+      currentLineIndex + 1 < lyricsData.length
+        ? lyricsData[currentLineIndex + 1].time
+        : duration;
+    
+    const timeDiff = nextLyricTime - currentLyricTime;
+    if (timeDiff <= 0) {
+      setProgressPercentage(currentTime >= currentLyricTime ? 100 : 0);
+      return;
+    }
+    
+    const elapsed = (currentTime + settings.lyricOffset) - currentLyricTime;
+    const progress = Math.min(Math.max(elapsed / timeDiff, 0), 1) * 100;
+    
+    setProgressPercentage(progress);
+  }, [currentTime, currentLineIndex, lyricsData, duration, settings.lyricOffset]);
+
+  useEffect(() => {
+    const container = lyricsContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (isProgrammaticScrollingRef.current) return;
+      if (scrollDisableTimerRef.current) {
+        clearTimeout(scrollDisableTimerRef.current);
+      }
+      setIsAutoScrollEnabled(false);
+
+      scrollDisableTimerRef.current = setTimeout(() => {
+        setIsAutoScrollEnabled(true);
+      }, 5000);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   // 自動スクロール
   useEffect(() => {
+    if (!isAutoScrollEnabled) return;
     if (!lyricsContainerRef.current) return;
     if (currentLineIndex < 0 || currentLineIndex >= lyricsData.length) return;
   
@@ -92,10 +216,14 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
         0,
         Math.min(targetScrollTop, contentHeight - containerHeight)
       );
-  
-      smoothScrollTo(container, targetScrollTop, scrollDuration);
+
+      isProgrammaticScrollingRef.current = true;
+      (smoothScrollTo as (element: HTMLElement, to: number, duration: number) => Promise<void>)(container, targetScrollTop, scrollDuration)
+        .then(() => {
+          isProgrammaticScrollingRef.current = false;
+        });
     }
-  }, [currentLineIndex, lyricsData, duration, isMobile, smoothScrollTo]);  
+  }, [currentLineIndex, lyricsData, duration, isMobile, smoothScrollTo, isAutoScrollEnabled]);
 
   const handleLyricsMouseEnter = () => {
     setIsLyricsHovered(true);
@@ -146,8 +274,7 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
             const isActive = index === currentLineIndex;
             const isPast = index < currentLineIndex;
             const isInterlude = line.text.trim() === '';
-            const isCurrentLineInterlude =
-              lyricsData[currentLineIndex]?.text.trim() === '';
+            const isCurrentLineInterlude = lyricsData[currentLineIndex]?.text.trim() === '';
 
             let nextTime = duration;
             if (index + 1 < lyricsData.length) {
@@ -171,18 +298,18 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
               : 1;
 
             return (
-              <p
+              <div
                 key={index}
                 id={`lyric-${index}`}
-                className={`transition-all duration-700 px-2 rounded-lg
+                className={`transition-all duration-700 px-2 rounded-lg :hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer
                   ${
                     isInterlude
                       ? 'm-0 p-0'
                       : `my-8 
                         ${
                           isActive
-                            ? 'text-black dark:text-white font-bold'
-                            : 'text-black text-opacity-50 dark:text-white dark:text-opacity-40 hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer'
+                            ? 'font-bold'
+                            : 'text-black text-opacity-50 dark:text-white dark:text-opacity-40 hover:text-gray-900 dark:hover:text-gray-300'
                         }`
                   }`}
                 style={{
@@ -201,18 +328,33 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
                         : 'translateY(80px)'}`
                       : 'translateY(0)',
                   transition:
-                    'transform 1s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s, margin 1s, padding 1s, color 0.5s',
+                    `transform 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, opacity 0.8s, margin 1s, padding 1s, color 0.5s, background-color 0.5s`,
                   wordWrap: 'break-word',
                   wordBreak: 'break-word',
                 }}
-                onClick={() => onLyricClick(line.time)}
+                onClick={() => { onLyricClick(line.time); setIsAutoScrollEnabled(true);}}
               >
-                {isInterlude && isActive
-                  ? renderInterludeDots(line.time, endTime)
-                  : isInterlude
-                  ? null
-                  : <LineBreaker text={line.text} />}
-              </p>
+                {isInterlude
+                  ? isActive
+                    ? renderInterludeDots(line.time, endTime)
+                    : null
+                  : isActive && settings.useKaraokeLyric
+                  ? (
+                    <KaraokeLyricLine
+                      text={line.text}
+                      progressPercentage={progressPercentage}
+                      resolvedTheme={resolvedTheme}
+                      isActive={isActive}
+                      progressDirection={settings.lyricProgressDirection}
+                    />
+                  )
+                  : (
+                    <span style={{ pointerEvents: 'none' }}>
+                      <LineBreaker text={line.text} />
+                    </span>
+                  )
+                }
+              </div>
             );
           })}
           <div style={{ height: window.innerHeight }}></div>

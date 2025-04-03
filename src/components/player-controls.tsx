@@ -16,31 +16,9 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { 
   Card,
-  CardContent
+  CardContent,
 } from '@/components/ui/card';
-
-interface PlayerControlsProps {
-  isPlaying: boolean;
-  togglePlayPause: () => void;
-  handleSkipBack: () => void;
-  handleSkipForward: () => void;
-  volume: number;
-  handleVolumeChange: (value: number[]) => void;
-  handleProgressChange: (value: number[]) => void;
-  currentTime: number;
-  duration: number;
-  isMobile: boolean;
-  trackName: string;
-  artistName: string;
-  albumName: string;
-  settings: {
-    playerposition: string;
-    fullplayer: boolean;
-    showplayercontrol: boolean;
-    fontSize: 'small' | 'medium' | 'large';
-  };
-  formatTime: (time: number) => string;
-}
+import { PlayerControlsProps } from '@/types';
 
 const PlayerControls: React.FC<PlayerControlsProps> = ({
   isPlaying,

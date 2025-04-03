@@ -31,27 +31,9 @@ import {
   Link
 } from "lucide-react";
 
+import { LyricLine, SearchResult, ErrorState } from '@/types';
+
 const Player = dynamic(() => import('@/components/player'), { ssr: false });
-
-interface LyricLine {
-  time: number;
-  text: string;
-}
-
-interface SearchResult {
-  id: number;
-  trackName: string;
-  artistName: string;
-  albumName: string;
-  duration: number;
-  hash?: string | null;
-  album_id?: string | null;
-}
-
-interface ErrorState {
-  message: string;
-  advice: string;
-}
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState<string>('');

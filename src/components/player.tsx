@@ -8,34 +8,8 @@ import { useTheme } from 'next-themes';
 import PlayerLyrics from '@/components/player-lyrics';
 import PlayerControls from '@/components/player-controls';
 import SettingsSidebar from '@/components/settings-dialog';
-import { toast } from "sonner"
-
-interface LyricLine {
-  time: number;
-  text: string;
-}
-
-interface PlayerProps {
-  lyricsData: LyricLine[];
-  audioUrl: string;
-  trackName: string;
-  albumName: string;
-  artistName: string;
-  onBack: () => void;
-}
-
-interface Settings {
-  showplayercontrol: boolean;
-  fullplayer: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-  lyricposition: 'left' | 'center' | 'right';
-  backgroundblur: 'none' | 'small' | 'medium' | 'large';
-  backgroundtransparency: 'none' | 'small' | 'medium' | 'large';
-  theme: 'system' | 'dark' | 'light';
-  playerposition: 'left' | 'center' | 'right';
-  volume: number;
-  lyricOffset: number;
-}
+import { toast } from 'sonner';
+import { PlayerProps, Settings } from '@/types';
 
 const DEFAULT_SETTINGS: Settings = {
   showplayercontrol: true,
@@ -44,10 +18,13 @@ const DEFAULT_SETTINGS: Settings = {
   lyricposition: 'left',
   backgroundblur: 'medium',
   backgroundtransparency: 'medium',
-  theme: 'system',
+  theme: 'dark',
   playerposition: 'right',
   volume: 50,
   lyricOffset: 0,
+  useKaraokeLyric: true,
+  lyricProgressDirection: 'ltr',
+  CustomEasing: 'cubic-bezier(0.22, 1, 0.36, 1)',
 };
 
 const Player: React.FC<PlayerProps> = ({
@@ -250,25 +227,45 @@ const Player: React.FC<PlayerProps> = ({
   );
 
   // スクロール
-  const smoothScrollTo = useCallback(
-    (element: HTMLElement, to: number, duration: number) => {
-      const start = element.scrollTop;
-      const change = to - start;
-      const startTime = performance.now();
-      const bezier = cubicBezier(0.22, 1, 0.36, 1);
+  const parseCubicBezier = (easing: string): [number, number, number, number] => {
+    const cleaned = easing.replace('cubic-bezier(', '').replace(')', '');
+    const parts = cleaned.split(',').map(s => parseFloat(s.trim()));
+    if (parts.length !== 4 || parts.some(isNaN)) {
+      throw new Error("Invalid cubic-bezier format");
+    }
+    return [parts[0], parts[1], parts[2], parts[3]];
+  };
 
-      const animateScroll = (currentT: number) => {
-        const elapsed = currentT - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const ease = bezier(progress);
-        element.scrollTop = start + change * ease;
-        if (elapsed < duration) {
-          requestAnimationFrame(animateScroll);
+  const smoothScrollTo = useCallback(
+    (element: HTMLElement, to: number, duration: number): Promise<void> => {
+      return new Promise((resolve) => {
+        const start = element.scrollTop;
+        const change = to - start;
+        const startTime = performance.now();
+        let p1x = 0.22, p1y = 1, p2x = 0.36, p2y = 1;
+        try {
+          const easingValues = parseCubicBezier(settings.CustomEasing);
+          [p1x, p1y, p2x, p2y] = easingValues;
+        } catch (e) {
+          console.error("Invalid CustomEasing, falling back to default.", e);
         }
-      };
-      requestAnimationFrame(animateScroll);
+        const bezier = cubicBezier(p1x, p1y, p2x, p2y);
+
+        const animateScroll = (currentT: number) => {
+          const elapsed = currentT - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const ease = bezier(progress);
+          element.scrollTop = start + change * ease;
+          if (elapsed < duration) {
+            requestAnimationFrame(animateScroll);
+          } else {
+            resolve();
+          }
+        };
+        requestAnimationFrame(animateScroll);
+      });
     },
-    [cubicBezier]
+    [cubicBezier, settings.CustomEasing]
   );
 
   // YouTubeプレーヤー関連

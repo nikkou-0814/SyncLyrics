@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal } from 'lucide-react';
+import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -23,6 +23,9 @@ interface Settings {
   playerposition: 'left' | 'center' | 'right';
   volume: number;
   lyricOffset: number;
+  useKaraokeLyric: boolean;
+  lyricProgressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
+  CustomEasing: string;
 }
 
 interface SettingsSidebarProps {
@@ -170,6 +173,56 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                         </p>
                       </div>
                     </div>
+
+                    <Separator />
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="useKaraokeLyric" className="text-sm font-medium flex items-center gap-2">
+                        <MicVocal className="h-4 w-4" />
+                        カラオケ風歌詞
+                      </Label>
+                      <Switch
+                        id="useKaraokeLyric"
+                        checked={settings.useKaraokeLyric}
+                        onCheckedChange={(checked) => handleSettingChange('useKaraokeLyric', checked)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <ArrowUpWideNarrow className="h-4 w-4" />
+                        カラオケ風歌詞進行方向
+                        {!settings.useKaraokeLyric && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">カラオケ風歌詞がオフの場合は使用できません</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </Label>
+                      <div className="grid grid-cols-4 gap-1">
+                        {[
+                          { value: 'rtl', label: '右→左' },
+                          { value: 'ltr', label: '左→右' },
+                          { value: 'btt', label: '下→上' },
+                          { value: 'ttb', label: '上→下' },
+                        ].map((option) => (
+                          <Button
+                            key={option.value}
+                            variant={settings.lyricProgressDirection === option.value ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleSettingChange('lyricProgressDirection', option.value as 'rtl' | 'ltr' | 'btt' | 'ttb')}
+                            className="flex-1"
+                            disabled={!settings.useKaraokeLyric}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   </TooltipProvider>
                 </div>
               </CardContent>
@@ -258,6 +311,23 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       </Button>
                     ))}
                   </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label htmlFor="theme" className="text-sm font-medium flex items-center gap-2">
+                    <Spline className="h-4 w-4" />
+                    カスタムイージング
+                  </Label>
+                  <Input
+                    id="scrollEasing"
+                    type="text"
+                    value={settings.CustomEasing}
+                    onChange={(e) => handleSettingChange('CustomEasing', e.target.value)}
+                    placeholder="例: cubic-bezier(0.22, 1, 0.36, 1)"
+                    className="mt-1"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -365,7 +435,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
         
         <div className="overflow-y-auto h-full pb-8">
           <Tabs defaultValue="display" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4 sticky top-0 z-10 bg-background">
+            <TabsList className="grid w-full grid-cols-2 mb-4 sticky top-0 z-10 bg-background rounded-none">
               <TabsTrigger value="display" className="flex items-center gap-2">
                 <Type className="h-4 w-4" />
                 <span>表示設定</span>
@@ -459,6 +529,48 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       </div>
                     </div>
                   </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="useKaraokeLyric" className="text-sm font-medium flex items-center gap-2">
+                      <MicVocal className="h-4 w-4" />
+                      カラオケ風歌詞
+                    </Label>
+                    <Switch
+                      id="useKaraokeLyric"
+                      checked={settings.useKaraokeLyric}
+                      onCheckedChange={(checked) => handleSettingChange('useKaraokeLyric', checked)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      カラオケ風歌詞進行方向
+                    </Label>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[
+                        { value: 'rtl', label: '右→左' },
+                        { value: 'ltr', label: '左→右' },
+                        { value: 'btt', label: '下→上' },
+                        { value: 'ttb', label: '上→下' },
+                      ].map((option) => (
+                        <Button
+                          key={option.value}
+                          variant={settings.lyricProgressDirection === option.value ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleSettingChange('lyricProgressDirection', option.value as 'rtl' | 'ltr' | 'btt' | 'ttb')}
+                          className="flex-1"
+                          disabled={!settings.useKaraokeLyric}
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                    {!settings.useKaraokeLyric && (
+                      <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                        カラオケ風歌詞がオフの場合は使用できません
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -540,6 +652,23 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         </Button>
                       ))}
                     </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="theme" className="text-sm font-medium flex items-center gap-2">
+                      <Spline className="h-4 w-4" />
+                      カスタムイージング
+                    </Label>
+                    <Input
+                      id="scrollEasing"
+                      type="text"
+                      value={settings.CustomEasing}
+                      onChange={(e) => handleSettingChange('CustomEasing', e.target.value)}
+                      placeholder="例: cubic-bezier(0.22, 1, 0.36, 1)"
+                      className="mt-1"
+                    />
                   </div>
                 </CardContent>
               </Card>

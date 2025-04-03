@@ -1,31 +1,6 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next/types';
 import axios from 'axios';
-
-interface SearchQuery {
-  q?: string;
-  track_name?: string;
-  artist_name?: string;
-  album_name?: string;
-  service?: string;
-}
-
-interface SearchResult {
-  id: number;
-  trackName: string;
-  artistName: string;
-  albumName: string;
-  duration: number;
-  hash?: string | null;
-  album_id?: string | null;
-}
-
-interface LrcLibSearchResponseItem {
-  id: number;
-  trackName: string;
-  artistName: string;
-  albumName?: string;
-  duration: number;
-}
+import { SearchQuery, SearchResult, LrcLibSearchResponseItem } from '@/types';
 
 type LrcLibSearchResponse = LrcLibSearchResponseItem[];
 
