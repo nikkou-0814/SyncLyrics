@@ -241,6 +241,12 @@ const Player: React.FC<PlayerProps> = ({
       return new Promise((resolve) => {
         const start = element.scrollTop;
         const change = to - start;
+        
+        if (Math.abs(change) < 2) {
+          resolve();
+          return;
+        }
+        
         const startTime = performance.now();
         let p1x = 0.22, p1y = 1, p2x = 0.36, p2y = 1;
         try {
@@ -256,9 +262,11 @@ const Player: React.FC<PlayerProps> = ({
           const progress = Math.min(elapsed / duration, 1);
           const ease = bezier(progress);
           element.scrollTop = start + change * ease;
+          
           if (elapsed < duration) {
             requestAnimationFrame(animateScroll);
           } else {
+            element.scrollTop = to;
             resolve();
           }
         };

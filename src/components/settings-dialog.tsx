@@ -11,30 +11,7 @@ import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palett
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-
-interface Settings {
-  showplayercontrol: boolean;
-  fullplayer: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-  lyricposition: 'left' | 'center' | 'right';
-  backgroundblur: 'none' | 'small' | 'medium' | 'large';
-  backgroundtransparency: 'none' | 'small' | 'medium' | 'large';
-  theme: 'system' | 'dark' | 'light';
-  playerposition: 'left' | 'center' | 'right';
-  volume: number;
-  lyricOffset: number;
-  useKaraokeLyric: boolean;
-  lyricProgressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
-  CustomEasing: string;
-}
-
-interface SettingsSidebarProps {
-  showSettings: boolean;
-  setShowSettings: (value: boolean) => void;
-  settings: Settings;
-  handleSettingChange: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
-  isMobile: boolean;
-}
+import { SettingsSidebarProps } from '@/types';
 
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   showSettings,

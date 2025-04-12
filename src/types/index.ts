@@ -120,3 +120,11 @@ export interface SearchRequestBody {
 export interface LrcLibResponse {
   syncedLyrics: string;
 }
+
+export interface SettingsSidebarProps {
+  showSettings: boolean;
+  setShowSettings: (value: boolean) => void;
+  settings: Settings;
+  handleSettingChange: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
+  isMobile: boolean;
+}
