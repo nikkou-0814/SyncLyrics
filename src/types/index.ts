@@ -17,6 +17,7 @@ export interface Settings {
   useKaraokeLyric: boolean;
   lyricProgressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
   CustomEasing: string;
+  scrollPositionOffset: number;
 }
 
 export interface PlayerLyricsProps {

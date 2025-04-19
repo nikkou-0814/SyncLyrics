@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS: Settings = {
   useKaraokeLyric: true,
   lyricProgressDirection: 'ltr',
   CustomEasing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  scrollPositionOffset: 50,
 };
 
 const Player: React.FC<PlayerProps> = ({

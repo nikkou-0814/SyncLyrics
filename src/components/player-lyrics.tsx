@@ -211,15 +211,17 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
       const lyricOffsetTop = activeLyric.offsetTop;
       const lyricHeight = activeLyric.clientHeight;
   
+      const offsetPercentage = settings.scrollPositionOffset !== undefined ? settings.scrollPositionOffset / 100 : 0.5;
+      
       // モバイルは画面上部、PCなどは中央寄せ
       let targetScrollTop: number;
       if (isMobile) {
         const displayHeight = window.innerHeight;
-        const offsetFromTop = displayHeight * 0.3;
+        const offsetFromTop = displayHeight * (1 - offsetPercentage) * 0.6;
         targetScrollTop = lyricOffsetTop - offsetFromTop + lyricHeight / 2;
       } else {
-        targetScrollTop =
-          lyricOffsetTop - containerHeight / 2 + lyricHeight / 2;
+        const scrollOffset = (1 - offsetPercentage) * containerHeight;
+        targetScrollTop = lyricOffsetTop - containerHeight / 2 + lyricHeight / 2 + scrollOffset - containerHeight / 2;
       }
   
       // スクロール範囲を超えないように調整
@@ -237,7 +239,7 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
           }, 50);
         });
     }
-  }, [currentLineIndex, lyricsData, duration, isMobile, smoothScrollTo, isAutoScrollEnabled]);
+  }, [currentLineIndex, lyricsData, duration, isMobile, smoothScrollTo, isAutoScrollEnabled, settings.scrollPositionOffset]);
 
   const handleLyricsMouseEnter = () => {
     setIsLyricsHovered(true);

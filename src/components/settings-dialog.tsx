@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { SettingsSidebarProps } from '@/types';
+import { Slider } from '@/components/ui/slider';
 
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   showSettings,
@@ -198,6 +199,38 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                             {option.label}
                           </Button>
                         ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                      <Label htmlFor="scrollPositionOffset" className="text-sm font-medium flex items-center gap-2">
+                        <MoveHorizontal className="h-4 w-4 rotate-90" />
+                        歌詞表示位置（上下）
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">歌詞のスクロール位置を調整します。高い値は上に、低い値は下に表示されます。</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </Label>
+                      <div className="pt-4 px-2">
+                        <Slider
+                          id="scrollPositionOffset"
+                          defaultValue={[settings.scrollPositionOffset]}
+                          min={0}
+                          max={100}
+                          step={5}
+                          onValueChange={(values) => handleSettingChange('scrollPositionOffset', values[0])}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-2">
+                        <span className="text-sm text-muted-foreground">上部</span>
+                        <span className="text-sm text-muted-foreground">中央</span>
+                        <span className="text-sm text-muted-foreground">下部</span>
                       </div>
                     </div>
                   </TooltipProvider>
@@ -507,6 +540,8 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     </div>
                   </div>
 
+                  <Separator />
+
                   <div className="flex items-center justify-between">
                     <Label htmlFor="useKaraokeLyric" className="text-sm font-medium flex items-center gap-2">
                       <MicVocal className="h-4 w-4" />
@@ -548,6 +583,30 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       </div>
                     )}
                   </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                      <Label htmlFor="scrollPositionOffset" className="text-sm font-medium flex items-center gap-2 mb-2">
+                        <MoveHorizontal className="h-4 w-4 rotate-90" />
+                        歌詞表示位置（上下）
+                      </Label>
+                      <div className="pt-4 px-2">
+                        <Slider
+                          id="scrollPositionOffset"
+                          defaultValue={[settings.scrollPositionOffset]}
+                          min={0}
+                          max={100}
+                          step={5}
+                          onValueChange={(values) => handleSettingChange('scrollPositionOffset', values[0])}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-2">
+                        <span className="text-sm text-muted-foreground">上部</span>
+                        <span className="text-sm text-muted-foreground">中央</span>
+                        <span className="text-sm text-muted-foreground">下部</span>
+                      </div>
+                    </div>
                 </CardContent>
               </Card>
 
