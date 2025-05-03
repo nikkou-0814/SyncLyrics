@@ -217,7 +217,7 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
       let targetScrollTop: number;
       if (isMobile) {
         const displayHeight = window.innerHeight;
-        const offsetFromTop = displayHeight * offsetPercentage * 0.6;
+        const offsetFromTop = displayHeight * offsetPercentage;
         targetScrollTop = lyricOffsetTop - offsetFromTop + lyricHeight / 2;
       } else {
         const scrollOffset = (1 - offsetPercentage) * containerHeight;
