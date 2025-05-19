@@ -334,16 +334,43 @@ const Player: React.FC<PlayerProps> = ({
     const exitStart = total - 1.2;
     let parentScale = 1.0;
     let opacity = 1.0;
-    let transformTransition = '4s cubic-bezier(0.19, 1, 0.22, 1)';
+    const transitionDuration = Math.min(Math.max(total * 0.4, 2), 6);
+    let transformTransition = `${transitionDuration}s cubic-bezier(0.19, 1, 0.22, 1)`;
     let opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
     let dotFills: [number, number, number] = [0, 0, 0];
+    const availableDuration = exitStart - appearEnd - 2;
+    const pulseCycleDuration = 5;
+    const pulseCount = Math.max(1, Math.floor(availableDuration / pulseCycleDuration));
+    const actualPulseDuration = availableDuration / pulseCount;
 
     if (dt < exitStart - 1) {
       const appearRatio = dt < appearEnd ? dt / appearEnd : 1;
       opacity = appearRatio;
 
-      const modT = dt % 4;
-      parentScale = modT < 2 ? 1.1 : 0.9;
+      if (dt < appearEnd) {
+        opacityTransition = '4s cubic-bezier(0.19, 1, 0.22, 1)';
+        parentScale = 0.9 + (0.2 * dt / appearEnd);
+      } else if (dt < exitStart - 2) {
+        const pulseTime = dt - appearEnd;
+        
+        if (pulseTime < 1) {
+          parentScale = 1.1;
+        } else {
+          const adjustedPulseTime = pulseTime - 1;
+          const timeInCycle = adjustedPulseTime % actualPulseDuration;
+          
+          const cooldownTime = actualPulseDuration * 0.2;
+          
+          if (timeInCycle < cooldownTime) {
+            parentScale = 0.9;
+          } else {
+            const pulsePhase = (timeInCycle - cooldownTime) / (actualPulseDuration - cooldownTime);
+            parentScale = 0.9 + 0.2 * Math.sin(pulsePhase * Math.PI);
+          }
+        }
+      } else {
+        parentScale = 0.9;
+      }
 
       const midDuration = Math.max(0, total - 1);
       let ratio = dt / midDuration;
@@ -363,12 +390,12 @@ const Player: React.FC<PlayerProps> = ({
       dotFills = [1, 1, 1];
 
       if (dtExit < 0.8) {
-        transformTransition = '2s cubic-bezier(0.19, 1, 0.22, 1)';
+        transformTransition = '3s cubic-bezier(0.19, 1, 0.22, 1)';
         parentScale = 1.3;
         opacity = 1;
       } else if (dtExit < 1.0) {
         transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
-        opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        opacityTransition = '0.3s cubic-bezier(0.19, 1, 0.22, 1)';
         parentScale = 0.6;
         opacity = 0;
       }
