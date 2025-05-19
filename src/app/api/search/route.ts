@@ -1,16 +1,23 @@
-import type { NextApiRequest, NextApiResponse } from 'next/types';
+import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { SearchQuery, SearchResult, LrcLibSearchResponseItem } from '@/types';
 
 type LrcLibSearchResponse = LrcLibSearchResponseItem[];
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function GET(request: NextRequest) {
   try {
-    const { q, track_name, artist_name, album_name, service } = req.query as SearchQuery;
+    const searchParams = request.nextUrl.searchParams;
+    const q = searchParams.get('q');
+    const track_name = searchParams.get('track_name');
+    const artist_name = searchParams.get('artist_name');
+    const album_name = searchParams.get('album_name');
+    const service = searchParams.get('service') as SearchQuery['service'];
 
     if (!q && !track_name) {
-      res.status(400).json({ error: 'クエリパラメータ "q" または "track_name" のいずれかを指定してください' });
-      return;
+      return NextResponse.json(
+        { error: 'クエリパラメータ "q" または "track_name" のいずれかを指定してください' },
+        { status: 400 }
+      );
     }
 
     if (service === 'KuGou') {
@@ -23,8 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (response.status === 200) {
         const data = response.data;
         if (!data.data || !data.data.info) {
-          res.status(404).json({ error: 'KuGou 検索結果が見つかりませんでした' });
-          return;
+          return NextResponse.json(
+            { error: 'KuGou 検索結果が見つかりませんでした' },
+            { status: 404 }
+          );
         }
         const results: SearchResult[] = data.data.info.map((item: { songname: string; singername: string; album_name?: string; duration: number; hash?: string; album_id?: string }, idx: number) => ({
           id: idx,
@@ -35,11 +44,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           hash: item.hash,
           album_id: item.album_id,
         }));
-        res.status(200).json({ results });
+        return NextResponse.json({ results });
       } else {
-        res.status(500).json({ error: 'KuGou 検索に失敗しました' });
+        return NextResponse.json(
+          { error: 'KuGou 検索に失敗しました' },
+          { status: 500 }
+        );
       }
-      return;
     }
 
     // lrclib
@@ -70,8 +81,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const data: LrcLibSearchResponse = response.data;
       if (!Array.isArray(data)) {
         console.error('Unexpected response format:', data);
-        res.status(500).json({ error: '予期しないAPIレスポンス形式です' });
-        return;
+        return NextResponse.json(
+          { error: '予期しないAPIレスポンス形式です' },
+          { status: 500 }
+        );
       }
       const results: SearchResult[] = data.map((item: LrcLibSearchResponseItem) => ({
         id: item.id,
@@ -80,24 +93,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         albumName: item.albumName || '',
         duration: item.duration,
       }));
-      res.status(200).json({ results });
+      return NextResponse.json({ results });
     } else {
-      res.status(500).json({ error: '検索に失敗しました' });
+      return NextResponse.json(
+        { error: '検索に失敗しました' },
+        { status: 500 }
+      );
     }
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       console.error('Error during search:', error.message);
       if (error.response && error.response.data) {
-        res.status(error.response.status).json({ error: error.response.data.message || 'APIエラーが発生しました' });
+        return NextResponse.json(
+          { error: error.response.data.message || 'APIエラーが発生しました' },
+          { status: error.response.status }
+        );
       } else {
-        res.status(500).json({ error: 'サーバーエラーが発生しました' });
+        return NextResponse.json(
+          { error: 'サーバーエラーが発生しました' },
+          { status: 500 }
+        );
       }
     } else if (error instanceof Error) {
       console.error('Unexpected error:', error.message);
-      res.status(500).json({ error: 'サーバーエラーが発生しました' });
+      return NextResponse.json(
+        { error: 'サーバーエラーが発生しました' },
+        { status: 500 }
+      );
     } else {
       console.error('Unknown error:', error);
-      res.status(500).json({ error: 'サーバーエラーが発生しました' });
+      return NextResponse.json(
+        { error: 'サーバーエラーが発生しました' },
+        { status: 500 }
+      );
     }
   }
 }

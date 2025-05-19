@@ -139,7 +139,7 @@ export default function Home() {
     setSelectedTrack(track);
     setAudioUrl(videoId);
     try {
-      const res = await fetch('/api/get-lyrics', {
+      const res = await fetch('/api/getlyrics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

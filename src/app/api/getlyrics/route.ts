@@ -1,39 +1,43 @@
-import type { NextApiRequest, NextApiResponse } from 'next/types';
+import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { SearchRequestBody, LyricLine, LrcLibResponse } from '@/types';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'このエンドポイントは POST メソッドのみをサポートしています' });
-    return;
-  }
-
+export async function POST(request: NextRequest) {
   try {
-    const { track_name, artist_name, album_name, duration, service, hash, album_id } = req.body as SearchRequestBody;
+    const body = await request.json();
+    const { track_name, artist_name, album_name, duration, service, hash, album_id } = body as SearchRequestBody;
 
     console.log('KuGou data:', { track_name, artist_name, album_name, duration, service, hash, album_id });
 
     if (!track_name || !artist_name || typeof duration !== 'number') {
-      res.status(400).json({ error: '必要なトラック情報が不足しています' });
-      return;
+      return NextResponse.json(
+        { error: '必要なトラック情報が不足しています' },
+        { status: 400 }
+      );
     }
 
     if (service === 'KuGou') {
       if (!hash) {
-        res.status(400).json({ error: 'KuGou の歌詞取得には hash が必要です' });
-        return;
+        return NextResponse.json(
+          { error: 'KuGou の歌詞取得には hash が必要です' },
+          { status: 400 }
+        );
       }
       // 候補情報の取得
       const searchUrl = `https://krcs.kugou.com/search?ver=1&man=yes&client=mobi&hash=${hash}`;
       const candidateResponse = await axios.get(searchUrl);
       if (candidateResponse.status !== 200) {
-        res.status(500).json({ error: 'KuGou 候補情報の取得に失敗しました' });
-        return;
+        return NextResponse.json(
+          { error: 'KuGou 候補情報の取得に失敗しました' },
+          { status: 500 }
+        );
       }
       const candidateJson = candidateResponse.data;
       if (!candidateJson.candidates || candidateJson.candidates.length === 0) {
-        res.status(404).json({ error: 'KuGou で歌詞候補が見つかりませんでした' });
-        return;
+        return NextResponse.json(
+          { error: 'KuGou で歌詞候補が見つかりませんでした' },
+          { status: 404 }
+        );
       }
       const { id, accesskey } = candidateJson.candidates[0];
       
@@ -41,13 +45,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const downloadUrl = `https://krcs.kugou.com/download?ver=1&man=yes&client=pc&fmt=lrc&id=${id}&accesskey=${accesskey}`;
       const lyricResponse = await axios.get(downloadUrl);
       if (lyricResponse.status !== 200) {
-        res.status(500).json({ error: 'KuGou からの歌詞ダウンロードに失敗しました' });
-        return;
+        return NextResponse.json(
+          { error: 'KuGou からの歌詞ダウンロードに失敗しました' },
+          { status: 500 }
+        );
       }
       const lyricJson = lyricResponse.data;
       if (!lyricJson.content) {
-        res.status(404).json({ error: 'KuGou から歌詞が返されませんでした' });
-        return;
+        return NextResponse.json(
+          { error: 'KuGou から歌詞が返されませんでした' },
+          { status: 404 }
+        );
       }
       // Base64デコードし LRC 形式テキストを取得
       const base64Content = lyricJson.content;
@@ -72,8 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       console.log('KuGou lyricsData:', lyricsData);
-      res.status(200).json({ lyricsData });
-      return;
+      return NextResponse.json({ lyricsData });
     } else {
       const params: SearchRequestBody = {
         track_name,
@@ -94,8 +101,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const syncedLyrics = data.syncedLyrics;
 
         if (!syncedLyrics) {
-          res.status(404).json({ error: '同期歌詞が見つかりませんでした' });
-          return;
+          return NextResponse.json(
+            { error: '同期歌詞が見つかりませんでした' },
+            { status: 404 }
+          );
         }
 
         const lyricsData: LyricLine[] = [];
@@ -114,25 +123,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         console.log('lrclib lyricsData:', lyricsData);
-        res.status(200).json({ lyricsData });
+        return NextResponse.json({ lyricsData });
       } else {
-        res.status(404).json({ error: '歌詞が見つかりませんでした' });
+        return NextResponse.json(
+          { error: '歌詞が見つかりませんでした' },
+          { status: 404 }
+        );
       }
     }
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       console.error('Error fetching lyrics:', error.message);
       if (error.response && error.response.status === 404) {
-        res.status(404).json({ error: '歌詞が見つかりませんでした' });
+        return NextResponse.json(
+          { error: '歌詞が見つかりませんでした' },
+          { status: 404 }
+        );
       } else {
-        res.status(500).json({ error: 'サーバーエラーが発生しました' });
+        return NextResponse.json(
+          { error: 'サーバーエラーが発生しました' },
+          { status: 500 }
+        );
       }
     } else if (error instanceof Error) {
       console.error('Unexpected error:', error.message);
-      res.status(500).json({ error: 'サーバーエラーが発生しました' });
+      return NextResponse.json(
+        { error: 'サーバーエラーが発生しました' },
+        { status: 500 }
+      );
     } else {
       console.error('Unknown error:', error);
-      res.status(500).json({ error: 'サーバーエラーが発生しました' });
+      return NextResponse.json(
+        { error: 'サーバーエラーが発生しました' },
+        { status: 500 }
+      );
     }
   }
 }
