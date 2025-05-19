@@ -1,7 +1,8 @@
 {
-  "name": "sync-lyrics-v2",
-  "version": "0.1.3",
+  "name": "sync-lyrics",
+  "version": "0.1.4",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
