@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline } from 'lucide-react';
+import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline, FileText } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -200,6 +200,51 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           </Button>
                         ))}
                       </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="useTTML" className="text-sm font-medium flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        TTML形式を使用
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">TTML形式の歌詞データが利用可能な場合に使用します</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </Label>
+                      <Switch
+                        id="useTTML"
+                        checked={settings.useTTML}
+                        onCheckedChange={(checked) => handleSettingChange('useTTML', checked)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="useWordTiming" className="text-sm font-medium flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        単語単位の同期を使用
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">TTML形式で単語単位のタイミング情報がある場合に使用できます</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </Label>
+                      <Switch
+                        id="useWordTiming"
+                        checked={settings.useWordTiming}
+                        onCheckedChange={(checked) => handleSettingChange('useWordTiming', checked)}
+                        disabled={!settings.useTTML}
+                      />
                     </div>
 
                     <Separator />
@@ -582,6 +627,53 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         カラオケ風歌詞がオフの場合は使用できません
                       </div>
                     )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="useTTML" className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      TTML形式を使用
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">TTML形式の歌詞データが利用可能な場合に使用します</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </Label>
+                    <Switch
+                      id="useTTML"
+                      checked={settings.useTTML}
+                      onCheckedChange={(checked) => handleSettingChange('useTTML', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="useWordTiming" className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      単語単位の同期を使用
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">TTML形式で単語単位のタイミング情報がある場合に使用できます</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </Label>
+                    <Switch
+                      id="useWordTiming"
+                      checked={settings.useWordTiming}
+                      onCheckedChange={(checked) => handleSettingChange('useWordTiming', checked)}
+                      disabled={!settings.useTTML}
+                    />
                   </div>
 
                   <Separator />

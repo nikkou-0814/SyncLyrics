@@ -3,6 +3,82 @@ export interface LyricLine {
   text: string;
 }
 
+export interface TTMLAgent {
+  id: string;
+  type: 'person' | 'group' | 'other';
+  name?: string;
+}
+
+export interface TTMLSpan {
+  begin: number;
+  end: number;
+  text: string;
+  agent?: string;
+  isBackground?: boolean;
+  role?: string;
+}
+
+export interface TTMLWord {
+  begin: number;
+  end: number;
+  text: string;
+}
+
+export interface TTMLLine {
+  begin: number;
+  end: number;
+  agent?: string;
+  spans?: TTMLSpan[];
+  text?: string;
+  words?: TTMLWord[];
+  backgroundWords?: TTMLWord[];
+  backgroundText?: string;
+  timing?: 'Line' | 'Word';
+}
+
+export interface TTMLDiv {
+  begin: number;
+  end: number;
+  songPart?: string;
+  lines: TTMLLine[];
+}
+
+export interface TTMLData {
+  title?: string;
+  artists?: string[];
+  songwriter?: string;
+  language?: string;
+  duration?: number;
+  agents: {
+    id: string;
+    name: string;
+    type: string;
+  }[];
+  divs: {
+    begin: number;
+    end: number;
+    lines: TTMLLine[];
+  }[];
+  timing?: 'Line' | 'Word';
+}
+
+export interface WordTimingKaraokeLyricLineProps {
+  line: TTMLLine;
+  currentTime: number;
+  resolvedTheme: string;
+  progressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
+  isActive: boolean;
+  isPast?: boolean;
+}
+
+export interface BackgroundWordTimingLyricLineProps {
+  backgroundWords: TTMLWord[];
+  currentTime: number;
+  resolvedTheme: string;
+  progressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
+  fontSize: 'small' | 'medium' | 'large';
+}
+
 export interface Settings {
   showplayercontrol: boolean;
   fullplayer: boolean;
@@ -18,6 +94,8 @@ export interface Settings {
   lyricProgressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
   CustomEasing: string;
   scrollPositionOffset: number;
+  useTTML?: boolean;
+  useWordTiming: boolean;
 }
 
 export interface PlayerLyricsProps {
@@ -29,12 +107,13 @@ export interface PlayerLyricsProps {
   settings: Settings;
   resolvedTheme: string;
   onLyricClick: (time: number) => void;
-  renderInterludeDots: (startTime: number, endTime: number) => JSX.Element | null;
+  renderInterludeDots: (startTime: number, endTime: number, alignment?: 'left' | 'center' | 'right') => JSX.Element | null;
   smoothScrollTo: (
     element: HTMLElement,
     to: number,
     duration: number
   ) => void;
+  ttmlData?: TTMLData;
 }
 
 export interface KaraokeLyricLineProps {
@@ -52,6 +131,7 @@ export interface PlayerProps {
   albumName: string;
   artistName: string;
   onBack: () => void;
+  ttmlData?: TTMLData;
 }
 
 export interface PlayerControlsProps {

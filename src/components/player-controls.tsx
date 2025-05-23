@@ -55,7 +55,6 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
     handleVolumeChange(val);
   };
 
-  // Determine volume icon based on volume level
   const VolumeIcon = () => {
     if (volume === 0) return <VolumeX className="h-4 w-4" />;
     if (volume > 50) return <Volume2 className="h-4 w-4" />;
@@ -108,8 +107,8 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                   {trackName.length > 40 ? `${trackName.slice(0, 40)}...` : trackName}
                 </p>
                 <p className="text-xs overflow-hidden text-nowrap text-ellipsis text-muted-foreground">
-                  {artistName.length > 40 ? `${artistName.slice(0, 40)}...` : artistName} - 
-                  {albumName.length > 40 ? `${albumName.slice(0, 40)}...` : albumName}
+                  {artistName.length > 40 ? `${artistName.slice(0, 40)}...` : artistName}
+                  {albumName && ` - ${albumName.length > 40 ? `${albumName.slice(0, 40)}...` : albumName}`}
                 </p>
               </div>
 
@@ -263,11 +262,10 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                   <p className="text-xs overflow-hidden text-nowrap text-ellipsis text-muted-foreground">
                     {artistName.length > (settings.fullplayer ? 50 : 30)
                       ? `${artistName.slice(0, settings.fullplayer ? 50 : 30)}...`
-                      : artistName}{" "}
-                    -{" "}
-                    {albumName.length > (settings.fullplayer ? 40 : 20)
+                      : artistName}
+                    {albumName && ` - ${albumName.length > (settings.fullplayer ? 40 : 20)
                       ? `${albumName.slice(0, settings.fullplayer ? 40 : 20)}...`
-                      : albumName}
+                      : albumName}`}
                   </p>
                 </div>
               </div>

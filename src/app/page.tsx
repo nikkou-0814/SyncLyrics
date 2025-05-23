@@ -28,10 +28,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertCircle,
   Search,
-  Link
+  Link,
+  FileUp
 } from "lucide-react";
 
-import { LyricLine, SearchResult, ErrorState } from '@/types';
+import { LyricLine, SearchResult, ErrorState, TTMLData } from '@/types';
+import { parseTTML } from '@/utils/ttml-parser';
 
 const Player = dynamic(() => import('@/components/player'), { ssr: false });
 
@@ -46,13 +48,18 @@ export default function Home() {
   const [error, setError] = useState<ErrorState | null>(null);
   const [showPlayer, setShowPlayer] = useState<boolean>(false);
   const [selectedService, setSelectedService] = useState<'lrclib' | 'KuGou'>('lrclib');
+  const [ttmlData, setTtmlData] = useState<TTMLData | null>(null);
+  const [ttmlPasteValue, setTtmlPasteValue] = useState<string>('');
+  const [showTtmlInput, setShowTtmlInput] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedUrl = localStorage.getItem('savedUrlQuery');
       const savedQuery = localStorage.getItem('savedSearchQuery');
+      const savedTtml = localStorage.getItem('savedTtmlPaste');
       if (savedUrl) setUrlQuery(savedUrl);
       if (savedQuery) setSearchQuery(savedQuery);
+      if (savedTtml) setTtmlPasteValue(savedTtml);
     }
   }, []);  
   
@@ -64,10 +71,27 @@ export default function Home() {
     localStorage.setItem('savedSearchQuery', searchQuery);
   }, [searchQuery]);  
 
+  useEffect(() => {
+    localStorage.setItem('savedTtmlPaste', ttmlPasteValue);
+  }, [ttmlPasteValue]);
+
   const extractVideoId = (url: string): string | null => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  const getYouTubeTitle = async (videoId: string): Promise<string> => {
+    try {
+      const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+      if (response.ok) {
+        const data = await response.json();
+        return data.title || 'Unknown Track';
+      }
+    } catch (error) {
+      console.error('YouTube title fetch error:', error);
+    }
+    return 'Unknown Track';
   };
 
   const handleSearch = async () => {
@@ -164,6 +188,8 @@ export default function Home() {
       }
       setLyricsData(data.lyricsData);
       setShowPlayer(true);
+      const prev = JSON.parse(localStorage.getItem('playerSettings') || '{}');
+      localStorage.setItem('playerSettings', JSON.stringify({ ...prev, useTTML: false }));
     } catch (err: unknown) {
       if (err instanceof Error) {
         console.error(err);
@@ -181,12 +207,104 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
-  };  
+  };
+
+  const handleTtmlPaste = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTtmlPasteValue(e.target.value);
+  };
+  
+  const handleTtmlSubmit = async () => {
+    if (!urlQuery) {
+      setError({
+        message: 'YouTubeのURLを入力してください。',
+        advice: '有効なYouTube URLを入力してください。',
+      });
+      return;
+    }
+    
+    const videoId = extractVideoId(urlQuery);
+    if (!videoId) {
+      setError({
+        message: '有効なYouTube URLではありません。',
+        advice: 'URLを確認し、有効なYouTubeリンクを入力してください。',
+      });
+      return;
+    }
+    
+    setIsProcessing(true);
+    
+    try {
+      const parsed = parseTTML(ttmlPasteValue);
+      if (!parsed) {
+        setError({
+          message: '無効なTTML形式です。',
+          advice: '正しいTTML形式であることを確認してください。',
+        });
+        setIsProcessing(false);
+        return;
+      }
+      
+      const youtubeTitle = await getYouTubeTitle(videoId);
+      
+      const lyricsLines: LyricLine[] = [];
+      parsed.divs.forEach(div => {
+        div.lines.forEach(line => {
+          if (line.text) {
+            lyricsLines.push({
+              time: line.begin,
+              text: line.text
+            });
+          }
+        });
+      });
+      
+      lyricsLines.sort((a, b) => a.time - b.time);
+      
+      setTtmlData(parsed);
+      setLyricsData(lyricsLines);
+      setAudioUrl(videoId);
+      setSelectedTrack({
+        id: 0,
+        trackName: youtubeTitle,
+        artistName: parsed.songwriter || 'Unknown Artist',
+        albumName: '',
+        duration: parsed.duration || 0
+      });
+      setShowPlayer(true);
+      const prev = JSON.parse(localStorage.getItem('playerSettings') || '{}');
+      localStorage.setItem('playerSettings', JSON.stringify({ ...prev, useTTML: true }));
+    } catch (err) {
+      console.error('TTML解析エラー:', err);
+      setError({
+        message: 'TTML解析に失敗しました。',
+        advice: err instanceof Error ? err.message : '形式を確認してください。',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  const handleUploadTtml = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setTtmlPasteValue(content);
+    };
+    reader.readAsText(file);
+  };
 
   const handleBack = () => {
     setShowPlayer(false);
     setSelectedTrack(null);
     setLyricsData(null);
+    setTtmlData(null);
+  };
+
+  const toggleTtmlInput = () => {
+    setShowTtmlInput(!showTtmlInput);
   };
 
   return (
@@ -195,7 +313,7 @@ export default function Home() {
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="pb-2">
             <CardTitle className="text-2xl font-bold text-center">
-              URLを挿入し曲を検索してください
+              {showTtmlInput ? 'URLを挿入しファイルを選択かペーストして開始してください' : 'URLを挿入し曲を検索してください'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -210,39 +328,122 @@ export default function Home() {
                   className="pl-8"
                 />
               </div>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="曲名を入力"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
+              
+              {!showTtmlInput ? (
+                <>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="曲名を入力"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                  
+                  <Select
+                    value={selectedService}
+                    onValueChange={(value) => setSelectedService(value as 'lrclib' | 'KuGou')}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="サービスを選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="lrclib">lrclib</SelectItem>
+                      <SelectItem value="KuGou">KuGou</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={handleSearch}
+                      disabled={!searchQuery || isProcessing}
+                      className="flex-1"
+                    >
+                      {isProcessing ? '処理中...' : '検索'}
+                    </Button>
+                    <Button
+                      onClick={toggleTtmlInput}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <FileUp className="h-4 w-4" />
+                      TTMLファイル
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Button
+                        onClick={toggleTtmlInput}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        ← 通常検索
+                      </Button>
+                      <span className="text-lg font-semibold text-primary">TTML歌詞</span>
+                    </div>
+                    
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 space-y-3">
+                      <div className="text-center">
+                        <label htmlFor="ttmlFile" className="cursor-pointer">
+                          <div className="flex flex-col items-center gap-3 text-muted-foreground hover:text-primary transition-colors">
+                            <div className="p-3 border-2 border-dashed border-current rounded-lg">
+                              <FileUp className="h-8 w-8" />
+                            </div>
+                            <div className="text-center">
+                              <p className="font-medium">ファイルを選択</p>
+                              <p className="text-sm">(.ttml, .xml)</p>
+                            </div>
+                          </div>
+                          <input
+                            type="file"
+                            id="ttmlFile"
+                            accept=".ttml,.xml"
+                            onChange={handleUploadTtml}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                      
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-muted-foreground/25" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">または</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-muted-foreground">
+                          TTML形式の歌詞をペースト
+                        </label>
+                        <textarea
+                          value={ttmlPasteValue}
+                          onChange={handleTtmlPaste}
+                          placeholder="TTML形式の歌詞をここにペーストしてください..."
+                          className="w-full h-32 p-3 border rounded-md resize-none text-sm font-mono focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button
+                      onClick={handleTtmlSubmit}
+                      disabled={!ttmlPasteValue || isProcessing}
+                      className="w-full h-11"
+                    >
+                      {isProcessing ? '処理中...' : 'TTML歌詞で開始'}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
             
-            <Select
-              value={selectedService}
-              onValueChange={(value) => setSelectedService(value as 'lrclib' | 'KuGou')}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="サービスを選択" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lrclib">lrclib</SelectItem>
-                <SelectItem value="KuGou">KuGou</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              onClick={handleSearch}
-              disabled={!searchQuery || isProcessing}
-              className="w-full"
-            >
-              {isProcessing ? '処理中...' : '検索'}
-            </Button>
-
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -252,7 +453,7 @@ export default function Home() {
             )}
           </CardContent>
 
-          {searchResults && (
+          {searchResults && !showTtmlInput && (
             <CardFooter className="flex-col">
               <h2 className="text-xl font-semibold w-full mb-2">検索結果</h2>
               <ScrollArea className="max-h-64 w-full rounded-md border overflow-y-scroll">
@@ -289,6 +490,7 @@ export default function Home() {
           albumName={selectedTrack.albumName}
           artistName={selectedTrack.artistName}
           onBack={handleBack}
+          ttmlData={ttmlData || undefined}
         />
       )}
     </div>

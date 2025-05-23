@@ -6,6 +6,7 @@ import { ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import PlayerLyrics from '@/components/player-lyrics';
+import TTMLLyrics from '@/components/ttml-lyrics';
 import PlayerControls from '@/components/player-controls';
 import SettingsSidebar from '@/components/settings-dialog';
 import { toast } from 'sonner';
@@ -26,6 +27,8 @@ const DEFAULT_SETTINGS: Settings = {
   lyricProgressDirection: 'ltr',
   CustomEasing: 'cubic-bezier(0.22, 1, 0.36, 1)',
   scrollPositionOffset: 50,
+  useTTML: false,
+  useWordTiming: true,
 };
 
 const Player: React.FC<PlayerProps> = ({
@@ -35,6 +38,7 @@ const Player: React.FC<PlayerProps> = ({
   albumName,
   artistName,
   onBack,
+  ttmlData,
 }) => {
   const youtubeRef = useRef<YouTube['internalPlayer'] | null>(null);
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -243,7 +247,7 @@ const Player: React.FC<PlayerProps> = ({
         const start = element.scrollTop;
         const change = to - start;
         
-        if (Math.abs(change) < 2) {
+        if (Math.abs(change) < 5) {
           resolve();
           return;
         }
@@ -258,11 +262,17 @@ const Player: React.FC<PlayerProps> = ({
         }
         const bezier = cubicBezier(p1x, p1y, p2x, p2y);
 
+        let lastScrollTop = start;
         const animateScroll = (currentT: number) => {
           const elapsed = currentT - startTime;
           const progress = Math.min(elapsed / duration, 1);
           const ease = bezier(progress);
-          element.scrollTop = start + change * ease;
+          const newScrollTop = start + change * ease;
+          
+          if (Math.abs(newScrollTop - lastScrollTop) >= 1) {
+            element.scrollTop = newScrollTop;
+            lastScrollTop = newScrollTop;
+          }
           
           if (elapsed < duration) {
             requestAnimationFrame(animateScroll);
@@ -323,7 +333,7 @@ const Player: React.FC<PlayerProps> = ({
     return resolvedTheme === 'dark' ? 'rgba(255,255,255,' : 'rgba(0,0,0,';
   };
 
-  const renderInterludeDots = (startTime: number, endTime: number) => {
+  const renderInterludeDots = (startTime: number, endTime: number, alignment: 'left' | 'center' | 'right' = 'center') => {
     const total = endTime - startTime;
     if (total < 1) return null;
     if (total <= 0) return null;
@@ -331,7 +341,7 @@ const Player: React.FC<PlayerProps> = ({
     if (dt < 0 || dt >= total) return null;
 
     const appearEnd = 2;
-    const exitStart = total - 1.2;
+    const exitStart = settings.useTTML && ttmlData ? total - 1.0 : total - 1.1;
     let parentScale = 1.0;
     let opacity = 1.0;
     const transitionDuration = Math.min(Math.max(total * 0.4, 2), 6);
@@ -390,12 +400,12 @@ const Player: React.FC<PlayerProps> = ({
       dotFills = [1, 1, 1];
 
       if (dtExit < 0.8) {
-        transformTransition = '3s cubic-bezier(0.19, 1, 0.22, 1)';
+        transformTransition = '2s cubic-bezier(0.19, 1, 0.22, 1)';
         parentScale = 1.3;
         opacity = 1;
       } else if (dtExit < 1.0) {
-        transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)';
-        opacityTransition = '0.3s cubic-bezier(0.19, 1, 0.22, 1)';
+        transformTransition = settings.useTTML && ttmlData ? '0.5s cubic-bezier(0.19, 1, 0.22, 1)' : '0.4s cubic-bezier(0.19, 1, 0.22, 1)';
+        opacityTransition = settings.useTTML && ttmlData ? '0.2s cubic-bezier(0.19, 1, 0.22, 1)' : '0.4s cubic-bezier(0.19, 1, 0.22, 1)';
         parentScale = 0.6;
         opacity = 0;
       }
@@ -422,9 +432,9 @@ const Player: React.FC<PlayerProps> = ({
           ? '10px'
           : '15px',
       left:
-        settings.lyricposition === 'center'
+        alignment === 'center'
           ? '50%'
-          : settings.lyricposition === 'right'
+          : alignment === 'right'
           ? 'auto'
           : settings.fontSize === 'small'
           ? '5px'
@@ -432,7 +442,7 @@ const Player: React.FC<PlayerProps> = ({
           ? '10px'
           : '15px',
       right:
-        settings.lyricposition === 'right'
+        alignment === 'right'
           ? settings.fontSize === 'small'
             ? '5px'
             : settings.fontSize === 'medium'
@@ -440,7 +450,7 @@ const Player: React.FC<PlayerProps> = ({
             : '15px'
           : 'auto',
       transform:
-        settings.lyricposition === 'center'
+        alignment === 'center'
           ? `translateX(-50%) scale(${parentScale + fontSizeScale})`
           : `scale(${parentScale + fontSizeScale})`,
     };
@@ -475,18 +485,34 @@ const Player: React.FC<PlayerProps> = ({
 
   return (
     <>
-      <PlayerLyrics
-        lyricsData={processedLyricsData}
-        currentTime={currentTime}
-        duration={duration}
-        currentLineIndex={currentLineIndex}
-        isMobile={isMobile}
-        settings={settings}
-        resolvedTheme={theme}
-        onLyricClick={handleLyricClick}
-        renderInterludeDots={renderInterludeDots}
-        smoothScrollTo={smoothScrollTo}
-      />
+      {settings.useTTML && ttmlData ? (
+        <TTMLLyrics
+          lyricsData={processedLyricsData}
+          currentTime={currentTime}
+          duration={duration}
+          currentLineIndex={currentLineIndex}
+          isMobile={isMobile}
+          settings={settings}
+          resolvedTheme={theme}
+          onLyricClick={handleLyricClick}
+          renderInterludeDots={renderInterludeDots}
+          smoothScrollTo={smoothScrollTo}
+          ttmlData={ttmlData}
+        />
+      ) : (
+        <PlayerLyrics
+          lyricsData={processedLyricsData}
+          currentTime={currentTime}
+          duration={duration}
+          currentLineIndex={currentLineIndex}
+          isMobile={isMobile}
+          settings={settings}
+          resolvedTheme={theme}
+          onLyricClick={handleLyricClick}
+          renderInterludeDots={renderInterludeDots}
+          smoothScrollTo={smoothScrollTo}
+        />
+      )}
 
       <PlayerControls
         isPlaying={isPlaying}

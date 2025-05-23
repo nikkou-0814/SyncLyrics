@@ -352,7 +352,7 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
               >
                 {isInterlude
                   ? isActive
-                    ? renderInterludeDots(line.time, endTime)
+                    ? renderInterludeDots(line.time, endTime, settings.lyricposition === 'right' ? 'right' : settings.lyricposition === 'center' ? 'center' : 'left')
                     : null
                   : isActive && settings.useKaraokeLyric
                   ? (
