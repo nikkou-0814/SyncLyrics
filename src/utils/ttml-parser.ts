@@ -61,6 +61,20 @@ export function parseTTML(xmlContent: string): TTMLData | null {
         const pBegin = parseTime(p.getAttribute('begin') || '0');
         const pEnd = parseTime(p.getAttribute('end') || '0');
         const agent = p.getAttribute('ttm:agent') || undefined;
+        
+        const directChildren = Array.from(p.children);
+        const firstBgSpanIndex = directChildren.findIndex(
+          el => el.tagName.toLowerCase() === 'span' && el.getAttribute('ttm:role') === 'x-bg'
+        );
+        const firstMainSpanIndex = directChildren.findIndex(
+          el => el.tagName.toLowerCase() === 'span' && el.getAttribute('ttm:role') !== 'x-bg'
+        );
+        
+        let backgroundPosition: 'above' | 'below' = 'below';
+        if (firstBgSpanIndex !== -1 && firstMainSpanIndex !== -1) {
+          backgroundPosition = firstBgSpanIndex < firstMainSpanIndex ? 'above' : 'below';
+        }
+        
         const processSpans = (parentElement: Element, isBackgroundParent = false): { words: TTMLWord[], backgroundWords: TTMLWord[] } => {
           const words: TTMLWord[] = [];
           const backgroundWords: TTMLWord[] = [];
@@ -155,6 +169,7 @@ export function parseTTML(xmlContent: string): TTMLData | null {
             words,
             backgroundWords: backgroundWords.length > 0 ? backgroundWords : undefined,
             backgroundText,
+            backgroundPosition,
             timing: 'Word' as const
           } as TTMLLine;
         } else {

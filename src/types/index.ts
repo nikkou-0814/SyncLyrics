@@ -33,6 +33,7 @@ export interface TTMLLine {
   words?: TTMLWord[];
   backgroundWords?: TTMLWord[];
   backgroundText?: string;
+  backgroundPosition?: 'above' | 'below';
   timing?: 'Line' | 'Word';
 }
 

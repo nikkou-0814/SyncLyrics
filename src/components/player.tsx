@@ -233,6 +233,9 @@ const Player: React.FC<PlayerProps> = ({
 
   // スクロール
   const parseCubicBezier = (easing: string): [number, number, number, number] => {
+    if (!easing || typeof easing !== 'string') {
+      return [0.22, 1, 0.36, 1];
+    }
     const cleaned = easing.replace('cubic-bezier(', '').replace(')', '');
     const parts = cleaned.split(',').map(s => parseFloat(s.trim()));
     if (parts.length !== 4 || parts.some(isNaN)) {
@@ -255,7 +258,7 @@ const Player: React.FC<PlayerProps> = ({
         const startTime = performance.now();
         let p1x = 0.22, p1y = 1, p2x = 0.36, p2y = 1;
         try {
-          const easingValues = parseCubicBezier(settings.CustomEasing);
+          const easingValues = parseCubicBezier(settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)');
           [p1x, p1y, p2x, p2y] = easingValues;
         } catch (e) {
           console.error("Invalid CustomEasing, falling back to default.", e);

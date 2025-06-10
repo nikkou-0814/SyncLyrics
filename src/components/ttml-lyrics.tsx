@@ -225,8 +225,8 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
               backgroundPosition: finalPosition,
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
-              transform: shouldAnimate && isActive ? 'translateY(-5px)' : 'translateY(0px)',
-              transition: animationEnabled ? 'background-position 0.1s linear, transform 1s ease' : 'transform 1s ease',
+              transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
+              transition: animationEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'transform 1s ease',
               whiteSpace: 'pre-wrap'
             }}
           >
@@ -241,8 +241,8 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
             style={{
               display: 'inline-block',
               position: 'relative',
-              transform: shouldAnimate && isActive ? 'translateY(-5px)' : 'translateY(0px)',
-              transition: 'transform 1s ease',
+              transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
+              transition: 'transform 1.5s ease',
               color: isPast ? activeColor : inactiveColor,
               whiteSpace: 'pre-wrap'
             }}
@@ -952,6 +952,56 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                 >
                   {!isEmpty && (
                     <div>
+                      {line.backgroundText && line.backgroundPosition === 'above' && (() => {
+                        const backgroundKey = `${line.begin}-${line.end}-bg`;
+                        const actualHeight = backgroundHeights.get(backgroundKey) || 0;
+                        
+                        return (
+                          <div 
+                            style={{
+                              opacity: isActive ? 1 : 0,
+                              maxHeight: isActive ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                              marginBottom: isActive ? '20px' : '0px',
+                              overflow: 'hidden',
+                              filter: isActive ? 'none' : 'blur(20px)',
+                              transition: `${isActive ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, margin-bottom 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                              pointerEvents: 'none',
+                              textAlign: textAlignment
+                            }}
+                          >
+                            <div 
+                              ref={(el) => {
+                                if (el) {
+                                  backgroundRefs.current.set(backgroundKey, el);
+                                }
+                              }}
+                            >
+                              {line.backgroundWords && line.backgroundWords.length > 0 ? (
+                                <BackgroundWordTimingLyricLine
+                                  backgroundWords={line.backgroundWords}
+                                  currentTime={currentTime + (settings.lyricOffset || 0)}
+                                  resolvedTheme={resolvedTheme}
+                                  progressDirection={settings.lyricProgressDirection}
+                                  fontSize={settings.fontSize}
+                                />
+                              ) : (
+                                <span style={{ 
+                                  fontSize: {
+                                    small: '1.2rem',
+                                    medium: '1.5rem',
+                                    large: '2.0rem',
+                                  }[settings.fontSize],
+                                  color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                                  fontWeight: 'normal',
+                                  pointerEvents: 'none'
+                                }}>
+                                  <LineBreaker text={line.backgroundText} />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {settings.useKaraokeLyric ? (
                         hasWordTiming && settings.useWordTiming && line.words && line.words.length > 0 ? (
                           <WordTimingKaraokeLyricLine
@@ -982,7 +1032,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           <LineBreaker text={line.text || ''} />
                         </span>
                       )}
-                      {line.backgroundText && (() => {
+                      {line.backgroundText && (!line.backgroundPosition || line.backgroundPosition === 'below') && (() => {
                         const backgroundKey = `${line.begin}-${line.end}-bg`;
                         const actualHeight = backgroundHeights.get(backgroundKey) || 0;
                         
