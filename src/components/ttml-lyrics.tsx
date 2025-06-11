@@ -338,8 +338,8 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
             style={{
               display: 'inline-block',
               position: 'relative',
-              transform: wordIsActive || wordIsCompleted ? 'translateY(-2px)' : 'translateY(0px)',
-              transition: 'transform 0.5s ease',
+              transform: wordIsActive || wordIsCompleted ? 'translateY(-3px)' : 'translateY(0px)',
+              transition: 'transform 1s ease',
               color: inactiveColor,
               whiteSpace: 'pre-wrap',
               fontSize: bgfontSizeValue,
@@ -401,8 +401,8 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
               backgroundPosition: finalPosition,
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
-              transform: wordIsActive || wordIsCompleted ? 'translateY(-2px)' : 'translateY(0px)',
-              transition: animationEnabled ? 'background-position 0.1s linear, transform 0.5s ease' : 'transform 0.5s ease',
+              transform: wordIsActive || wordIsCompleted ? 'translateY(-3px)' : 'translateY(0px)',
+              transition: animationEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'transform 0.5s ease',
               whiteSpace: 'pre-wrap',
               fontSize: bgfontSizeValue,
               fontWeight: 'bold'
@@ -963,17 +963,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
               groupLine.begin === line.begin && groupLine.text === line.text
             );
             
-            // グループ表示中かどうかを判定
             const isGroupActive = currentGroup.length > 0 && groupEnd !== null && now >= currentGroup[0].begin && now < groupEnd;
-            
             const lineEnd = line.groupEnd || line.originalEnd || line.end;
-            
-            // グループ表示中はグループ内の歌詞を「表示し終わった」状態にしない
             const isPast = isGroupActive && isInCurrentGroup ? false : lineEnd < now;
-            
-            // 表示状態の判定: アクティブまたはグループ内で表示中
             const isDisplaying = isActive || (isGroupActive && isInCurrentGroup);
-            
             const isEmpty = !line.text || line.text.trim() === '';
             const agent = line.agent ? ttmlData.agents.find(a => a.id === line.agent) : null;
             
@@ -1073,7 +1066,20 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                 >
                   {!isEmpty && (
                     <div>
-                      {line.backgroundText && line.backgroundPosition === 'above' && (() => {
+                      {line.backgroundText && (() => {
+                        const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
+                          ? line.backgroundWords[0].begin 
+                          : null;
+                        const mainStartTime = line.words && line.words.length > 0 
+                          ? line.words[0].begin 
+                          : line.begin;
+                        
+                        const shouldShowAbove = backgroundStartTime !== null 
+                          ? backgroundStartTime < mainStartTime
+                          : line.backgroundPosition === 'above';
+                        
+                        if (!shouldShowAbove) return null;
+                        
                         const backgroundKey = `${line.begin}-${line.end}-bg`;
                         const actualHeight = backgroundHeights.get(backgroundKey) || 0;
                         
@@ -1082,7 +1088,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             style={{
                               opacity: isDisplaying ? 1 : 0,
                               maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                              marginBottom: isDisplaying ? '20px' : '0px',
+                              marginBottom: isDisplaying ? '10px' : '0px',
                               overflow: 'hidden',
                               filter: isDisplaying ? 'none' : 'blur(20px)',
                               transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, margin-bottom 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
@@ -1153,7 +1159,20 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           <LineBreaker text={line.text || ''} />
                         </span>
                       )}
-                      {line.backgroundText && (!line.backgroundPosition || line.backgroundPosition === 'below') && (() => {
+                      {line.backgroundText && (() => {
+                        const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
+                          ? line.backgroundWords[0].begin 
+                          : null;
+                        const mainStartTime = line.words && line.words.length > 0 
+                          ? line.words[0].begin 
+                          : line.begin;
+                        
+                        const shouldShowAbove = backgroundStartTime !== null 
+                          ? backgroundStartTime < mainStartTime
+                          : line.backgroundPosition === 'above';
+                        
+                        if (shouldShowAbove) return null;
+                        
                         const backgroundKey = `${line.begin}-${line.end}-bg`;
                         const actualHeight = backgroundHeights.get(backgroundKey) || 0;
                         
@@ -1245,12 +1264,11 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                         </div>
                       );
                     })() 
-                    : null
+                  : null
                 }
               </React.Fragment>
             );
           })}
-          
           <div style={{ height: window.innerHeight }}></div>
         </div>
       </div>

@@ -36,7 +36,7 @@ export function parseTTML(xmlContent: string): TTMLData | null {
       throw new Error('XMLのパースに失敗しました');
     }
     
-    const ttElement = xmlDoc.querySelector('tt');
+    const ttElement = xmlDoc.getElementsByTagNameNS('http://www.w3.org/ns/ttml', 'tt')[0];
     if (!ttElement) {
       throw new Error('TTMLのルート要素が見つかりません');
     }
@@ -98,6 +98,7 @@ export function parseTTML(xmlContent: string): TTMLData | null {
               const span = node as Element;
               const role = span.getAttribute('ttm:role');
               const isBackground = role === 'x-bg' || isBackgroundParent;
+              
               if (span.childNodes.length > 0) {
                 const hasChildSpans = Array.from(span.childNodes).some(
                   child => child.nodeType === Node.ELEMENT_NODE && (child as Element).tagName.toLowerCase() === 'span'
@@ -123,6 +124,18 @@ export function parseTTML(xmlContent: string): TTMLData | null {
                   } else {
                     words.push(wordObj);
                   }
+                }
+              } else {
+                const wordObj = {
+                  begin: parseTime(span.getAttribute('begin') || '0'),
+                  end: parseTime(span.getAttribute('end') || '0'),
+                  text: span.textContent || ''
+                };
+                
+                if (isBackground) {
+                  backgroundWords.push(wordObj);
+                } else {
+                  words.push(wordObj);
                 }
               }
             }
