@@ -54,7 +54,11 @@ const Player: React.FC<PlayerProps> = ({
   const didShowToastRef = useRef(false);
   const [settings, setSettings] = useState<Settings>(() => {
     const savedSettings = localStorage.getItem('playerSettings');
-    return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
+    if (savedSettings) {
+      const parsed = JSON.parse(savedSettings);
+      return { ...DEFAULT_SETTINGS, ...parsed };
+    }
+    return DEFAULT_SETTINGS;
   });
 
   const processedLyricsData = useMemo(() => {
@@ -66,7 +70,7 @@ const Player: React.FC<PlayerProps> = ({
 
   const updateSettings = (newSettings: Partial<Settings>) => {
     setSettings((prevSettings) => {
-      const updatedSettings = { ...prevSettings, ...newSettings };
+      const updatedSettings = { ...DEFAULT_SETTINGS, ...prevSettings, ...newSettings };
       localStorage.setItem('playerSettings', JSON.stringify(updatedSettings));
       return updatedSettings;
     });
