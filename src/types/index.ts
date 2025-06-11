@@ -35,6 +35,8 @@ export interface TTMLLine {
   backgroundText?: string;
   backgroundPosition?: 'above' | 'below';
   timing?: 'Line' | 'Word';
+  groupEnd?: number;
+  originalEnd?: number;
 }
 
 export interface TTMLDiv {

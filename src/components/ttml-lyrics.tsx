@@ -440,7 +440,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   const isProgrammaticScrollingRef = useRef<boolean>(false);
   const lastUserScrollTimeRef = useRef<number>(0);
   const lastScrolledLineRef = useRef<TTMLLine | null>(null);
-  const scrollCooldownPeriod = 200;
+  const lastScrolledActiveLineRef = useRef<TTMLLine | null>(null);
   const [currentGroup, setCurrentGroup] = useState<TTMLLine[]>([]);
   const [groupEnd, setGroupEnd] = useState<number | null>(null);
   const [groupIndex, setGroupIndex] = useState<number>(-1);
@@ -460,7 +460,32 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       });
     });
     lines.sort((a, b) => a.begin - b.begin);
-    return lines;
+    
+    const processedLines = lines.map(line => ({ ...line, originalEnd: line.end }));
+    
+    for (let i = 0; i < processedLines.length; i++) {
+      const currentLine = processedLines[i];
+      if (currentLine.groupEnd !== undefined) continue;
+      
+      const overlappingLines = [currentLine];
+      for (let j = i + 1; j < processedLines.length && overlappingLines.length < 3; j++) {
+        const otherLine = processedLines[j];
+        if (otherLine.groupEnd !== undefined) continue;
+        
+        const overlap = Math.max(0, Math.min(currentLine.end, otherLine.end) - Math.max(currentLine.begin, otherLine.begin));
+        if (overlap > 0) {
+          overlappingLines.push(otherLine);
+        }
+      }
+      
+      const maxEnd = Math.max(...overlappingLines.map(line => line.originalEnd || line.end));
+      
+      overlappingLines.forEach(line => {
+        line.groupEnd = maxEnd;
+      });
+    }
+    
+    return processedLines;
   }, [ttmlData]);
 
   useEffect(() => {
@@ -564,9 +589,11 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   }, [ttmlData]);
 
   const getActiveGroup = useCallback((time: number): { group: TTMLLine[], end: number, index: number } => {
-    const active: TTMLLine[] = allLyricLines.filter(line => time >= line.begin && time < line.end);
+    const active: TTMLLine[] = allLyricLines.filter(line => 
+      time >= line.begin && time < (line.groupEnd || line.end)
+    );
     if (active.length === 0) return { group: [], end: 0, index: -1 };
-    const maxEnd = Math.max(...active.map(l => l.end));
+    const maxEnd = Math.max(...active.map(l => l.groupEnd || l.end));
     const firstIdx = allLyricLines.findIndex(l => l === active[0]);
     return { group: active, end: maxEnd, index: firstIdx };
   }, [allLyricLines]);
@@ -586,7 +613,11 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       setGroupEnd(group.length > 0 ? end : null);
       setGroupIndex(index);
       
-      const groupWithUnifiedEnd = group.map(line => ({ ...line, end, originalEnd: line.end }));
+      const groupWithUnifiedEnd = group.map(line => ({ 
+        ...line, 
+        end: end, 
+        originalEnd: line.originalEnd || line.end 
+      }));
       setCurrentLines(groupWithUnifiedEnd);
     }
   }, [currentTime, ttmlData, settings.lyricOffset, getActiveGroup, currentGroup, allLyricLines]);
@@ -666,7 +697,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       if (isProgrammaticScrollingRef.current) return;
       
       const now = Date.now();
-      if (now - lastUserScrollTimeRef.current > scrollCooldownPeriod) {
+      if (now - lastUserScrollTimeRef.current > 150) {
         lastUserScrollTimeRef.current = now;
         
         if (scrollDisableTimerRef.current) {
@@ -692,73 +723,146 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   // 自動スクロール
   useEffect(() => {
     if (!ttmlData) return;
-    if (!isAutoScrollEnabled || !lyricsContainerRef.current || currentLines.length === 0) return;
+    if (!lyricsContainerRef.current) return;
+    if (!isAutoScrollEnabled) return;
     if (isProgrammaticScrollingRef.current) return;
     
-    const sortedLines = [...currentLines].sort((a, b) => a.begin - b.begin);
-    const firstLine = sortedLines[0];
-    const adjustedTime = currentTime + (settings.lyricOffset || 0);
-    if (!hasAgents) {
-      const timeSinceStart = adjustedTime - firstLine.begin;
-      if (timeSinceStart > 0.15) return;
-    }
-    
     const container = lyricsContainerRef.current;
+    const adjustedTime = currentTime + (settings.lyricOffset || 0);
     
-    if (lastScrolledLineRef.current && 
-        lastScrolledLineRef.current.begin === firstLine.begin && 
-        lastScrolledLineRef.current.text === firstLine.text) {
-      return;
+    // アクティブな歌詞を探す
+    let targetLine: TTMLLine | null = null;
+    let isActiveTarget = false;
+    for (let i = 0; i < allLyricLines.length; i++) {
+      const line = allLyricLines[i];
+      const lineEnd = line.groupEnd || line.end;
+      
+      if (adjustedTime >= line.begin && adjustedTime < lineEnd) {
+        targetLine = line;
+        isActiveTarget = true;
+        break;
+      }
+      
+      if (i < allLyricLines.length - 1) {
+        const nextLine = allLyricLines[i + 1];
+        if (adjustedTime >= lineEnd && adjustedTime < nextLine.begin) {
+          const gap = nextLine.begin - lineEnd;
+          if (gap < 1.0 || (adjustedTime - lineEnd) / gap > 0.3) {
+            targetLine = nextLine;
+            isActiveTarget = false;
+            break;
+          }
+        }
+      }
     }
     
-    const lineElement = document.getElementById(`ttml-line-${firstLine.begin}-${firstLine.end}`);
+    if (!targetLine) return;
+    
+    if (isActiveTarget) {
+      const isSameActiveLine = lastScrolledActiveLineRef.current && lastScrolledActiveLineRef.current.begin === targetLine.begin && lastScrolledActiveLineRef.current.text === targetLine.text;
+      
+      if (isSameActiveLine) return;
+      
+      lastScrolledActiveLineRef.current = targetLine;
+    }
+    
+    const now = Date.now();
+    const timeSinceLastScroll = now - lastUserScrollTimeRef.current;
+    
+    const isSameLine = lastScrolledLineRef.current && lastScrolledLineRef.current.begin === targetLine.begin && lastScrolledLineRef.current.text === targetLine.text;
+    
+    if (isSameLine && timeSinceLastScroll < 100) return;
+    
+    if (targetLine.backgroundText && isActiveTarget) {
+      if (isSameLine && timeSinceLastScroll < 1500) {
+        return;
+      }
+    }
+    
+    const lineElement = document.getElementById(`ttml-line-${targetLine.begin}-${targetLine.end}`);
     if (!lineElement) return;
     
-    // 次の歌詞との時間差を計算
-    let nextTimeDiff = 1.0;
-    const currentLineIdx = allLyricLines.findIndex(line => line.begin === firstLine.begin && line.text === firstLine.text);
-    if (currentLineIdx >= 0 && currentLineIdx + 1 < allLyricLines.length) {
-      nextTimeDiff = allLyricLines[currentLineIdx + 1].begin - firstLine.begin;
+    let backgroundHeightAdjustment = 0;
+    if (targetLine.backgroundText) {
+      const backgroundKey = `${targetLine.begin}-${targetLine.end}-bg`;
+      const measuredBackgroundHeight = backgroundHeights.get(backgroundKey) || 0;
+      
+      if (measuredBackgroundHeight > 0) {
+        if (targetLine.backgroundPosition === 'above') {
+          // バックグラウンドボーカル上部
+          const marginAdjustment = -100;
+          backgroundHeightAdjustment = -(measuredBackgroundHeight + marginAdjustment);
+        } else {
+          // バックグラウンドボーカル下部
+          const marginAdjustment = 5;
+          backgroundHeightAdjustment = measuredBackgroundHeight + marginAdjustment;
+        }
+      }
     }
     
-    const scrollDuration = nextTimeDiff < 0.2 ? 150 : nextTimeDiff < 0.3 ? 200 : nextTimeDiff < 0.4 ? 250 : nextTimeDiff < 0.5 ? 300 : nextTimeDiff < 0.6 ? 350 : nextTimeDiff < 0.7 ? 400 : nextTimeDiff < 0.8 ? 450 : nextTimeDiff < 0.9 ? 500 : nextTimeDiff < 1 ? 600 : 1000;
+    // スクロール位置計算
     const containerHeight = container.clientHeight;
     const contentHeight = container.scrollHeight;
     const lyricOffsetTop = lineElement.offsetTop;
     const lyricHeight = lineElement.clientHeight;
     const offsetPercentage = settings.scrollPositionOffset !== undefined ? settings.scrollPositionOffset / 100 : 0.5;
     
-    // スクロール位置を計算
     let targetScrollTop = 0;
     if (isMobile) {
       const displayHeight = window.innerHeight;
       const offsetFromTop = displayHeight * offsetPercentage;
-      targetScrollTop = lyricOffsetTop - offsetFromTop + lyricHeight / 2;
+      targetScrollTop = lyricOffsetTop - offsetFromTop + lyricHeight / 2 + backgroundHeightAdjustment;
     } else {
       const scrollOffset = (1 - offsetPercentage) * containerHeight;
-      targetScrollTop = lyricOffsetTop - containerHeight / 2 + lyricHeight / 2 + scrollOffset - containerHeight / 2;
+      targetScrollTop = lyricOffsetTop - containerHeight / 2 + lyricHeight / 2 + scrollOffset - containerHeight / 2 + backgroundHeightAdjustment;
     }
     
     targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
     
     const currentScrollTop = container.scrollTop;
-    if (Math.abs(targetScrollTop - currentScrollTop) < 10) {
+    if (Math.abs(targetScrollTop - currentScrollTop) < 5) {
+      lastScrolledLineRef.current = targetLine;
       return;
     }
     
+    let nextTimeDiff = 1.0;
+    const currentLineIdx = allLyricLines.findIndex(line => 
+      line.begin === targetLine.begin && line.text === targetLine.text
+    );
+    
+    if (currentLineIdx >= 0) {
+      for (let i = currentLineIdx + 1; i < allLyricLines.length; i++) {
+        const nextLine = allLyricLines[i];
+        const isInCurrentGroup = currentGroup.some(groupLine => 
+          groupLine.begin === nextLine.begin && groupLine.text === nextLine.text
+        );
+        
+        if (!isInCurrentGroup) {
+          nextTimeDiff = nextLine.begin - targetLine.begin;
+          break;
+        }
+      }
+    }
+    
+    const scrollDuration = nextTimeDiff < 0.2 ? 150 : nextTimeDiff < 0.3 ? 200 : nextTimeDiff < 0.4 ? 250 : nextTimeDiff < 0.5 ? 300 : nextTimeDiff < 0.6 ? 350 : nextTimeDiff < 0.7 ? 400 : nextTimeDiff < 0.8 ? 450 : nextTimeDiff < 0.9 ? 500 : nextTimeDiff < 1 ? 600 : 1000;
+    
     isProgrammaticScrollingRef.current = true;
-    lastScrolledLineRef.current = firstLine;
+    lastScrolledLineRef.current = targetLine;
+    lastUserScrollTimeRef.current = now;
     
     (smoothScrollTo as (element: HTMLElement, to: number, duration: number) => Promise<void>)(container, targetScrollTop, scrollDuration)
       .finally(() => {
         setTimeout(() => {
           isProgrammaticScrollingRef.current = false;
-        }, 100);
+        }, 50);
       });
-  }, [currentLines, smoothScrollTo, isAutoScrollEnabled, settings.scrollPositionOffset, isMobile, ttmlData, currentTime, settings.lyricOffset, hasAgents, allLyricLines]);
+  }, [allLyricLines, currentGroup, currentTime, settings.lyricOffset, isAutoScrollEnabled, settings.scrollPositionOffset, isMobile, smoothScrollTo, ttmlData, backgroundHeights]);
 
   useEffect(() => {
-    if (currentGroup.length === 0 || groupEnd === null) return;
+    if (currentGroup.length === 0 || groupEnd === null) {
+      setProgressPercentage(0);
+      return;
+    }
     
     const currentFirstLine = currentGroup[0];
     const adjustedTime = currentTime + (settings.lyricOffset || 0);
@@ -774,6 +878,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       const progress = Math.min(Math.max(elapsed / timeDiff, 0), 1) * 100;
       
       setProgressPercentage(progress);
+    } else {
+      setProgressPercentage(0);
     }
   }, [currentTime, currentGroup, groupEnd, settings.lyricOffset]);
 
@@ -851,13 +957,28 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
             const activeLine = currentLines.find(l => l.begin === line.begin && l.text === line.text) as (TTMLLine & { originalEnd?: number }) | undefined;
             const isActive = !!activeLine;
             const now = currentTime + (settings.lyricOffset || 0);
-            const lineEnd = activeLine?.originalEnd ?? line.end;
-            const isPast = lineEnd < now;
+            
+            // グループ内の歌詞かどうかをチェック
+            const isInCurrentGroup = currentGroup.some(groupLine => 
+              groupLine.begin === line.begin && groupLine.text === line.text
+            );
+            
+            // グループ表示中かどうかを判定
+            const isGroupActive = currentGroup.length > 0 && groupEnd !== null && now >= currentGroup[0].begin && now < groupEnd;
+            
+            const lineEnd = line.groupEnd || line.originalEnd || line.end;
+            
+            // グループ表示中はグループ内の歌詞を「表示し終わった」状態にしない
+            const isPast = isGroupActive && isInCurrentGroup ? false : lineEnd < now;
+            
+            // 表示状態の判定: アクティブまたはグループ内で表示中
+            const isDisplaying = isActive || (isGroupActive && isInCurrentGroup);
+            
             const isEmpty = !line.text || line.text.trim() === '';
             const agent = line.agent ? ttmlData.agents.find(a => a.id === line.agent) : null;
             
             let textColor = '';
-            if (isActive) {
+            if (isDisplaying) {
               textColor = 'text-primary font-bold';
             } else if (isPast) {
               textColor = 'text-black text-opacity-50 dark:text-white dark:text-opacity-40';
@@ -865,7 +986,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
               textColor = 'text-black text-opacity-50 dark:text-white dark:text-opacity-40';
             }
             
-            const opacity = isLyricsHovered ? 1 : isActive ? 1 : isPast ? 0 : 1;
+            const opacity = isLyricsHovered ? 1 : isDisplaying ? 1 : isPast ? 0 : 1;
             let textAlignment: 'left' | 'center' | 'right' | 'justify' = 'center';
             if (hasAgents) {
               if (agent) {
@@ -959,12 +1080,12 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                         return (
                           <div 
                             style={{
-                              opacity: isActive ? 1 : 0,
-                              maxHeight: isActive ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                              marginBottom: isActive ? '20px' : '0px',
+                              opacity: isDisplaying ? 1 : 0,
+                              maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                              marginBottom: isDisplaying ? '20px' : '0px',
                               overflow: 'hidden',
-                              filter: isActive ? 'none' : 'blur(20px)',
-                              transition: `${isActive ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, margin-bottom 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                              filter: isDisplaying ? 'none' : 'blur(20px)',
+                              transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, margin-bottom 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
                               pointerEvents: 'none',
                               textAlign: textAlignment
                             }}
@@ -1009,16 +1130,16 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             currentTime={currentTime + (settings.lyricOffset || 0)}
                             resolvedTheme={resolvedTheme}
                             progressDirection={settings.lyricProgressDirection}
-                            isActive={isActive}
+                            isActive={isDisplaying}
                             isPast={isPast}
                           />
                         ) : (
-                          isActive ? (
+                          isDisplaying ? (
                             <KaraokeLyricLine
                               text={line.text || ''}
                               progressPercentage={progressPercentage}
                               resolvedTheme={resolvedTheme}
-                              isActive={isActive}
+                              isActive={isDisplaying}
                               progressDirection={settings.lyricProgressDirection}
                             />
                           ) : (
@@ -1039,12 +1160,12 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                         return (
                           <div 
                             style={{
-                              opacity: isActive ? 1 : 0,
-                              maxHeight: isActive ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                              marginTop: isActive ? '5px' : '0px',
+                              opacity: isDisplaying ? 1 : 0,
+                              maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                              marginTop: isDisplaying ? '5px' : '0px',
                               overflow: 'hidden',
-                              filter: isActive ? 'none' : 'blur(20px)',
-                              transition: `${isActive ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, margin-top 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                              filter: isDisplaying ? 'none' : 'blur(20px)',
+                              transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, margin-top 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
                               pointerEvents: 'none',
                               textAlign: textAlignment
                             }}
