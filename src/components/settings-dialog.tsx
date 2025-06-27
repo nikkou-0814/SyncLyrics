@@ -162,11 +162,22 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="useKaraokeLyric" className="text-sm font-medium flex items-center gap-2">
                       <MicVocal className="h-4 w-4" />
                       カラオケ風歌詞
+                      {settings.useAMLL && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">AMLLがオンの場合は使用できません</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </Label>
                     <Switch
                       id="useKaraokeLyric"
                       checked={settings.useKaraokeLyric}
                       onCheckedChange={(checked) => handleSettingChange('useKaraokeLyric', checked)}
+                      disabled={settings.useAMLL}
                     />
                   </div>
 
@@ -174,34 +185,37 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label className="text-sm font-medium flex items-center gap-2">
                       <ArrowUpWideNarrow className="h-4 w-4" />
                       カラオケ風歌詞進行方向
-                      {!settings.useKaraokeLyric && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">カラオケ風歌詞がオフの場合は使用できません</p>
-                          </TooltipContent>
-                        </Tooltip>
+                      {(!settings.useKaraokeLyric || settings.useAMLL) && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p className="max-w-xs">
+                          {!settings.useKaraokeLyric && "カラオケ風歌詞がオフの場合は使用できません"}
+                          {settings.useAMLL && "AMLLがオンの場合は使用できません"}
+                        </p>
+                        </TooltipContent>
+                      </Tooltip>
                       )}
                     </Label>
                     <div className="grid grid-cols-4 gap-1">
                       {[
-                        { value: 'rtl', label: '右→左' },
-                        { value: 'ltr', label: '左→右' },
-                        { value: 'btt', label: '下→上' },
-                        { value: 'ttb', label: '上→下' },
+                      { value: 'rtl', label: '右→左' },
+                      { value: 'ltr', label: '左→右' },
+                      { value: 'btt', label: '下→上' },
+                      { value: 'ttb', label: '上→下' },
                       ].map((option) => (
-                        <Button
-                          key={option.value}
-                          variant={settings.lyricProgressDirection === option.value ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleSettingChange('lyricProgressDirection', option.value as 'rtl' | 'ltr' | 'btt' | 'ttb')}
-                          className="flex-1"
-                          disabled={!settings.useKaraokeLyric}
-                        >
-                          {option.label}
-                        </Button>
+                      <Button
+                        key={option.value}
+                        variant={settings.lyricProgressDirection === option.value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleSettingChange('lyricProgressDirection', option.value as 'rtl' | 'ltr' | 'btt' | 'ttb')}
+                        className="flex-1"
+                        disabled={!settings.useKaraokeLyric || settings.useAMLL}
+                      >
+                        {option.label}
+                      </Button>
                       ))}
                     </div>
                   </div>
@@ -720,11 +734,18 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       id="useKaraokeLyric"
                       checked={settings.useKaraokeLyric}
                       onCheckedChange={(checked) => handleSettingChange('useKaraokeLyric', checked)}
+                      disabled={settings.useAMLL}
                     />
                   </div>
+                  {!settings.useAMLL && (
+                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                      AMLLがオンの場合は使用できません
+                    </div>
+                  )}
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-2">
+                    <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+                      <ArrowUpWideNarrow className="h-4 w-4" />
                       カラオケ風歌詞進行方向
                     </Label>
                     <div className="grid grid-cols-4 gap-1">
@@ -737,21 +758,23 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         <Button
                           key={option.value}
                           variant={settings.lyricProgressDirection === option.value ? "default" : "outline"}
-                          size="sm"
                           onClick={() => handleSettingChange('lyricProgressDirection', option.value as 'rtl' | 'ltr' | 'btt' | 'ttb')}
-                          className="flex-1"
-                          disabled={!settings.useKaraokeLyric}
+                          className="w-full py-3"
+                          disabled={!settings.useKaraokeLyric || settings.useAMLL}
                         >
                           {option.label}
                         </Button>
                       ))}
                     </div>
-                    {!settings.useKaraokeLyric && (
+                    {(!settings.useKaraokeLyric || settings.useAMLL) && (
                       <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
-                        カラオケ風歌詞がオフの場合は使用できません
+                      {!settings.useKaraokeLyric && "カラオケ風歌詞がオフの場合は使用できません"}
+                      {settings.useAMLL && "AMLLがオンの場合は使用できません"}
                       </div>
                     )}
                   </div>
+
+                    <Separator />
 
                   <div className="flex items-center justify-between">
                     <Label htmlFor="useTTML" className="text-sm font-medium flex items-center gap-2">
