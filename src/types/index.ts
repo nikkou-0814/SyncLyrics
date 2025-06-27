@@ -99,6 +99,16 @@ export interface Settings {
   scrollPositionOffset: number;
   useTTML?: boolean;
   useWordTiming: boolean;
+  useAMLL?: boolean;
+  amllEnableSpring?: boolean;
+  amllEnableBlur?: boolean;
+  amllEnableScale?: boolean;
+  amllHidePassedLines?: boolean;
+  amllSpringParams?: {
+    mass?: number;
+    tension?: number;
+    friction?: number;
+  };
 }
 
 export interface PlayerLyricsProps {
@@ -210,5 +220,14 @@ export interface SettingsSidebarProps {
   setShowSettings: (value: boolean) => void;
   settings: Settings;
   handleSettingChange: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
+  isMobile: boolean;
+}
+
+export interface AMLLLyricsProps {
+  ttmlData: TTMLData;
+  currentTime: number;
+  settings: Settings;
+  resolvedTheme: string;
+  onLyricClick: (time: number) => void;
   isMobile: boolean;
 }

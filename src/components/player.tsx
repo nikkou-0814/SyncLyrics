@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import PlayerLyrics from '@/components/player-lyrics';
 import TTMLLyrics from '@/components/ttml-lyrics';
+import AMLLLyrics from '@/components/amll-lyrics';
 import PlayerControls from '@/components/player-controls';
 import SettingsSidebar from '@/components/settings-dialog';
 import { toast } from 'sonner';
@@ -29,6 +30,16 @@ const DEFAULT_SETTINGS: Settings = {
   scrollPositionOffset: 50,
   useTTML: false,
   useWordTiming: true,
+  useAMLL: false,
+  amllEnableSpring: true,
+  amllEnableBlur: true,
+  amllEnableScale: true,
+  amllHidePassedLines: false,
+  amllSpringParams: {
+    mass: 1,
+    tension: 280,
+    friction: 60,
+  },
 };
 
 const Player: React.FC<PlayerProps> = ({
@@ -116,6 +127,12 @@ const Player: React.FC<PlayerProps> = ({
     if (key === 'fullplayer') {
       setWasFullPlayerManuallySet(true);
     }
+    
+    if (key === 'useAMLL' && value === true) {
+      updateSettings({ [key]: value, useTTML: true });
+      return;
+    }
+    
     updateSettings({ [key]: value });
   };
 
@@ -483,7 +500,7 @@ const Player: React.FC<PlayerProps> = ({
     );
   };
 
-  // YouTubeのコントロールを非表示に
+  // YouTubeのコントロールを非表示
   const opts = {
     playerVars: {
       controls: 0,
@@ -492,7 +509,16 @@ const Player: React.FC<PlayerProps> = ({
 
   return (
     <>
-      {settings.useTTML && ttmlData ? (
+      {settings.useTTML && ttmlData && settings.useAMLL ? (
+        <AMLLLyrics
+          ttmlData={ttmlData}
+          currentTime={currentTime}
+          settings={settings}
+          resolvedTheme={theme}
+          onLyricClick={handleLyricClick}
+          isMobile={isMobile}
+        />
+      ) : settings.useTTML && ttmlData ? (
         <TTMLLyrics
           lyricsData={processedLyricsData}
           currentTime={currentTime}
