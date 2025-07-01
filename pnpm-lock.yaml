@@ -17,6 +17,27 @@ importers:
       '@applemusic-like-lyrics/react':
         specifier: ^0.1.5
         version: 0.1.5(@pixi/app@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3)))(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))(@pixi/filter-blur@7.4.3(@pixi/core@7.4.3))(@pixi/filter-bulge-pinch@5.1.1(@pixi/core@7.4.3))(@pixi/filter-color-matrix@7.4.3(@pixi/core@7.4.3))(@pixi/sprite@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3)))(jss-preset-default@10.10.0)(jss@10.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@pixi/app':
+        specifier: ^7.4.3
+        version: 7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))
+      '@pixi/core':
+        specifier: ^7.4.3
+        version: 7.4.3
+      '@pixi/display':
+        specifier: ^7.4.3
+        version: 7.4.3(@pixi/core@7.4.3)
+      '@pixi/filter-blur':
+        specifier: ^7.4.3
+        version: 7.4.3(@pixi/core@7.4.3)
+      '@pixi/filter-bulge-pinch':
+        specifier: ^5.1.1
+        version: 5.1.1(@pixi/core@7.4.3)
+      '@pixi/filter-color-matrix':
+        specifier: ^7.4.3
+        version: 7.4.3(@pixi/core@7.4.3)
+      '@pixi/sprite':
+        specifier: ^7.4.3
+        version: 7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))
       '@radix-ui/react-dialog':
         specifier: ^1.1.4
         version: 1.1.4(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -80,6 +101,12 @@ importers:
       framer-motion:
         specifier: ^11.16.0
         version: 11.16.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      jss:
+        specifier: ^10.10.0
+        version: 10.10.0
+      jss-preset-default:
+        specifier: ^10.10.0
+        version: 10.10.0
       lucide-react:
         specifier: ^0.469.0
         version: 0.469.0(react@18.3.1)

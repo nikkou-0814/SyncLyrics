@@ -87,8 +87,8 @@ export interface Settings {
   fullplayer: boolean;
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';
-  backgroundblur: 'none' | 'small' | 'medium' | 'large';
-  backgroundtransparency: 'none' | 'small' | 'medium' | 'large';
+  backgroundblur: number;
+  backgroundtransparency: number;
   theme: 'system' | 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;
@@ -227,7 +227,8 @@ export interface AMLLLyricsProps {
   ttmlData: TTMLData;
   currentTime: number;
   settings: Settings;
-  resolvedTheme: string;
   onLyricClick: (time: number) => void;
   isMobile: boolean;
+  isPlaying: boolean;
+  resolvedTheme: string;
 }

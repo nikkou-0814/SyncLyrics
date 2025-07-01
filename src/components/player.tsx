@@ -18,8 +18,8 @@ const DEFAULT_SETTINGS: Settings = {
   fullplayer: false,
   fontSize: 'medium',
   lyricposition: 'left',
-  backgroundblur: 'medium',
-  backgroundtransparency: 'medium',
+  backgroundblur: 10,
+  backgroundtransparency: 50,
   theme: 'dark',
   playerposition: 'right',
   volume: 50,
@@ -514,9 +514,10 @@ const Player: React.FC<PlayerProps> = ({
           ttmlData={ttmlData}
           currentTime={currentTime}
           settings={settings}
-          resolvedTheme={theme}
           onLyricClick={handleLyricClick}
           isMobile={isMobile}
+          isPlaying={isPlaying}
+          resolvedTheme={theme}
         />
       ) : settings.useTTML && ttmlData ? (
         <TTMLLyrics
@@ -567,35 +568,13 @@ const Player: React.FC<PlayerProps> = ({
 
       <div className="fixed z-0 w-full h-full">
         <div
-          className={`w-full h-full fixed top-0 left-0 ${
-            resolvedTheme === 'dark'
-              ? `${
-                  settings.backgroundtransparency === 'small'
-                    ? 'bg-opacity-40'
-                    : settings.backgroundtransparency === 'medium'
-                    ? 'bg-opacity-70'
-                    : settings.backgroundtransparency === 'large'
-                    ? 'bg-opacity-80'
-                    : 'bg-opacity-0'
-                } bg-black`
-              : `${
-                  settings.backgroundtransparency === 'small'
-                    ? 'bg-opacity-20'
-                    : settings.backgroundtransparency === 'medium'
-                    ? 'bg-opacity-30'
-                    : settings.backgroundtransparency === 'large'
-                    ? 'bg-opacity-50'
-                    : 'bg-opacity-0'
-                } bg-white`
-          } ${
-            settings.backgroundblur === 'small'
-              ? 'backdrop-blur-sm'
-              : settings.backgroundblur === 'medium'
-              ? 'backdrop-blur-md'
-              : settings.backgroundblur === 'large'
-              ? 'backdrop-blur-lg'
-              : ''
-          }`}
+          className="w-full h-full fixed top-0 left-0"
+          style={{
+            backgroundColor: resolvedTheme === 'dark' 
+              ? `rgba(0, 0, 0, ${settings.backgroundtransparency / 100})`
+              : `rgba(255, 255, 255, ${settings.backgroundtransparency / 100})`,
+            backdropFilter: settings.backgroundblur > 0 ? `blur(${settings.backgroundblur}px)` : 'none',
+          }}
         />
         <YouTube
           videoId={audioUrl}
@@ -621,18 +600,18 @@ const Player: React.FC<PlayerProps> = ({
         variant="ghost"
         size="icon"
         onClick={onBack}
-        className="fixed top-4 left-4 z-50 text-gray-900 dark:text-white"
+        className="fixed top-4 left-4 z-50 h-12 w-12 rounded-full hover:bg-background/50 hover:dark:bg-background/30 hover:backdrop-blur-sm text-foreground/90 hover:text-foreground transition-all duration-200 drop-shadow-sm"
       >
-        <ArrowLeft size={30} style={{ width: '25px', height: '25px' }} />
+        <ArrowLeft className="h-6 w-6" />
       </Button>
 
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setShowSettings(true)}
-        className="fixed top-4 right-4 z-50 text-gray-900 dark:text-white"
+        className="fixed top-4 right-4 z-50 h-12 w-12 rounded-full hover:bg-background/50 hover:dark:bg-background/30 hover:backdrop-blur-sm text-foreground/90 hover:text-foreground transition-all duration-200 drop-shadow-sm"
       >
-        <MoreHorizontal size={30} style={{ width: '30px', height: '30px' }} />
+        <MoreHorizontal className="h-6 w-6" />
       </Button>
     </>
   );

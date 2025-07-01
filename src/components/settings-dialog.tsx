@@ -355,23 +355,19 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <Layers className="h-4 w-4" />
                       背景ぼかし
                     </Label>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[
-                        { value: 'none', label: 'なし' },
-                        { value: 'small', label: '小' },
-                        { value: 'medium', label: '中' },
-                        { value: 'large', label: '大' }
-                      ].map((option) => (
-                        <Button
-                          key={option.value}
-                          variant={settings.backgroundblur === option.value ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleSettingChange('backgroundblur', option.value as 'none' | 'small' | 'medium' | 'large')}
-                          className="flex-1"
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
+                    <div className="pt-4 px-2">
+                      <Slider
+                        id="backgroundblur"
+                        defaultValue={[settings.backgroundblur]}
+                        min={0}
+                        max={20}
+                        step={1}
+                        onValueChange={(values) => handleSettingChange('backgroundblur', values[0])}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">なし</span>
+                      <span className="text-xs text-muted-foreground">強</span>
                     </div>
                   </div>
 
@@ -382,23 +378,19 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <Blend className="h-4 w-4" />
                       背景透明度
                     </Label>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[
-                        { value: 'none', label: 'なし' },
-                        { value: 'small', label: '低' },
-                        { value: 'medium', label: '中' },
-                        { value: 'large', label: '高' }
-                      ].map((option) => (
-                        <Button
-                          key={option.value}
-                          variant={settings.backgroundtransparency === option.value ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleSettingChange('backgroundtransparency', option.value as 'none' | 'small' | 'medium' | 'large')}
-                          className="flex-1"
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
+                    <div className="pt-4 px-2">
+                      <Slider
+                        id="backgroundtransparency"
+                        defaultValue={[settings.backgroundtransparency]}
+                        min={0}
+                        max={100}
+                        step={5}
+                        onValueChange={(values) => handleSettingChange('backgroundtransparency', values[0])}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">不透明</span>
+                      <span className="text-xs text-muted-foreground">透明</span>
                     </div>
                   </div>
 
@@ -883,22 +875,19 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       <Layers className="h-4 w-4" />
                       背景ぼかし
                     </Label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[
-                        { value: 'none', label: 'なし' },
-                        { value: 'small', label: '小' },
-                        { value: 'medium', label: '中' },
-                        { value: 'large', label: '大' }
-                      ].map((option) => (
-                        <Button
-                          key={option.value}
-                          variant={settings.backgroundblur === option.value ? "default" : "outline"}
-                          onClick={() => handleSettingChange('backgroundblur', option.value as 'none' | 'small' | 'medium' | 'large')}
-                          className="w-full py-3"
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
+                    <div className="pt-4 px-2">
+                      <Slider
+                        id="backgroundblur"
+                        defaultValue={[settings.backgroundblur]}
+                        min={0}
+                        max={20}
+                        step={1}
+                        onValueChange={(values) => handleSettingChange('backgroundblur', values[0])}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">なし</span>
+                      <span className="text-xs text-muted-foreground">強</span>
                     </div>
                   </div>
 
@@ -909,22 +898,19 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       <Blend className="h-4 w-4" />
                       背景透明度
                     </Label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[
-                        { value: 'none', label: 'なし' },
-                        { value: 'small', label: '低' },
-                        { value: 'medium', label: '中' },
-                        { value: 'large', label: '高' }
-                      ].map((option) => (
-                        <Button
-                          key={option.value}
-                          variant={settings.backgroundtransparency === option.value ? "default" : "outline"}
-                          onClick={() => handleSettingChange('backgroundtransparency', option.value as 'none' | 'small' | 'medium' | 'large')}
-                          className="w-full py-3"
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
+                    <div className="pt-4 px-2">
+                      <Slider
+                        id="backgroundtransparency"
+                        defaultValue={[settings.backgroundtransparency]}
+                        min={0}
+                        max={100}
+                        step={5}
+                        onValueChange={(values) => handleSettingChange('backgroundtransparency', values[0])}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">不透明</span>
+                      <span className="text-xs text-muted-foreground">透明</span>
                     </div>
                   </div>
 

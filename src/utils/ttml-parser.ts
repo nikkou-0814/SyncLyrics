@@ -45,7 +45,19 @@ export function parseTTML(xmlContent: string): TTMLData | null {
     const timing = itunesTiming === 'Word' ? 'Word' : 'Line';
     const title = xmlDoc.querySelector('title')?.textContent || undefined;
     const duration = parseDuration(xmlDoc.querySelector('body')?.getAttribute('dur') || '');
-    const songwriter = xmlDoc.querySelector('songwriter')?.textContent || undefined;
+    
+    let songwriter: string | undefined;
+    const itunesMetadata = xmlDoc.querySelector('metadata');
+    if (itunesMetadata) {
+      const songwriters = Array.from(itunesMetadata.querySelectorAll('songwriter'));
+      if (songwriters.length > 0) {
+        songwriter = songwriters.map(sw => sw.textContent || '').filter(Boolean).join(' & ');
+      }
+    }
+    
+    if (!songwriter) {
+      songwriter = xmlDoc.querySelector('songwriter')?.textContent || undefined;
+    }
     const agents = Array.from(xmlDoc.querySelectorAll('metadata ttm\\:agent')).map(agent => {
       return {
         id: agent.getAttribute('xml:id') || '',
@@ -82,10 +94,16 @@ export function parseTTML(xmlContent: string): TTMLData | null {
           
           for (const node of childNodes) {
             if (node.nodeType === Node.TEXT_NODE && node.textContent && node.textContent.trim() !== '') {
+              let text = node.textContent;
+              
+              if (isBackgroundParent) {
+                text = text.replace(/[()（）]/g, '');
+              }
+              
               const wordObj = {
                 begin: parseTime(parentElement.getAttribute('begin') || '0'),
                 end: parseTime(parentElement.getAttribute('end') || '0'),
-                text: node.textContent
+                text: text
               };
               
               if (isBackgroundParent) {
@@ -113,10 +131,16 @@ export function parseTTML(xmlContent: string): TTMLData | null {
                     backgroundWords.push(...childBackgroundWords);
                   }
                 } else {
+                  let text = span.textContent || '';
+                  
+                  if (isBackground) {
+                    text = text.replace(/[()（）]/g, '');
+                  }
+                  
                   const wordObj = {
                     begin: parseTime(span.getAttribute('begin') || '0'),
                     end: parseTime(span.getAttribute('end') || '0'),
-                    text: span.textContent || ''
+                    text: text
                   };
                   
                   if (isBackground) {
@@ -126,10 +150,16 @@ export function parseTTML(xmlContent: string): TTMLData | null {
                   }
                 }
               } else {
+                let text = span.textContent || '';
+                
+                if (isBackground) {
+                  text = text.replace(/[()（）]/g, '');
+                }
+                
                 const wordObj = {
                   begin: parseTime(span.getAttribute('begin') || '0'),
                   end: parseTime(span.getAttribute('end') || '0'),
-                  text: span.textContent || ''
+                  text: text
                 };
                 
                 if (isBackground) {
@@ -150,13 +180,18 @@ export function parseTTML(xmlContent: string): TTMLData | null {
         
         if (directSpans.length > 0) {
           const { words, backgroundWords } = processSpans(p);
-          const addSpaceBetweenLanguages = (wordList: TTMLWord[]): string => {
+          const addSpaceBetweenLanguages = (wordList: TTMLWord[], isBackground = false): string => {
             let result = '';
             let prevIsLatin = false;
             
             for (let i = 0; i < wordList.length; i++) {
               const word = wordList[i];
-              const text = word.text || '';
+              let text = word.text || '';
+              
+              if (isBackground) {
+                text = text.replace(/[()（）]/g, '');
+              }
+              
               const isLatin = /^[a-zA-Z0-9]+$/.test(text.trim());
 
               if (i > 0) {
@@ -172,7 +207,7 @@ export function parseTTML(xmlContent: string): TTMLData | null {
           };
           
           const text = addSpaceBetweenLanguages(words);
-          const backgroundText = backgroundWords.length > 0 ? addSpaceBetweenLanguages(backgroundWords) : undefined;
+          const backgroundText = backgroundWords.length > 0 ? addSpaceBetweenLanguages(backgroundWords, true) : undefined;
           
           return {
             begin: pBegin,
