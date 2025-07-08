@@ -30,7 +30,7 @@ const DEFAULT_SETTINGS: Settings = {
   scrollPositionOffset: 50,
   useTTML: false,
   useWordTiming: true,
-  useAMLL: false,
+  useAMLL: true,
   amllEnableSpring: true,
   amllEnableBlur: true,
   amllEnableScale: true,
