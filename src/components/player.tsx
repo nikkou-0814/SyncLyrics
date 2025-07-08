@@ -58,6 +58,9 @@ const Player: React.FC<PlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(50);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [mobileControlsVisible, setMobileControlsVisible] = useState<boolean>(true);
+  const [lastInteractionTime, setLastInteractionTime] = useState<number>(Date.now());
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { setTheme, resolvedTheme } = useTheme();
   const theme = resolvedTheme || 'system';
   const [showSettings, setShowSettings] = useState<boolean>(false);
@@ -116,6 +119,54 @@ const Player: React.FC<PlayerProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [wasFullPlayerManuallySet]);
+
+  // モバイル版でのコントロール表示管理
+  useEffect(() => {
+    if (!isMobile) return;
+
+    // 再生停止時は常に表示
+    if (!isPlaying) {
+      setMobileControlsVisible(true);
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    // 再生中は5秒後に非表示
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+    
+    hideTimeoutRef.current = setTimeout(() => {
+      setMobileControlsVisible(false);
+    }, 5000);
+
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, [isMobile, isPlaying, lastInteractionTime]);
+
+  // モバイル版でのコントロール表示切り替え
+  const handleMobileControlsToggle = () => {
+    if (!isMobile) return;
+    
+    setMobileControlsVisible(true);
+    setLastInteractionTime(Date.now());
+    
+    // 再生中の場合は5秒後に再度非表示
+    if (isPlaying) {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+      hideTimeoutRef.current = setTimeout(() => {
+        setMobileControlsVisible(false);
+      }, 5000);
+    }
+  };
 
   // 設定変更
   const handleSettingChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
@@ -564,6 +615,8 @@ const Player: React.FC<PlayerProps> = ({
         albumName={albumName}
         settings={settings}
         formatTime={formatTime}
+        mobileControlsVisible={mobileControlsVisible}
+        onMobileControlsToggle={handleMobileControlsToggle}
       />
 
       <div className="fixed z-0 w-full h-full">

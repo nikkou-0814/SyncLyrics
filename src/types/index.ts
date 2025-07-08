@@ -168,6 +168,8 @@ export interface PlayerControlsProps {
     fontSize: 'small' | 'medium' | 'large';
   };
   formatTime: (time: number) => string;
+  mobileControlsVisible?: boolean;
+  onMobileControlsToggle?: () => void;
 }
 
 export interface SearchResult {

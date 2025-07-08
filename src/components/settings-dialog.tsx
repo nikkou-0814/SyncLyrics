@@ -7,12 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline, FileText } from 'lucide-react';
+import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline, FileText, Info } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { SettingsSidebarProps } from '@/types';
 import { Slider } from '@/components/ui/slider';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { SiGithub } from 'react-icons/si';
 
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   showSettings,
@@ -60,6 +62,15 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             </TabsList>
             
             <TabsContent value="display" className="space-y-4">
+              <Alert variant="default" className="bg-green-100 border-green-500 dark:bg-green-950/50 dark:border-green-600/50 mb-4">
+                <div className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <AlertTitle className="text-green-700 dark:text-green-300 font-medium">AMLLの使用を推奨</AlertTitle>
+                </div>
+                <AlertDescription className="text-green-700 dark:text-green-300 mt-1 pl-7">
+                  標準機能よりも遥かに優れた同期表示が可能です！
+                </AlertDescription>
+              </Alert>
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-md">レイアウトと表示</CardTitle>
@@ -309,6 +320,18 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       onCheckedChange={(checked) => handleSettingChange('amllHidePassedLines', checked)}
                       disabled={!settings.useAMLL}
                     />
+                  </div>
+
+                  <div className="flex justify-end mt-2">
+                    <a
+                      href="https://github.com/Steve-xmh/applemusic-like-lyrics"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted-foreground hover:underline hover:text-primary flex items-center gap-2"
+                    >
+                      <SiGithub className="h-4 w-4" />
+                      AMLL
+                    </a>
                   </div>
 
                   <Separator />
@@ -626,6 +649,15 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
             </TabsList>
             
             <TabsContent value="display" className="space-y-4 pb-8">
+              <Alert variant="default" className="bg-green-100 border-green-500 dark:bg-green-950/50 dark:border-green-600/50 mb-4">
+                <div className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <AlertTitle className="text-green-700 dark:text-green-300 font-medium">AMLLの使用を推奨</AlertTitle>
+                </div>
+                <AlertDescription className="text-green-700 dark:text-green-300 mt-1 pl-7">
+                  標準機能よりも遥かに優れた同期表示が可能です！
+                </AlertDescription>
+              </Alert>
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-md">レイアウトと表示</CardTitle>
@@ -835,6 +867,18 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       AMLLがオフの場合は使用できません
                     </div>
                   )}
+
+                  <div className="flex justify-end mt-2">
+                    <a
+                      href="https://github.com/Steve-xmh/applemusic-like-lyrics"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted-foreground hover:underline hover:text-primary flex items-center gap-2"
+                    >
+                      <SiGithub className="h-4 w-4" />
+                      AMLL
+                    </a>
+                  </div>
 
                   <Separator />
 

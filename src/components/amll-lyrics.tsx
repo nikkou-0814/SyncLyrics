@@ -225,7 +225,7 @@ const AMLLLyrics: React.FC<AMLLLyricsProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: getJustifyContent(),
-        height: settings.fullplayer ? '92vh' : '100vh',
+        height: '100%',
         marginBottom: settings.fullplayer && settings.showplayercontrol ? '92px' : '0',
         fontSize: {
           small: '2.0rem',
