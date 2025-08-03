@@ -432,6 +432,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   renderInterludeDots,
   resolvedTheme,
 }) => {
+  const SAME_BEGIN_EPS = 0.12;
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
   const [currentLines, setCurrentLines] = useState<TTMLLine[]>([]);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
@@ -446,6 +447,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   const [groupIndex, setGroupIndex] = useState<number>(-1);
   const [interludePeriods, setInterludePeriods] = useState<{start: number, end: number, divIndex: number}[]>([]);
   const [activeInterlude, setActiveInterlude] = useState<{start: number, end: number, divIndex: number} | null>(null);
+  const interludeHoldRef = useRef<boolean>(false);
+  const lastInterludeKeyRef = useRef<string | null>(null);
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
   const [hasWordTiming, setHasWordTiming] = useState<boolean>(false);
   const backgroundRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -487,6 +490,20 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     
     return processedLines;
   }, [ttmlData]);
+
+  const getNextTimeDiffSkippingCluster = useCallback((baseLine: TTMLLine): number => {
+    const baseIdx = allLyricLines.findIndex(l => l.begin === baseLine.begin && l.text === baseLine.text);
+    if (baseIdx < 0) return 1.0;
+    for (let i = baseIdx + 1; i < allLyricLines.length; i++) {
+      const next = allLyricLines[i];
+      const inSameGroup = currentGroup.some(g => g.begin === next.begin && g.text === next.text);
+      const gap = next.begin - baseLine.begin;
+      if (inSameGroup) continue;
+      if (gap < SAME_BEGIN_EPS) continue;
+      return Math.max(gap, 0.01);
+    }
+    return 1.0;
+  }, [allLyricLines, currentGroup]);
 
   useEffect(() => {
     if (!ttmlData) return;
@@ -539,6 +556,59 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     
     setActiveInterlude(active || null);
   }, [currentTime, interludePeriods, settings.lyricOffset]);
+
+  // 1回だけセンタリング
+  const centerInterludeOnce = useCallback((period: { start: number; end: number; divIndex: number }) => {
+    const container = lyricsContainerRef.current;
+    if (!container) return;
+    const el = document.getElementById(`interlude-${period.start}-${period.end}`);
+    if (!el) return;
+
+    const containerHeight = container.clientHeight;
+    const contentHeight = container.scrollHeight;
+    const interludeOffsetTop = el.offsetTop;
+    const interludeHeight = el.clientHeight;
+    const offsetPercentage = settings.scrollPositionOffset !== undefined
+      ? settings.scrollPositionOffset / 100
+      : 0.5;
+
+    const anchorBase = (isMobile ? window.innerHeight : containerHeight);
+    const anchorY = anchorBase * offsetPercentage;
+    let targetScrollTop = interludeOffsetTop - anchorY + interludeHeight / 2;
+    targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
+
+    const ilLen = Math.max(0, period.end - period.start);
+    const duration = ilLen < 0.2 ? 150
+                    : ilLen < 0.5 ? 300
+                    : ilLen < 1.0 ? 500
+                    : 800;
+
+    isProgrammaticScrollingRef.current = true;
+    (smoothScrollTo as (element: HTMLElement, to: number, duration: number) => Promise<void>)(container, targetScrollTop, duration)
+      .finally(() => {
+        setTimeout(() => { isProgrammaticScrollingRef.current = false; }, 80);
+      });
+  }, [isMobile, settings.scrollPositionOffset, smoothScrollTo]);
+
+  // ホールド制御
+  useEffect(() => {
+    if (activeInterlude) {
+      const key = `${activeInterlude.divIndex}:${activeInterlude.start}-${activeInterlude.end}`;
+      if (lastInterludeKeyRef.current !== key) {
+        centerInterludeOnce(activeInterlude);
+        interludeHoldRef.current = true;
+        setIsAutoScrollEnabled(false);
+        lastInterludeKeyRef.current = key;
+      }
+    } else {
+      // ホールド解除
+      if (interludeHoldRef.current) {
+        interludeHoldRef.current = false;
+        setIsAutoScrollEnabled(true);
+      }
+      lastInterludeKeyRef.current = null;
+    }
+  }, [activeInterlude, centerInterludeOnce]);
 
   // agentが設定されているか
   const hasAgents = useMemo(() => {
@@ -626,6 +696,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     if (!ttmlData) return;
     if (!lyricsContainerRef.current) return;
     if (currentGroup.length === 0 || groupEnd == null) return;
+    if (activeInterlude || interludeHoldRef.current) return;
     if (!isAutoScrollEnabled) return;
     if (isProgrammaticScrollingRef.current) return;
     
@@ -640,54 +711,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
         nextIdx++;
       }
       
-      // 次の行が間奏か
-      const currentDivIndex = divLastLineIndices.findIndex(lastIdx => lastIdx >= groupIndex + currentGroup.length - 1);
-      const interludePeriod = interludePeriods.find(ip => ip.divIndex === currentDivIndex);
       
-      if (interludePeriod && (adjustedTime >= interludePeriod.start - 0.2 || adjustedTime >= interludePeriod.start) && adjustedTime < interludePeriod.end) {
-        // 間奏にスクロール
-        const interludeElement = document.getElementById(`interlude-${interludePeriod.start}-${interludePeriod.end}`);
-        if (interludeElement) {
-          const container = lyricsContainerRef.current;
-          const containerHeight = container.clientHeight;
-          const contentHeight = container.scrollHeight;
-          const interludeOffsetTop = interludeElement.offsetTop;
-          const interludeHeight = interludeElement.clientHeight;
-          
-          // スクロール位置を計算
-          const offsetPercentage = settings.scrollPositionOffset !== undefined ? settings.scrollPositionOffset / 100 : 0.5;
-          let targetScrollTop = 0;
-          if (isMobile) {
-            const displayHeight = window.innerHeight;
-            const offsetFromTop = displayHeight * offsetPercentage;
-            targetScrollTop = interludeOffsetTop - offsetFromTop + interludeHeight / 2;
-          } else {
-            const scrollOffset = (1 - offsetPercentage) * containerHeight;
-            targetScrollTop = interludeOffsetTop - containerHeight / 2 + interludeHeight / 2 + scrollOffset - containerHeight / 2;
-          }
-          targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
-          
-          const currentScrollTop = container.scrollTop;
-          if (Math.abs(targetScrollTop - currentScrollTop) < 10) {
-            return;
-          }
-          
-          isProgrammaticScrollingRef.current = true;
-          
-          const interludeDuration = interludePeriod.end - interludePeriod.start;
-          const scrollDuration = interludeDuration < 0.2 ? 150 : interludeDuration < 0.3 ? 200 : interludeDuration < 0.4 ? 250 : interludeDuration < 0.5 ? 300 : interludeDuration < 0.6 ? 350 : interludeDuration < 0.7 ? 400 : interludeDuration < 0.8 ? 450 : interludeDuration < 0.9 ? 500 : interludeDuration < 1 ? 600 : 1000;
-          
-          (smoothScrollTo as (element: HTMLElement, to: number, duration: number) => Promise<void>)(container, targetScrollTop, scrollDuration)
-            .finally(() => {
-              setTimeout(() => {
-                isProgrammaticScrollingRef.current = false;
-              }, 50);
-            });
-          return;
-        }
-      }
+      // ← 間奏処理は activeInterlude の useEffect に集約
     }
-  }, [currentTime, groupEnd, currentGroup, groupIndex, allLyricLines, isMobile, settings.scrollPositionOffset, smoothScrollTo, ttmlData, settings.lyricOffset, isAutoScrollEnabled, divLastLineIndices, interludePeriods]);
+  }, [currentTime, groupEnd, currentGroup, groupIndex, allLyricLines, isMobile, settings.scrollPositionOffset, smoothScrollTo, ttmlData, settings.lyricOffset, isAutoScrollEnabled, divLastLineIndices, activeInterlude]);
 
   useEffect(() => {
     const container = lyricsContainerRef.current;
@@ -725,6 +752,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     if (!ttmlData) return;
     if (!lyricsContainerRef.current) return;
     if (!isAutoScrollEnabled) return;
+    if (interludeHoldRef.current) return; // ホールド中は自動処理しない
     if (isProgrammaticScrollingRef.current) return;
     
     const container = lyricsContainerRef.current;
@@ -825,26 +853,18 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       return;
     }
     
-    let nextTimeDiff = 1.0;
-    const currentLineIdx = allLyricLines.findIndex(line => 
-      line.begin === targetLine.begin && line.text === targetLine.text
-    );
+    const nextTimeDiff = getNextTimeDiffSkippingCluster(targetLine);
     
-    if (currentLineIdx >= 0) {
-      for (let i = currentLineIdx + 1; i < allLyricLines.length; i++) {
-        const nextLine = allLyricLines[i];
-        const isInCurrentGroup = currentGroup.some(groupLine => 
-          groupLine.begin === nextLine.begin && groupLine.text === nextLine.text
-        );
-        
-        if (!isInCurrentGroup) {
-          nextTimeDiff = nextLine.begin - targetLine.begin;
-          break;
-        }
-      }
-    }
-    
-    const scrollDuration = nextTimeDiff < 0.2 ? 150 : nextTimeDiff < 0.3 ? 200 : nextTimeDiff < 0.4 ? 250 : nextTimeDiff < 0.5 ? 300 : nextTimeDiff < 0.6 ? 350 : nextTimeDiff < 0.7 ? 400 : nextTimeDiff < 0.8 ? 450 : nextTimeDiff < 0.9 ? 500 : nextTimeDiff < 1 ? 600 : 1000;
+    const scrollDuration =
+      nextTimeDiff < 0.2 ? 150 :
+      nextTimeDiff < 0.3 ? 200 :
+      nextTimeDiff < 0.4 ? 250 :
+      nextTimeDiff < 0.5 ? 300 :
+      nextTimeDiff < 0.6 ? 350 :
+      nextTimeDiff < 0.7 ? 400 :
+      nextTimeDiff < 0.8 ? 450 :
+      nextTimeDiff < 0.9 ? 500 :
+      nextTimeDiff < 1.0 ? 600 : 1000;
     
     isProgrammaticScrollingRef.current = true;
     lastScrolledLineRef.current = targetLine;
@@ -856,7 +876,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
           isProgrammaticScrollingRef.current = false;
         }, 50);
       });
-  }, [allLyricLines, currentGroup, currentTime, settings.lyricOffset, isAutoScrollEnabled, settings.scrollPositionOffset, isMobile, smoothScrollTo, ttmlData, backgroundHeights]);
+  }, [allLyricLines, currentGroup, currentTime, settings.lyricOffset, isAutoScrollEnabled, settings.scrollPositionOffset, isMobile, smoothScrollTo, ttmlData, backgroundHeights, interludePeriods, getNextTimeDiffSkippingCluster]);
 
   useEffect(() => {
     if (currentGroup.length === 0 || groupEnd === null) {
@@ -1052,12 +1072,16 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                         : 'translateY(80px)'}`
                       : 'translateY(0)',
                     transition: `transform ${(() => {
-                      let nextTimeDiff = 1.0;
-                      const currentLineIdx = allLyricLines.findIndex(l => l.begin === line.begin && l.text === line.text);
-                      if (currentLineIdx >= 0 && currentLineIdx + 1 < allLyricLines.length) {
-                        nextTimeDiff = allLyricLines[currentLineIdx + 1].begin - line.begin;
-                      }
-                      return nextTimeDiff < 0.2 ? '0.15s' : nextTimeDiff < 0.3 ? '0.2s' : nextTimeDiff < 0.4 ? '0.25s' : nextTimeDiff < 0.5 ? '0.3s' : nextTimeDiff < 0.6 ? '0.35s' : nextTimeDiff < 0.7 ? '0.4s' : nextTimeDiff < 0.8 ? '0.45s' : nextTimeDiff < 0.9 ? '0.5s' : nextTimeDiff < 1 ? '0.6' : '1s';
+                      const diff = getNextTimeDiffSkippingCluster(line);
+                      return diff < 0.2 ? '0.15s' :
+                              diff < 0.3 ? '0.2s'  :
+                              diff < 0.4 ? '0.25s' :
+                              diff < 0.5 ? '0.3s'  :
+                              diff < 0.6 ? '0.35s' :
+                              diff < 0.7 ? '0.4s'  :
+                              diff < 0.8 ? '0.45s' :
+                              diff < 0.9 ? '0.5s'  :
+                              diff < 1.0 ? '0.6s'  : '1s';
                     })()} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, opacity 0.8s, margin 1s, padding 1s, color 0.5s, background-color 0.5s`,
                     wordWrap: 'break-word',
                     wordBreak: 'break-word',
