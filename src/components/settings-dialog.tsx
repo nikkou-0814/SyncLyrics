@@ -68,7 +68,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   <AlertTitle className="text-green-700 dark:text-green-300 font-medium">AMLLの使用を推奨</AlertTitle>
                 </div>
                 <AlertDescription className="text-green-700 dark:text-green-300 mt-1 pl-7">
-                  標準機能よりも遥かに優れた同期表示が可能です！
+                  標準機能よりも優れた同期表示が可能です！
                 </AlertDescription>
               </Alert>
               <Card>
@@ -655,7 +655,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                   <AlertTitle className="text-green-700 dark:text-green-300 font-medium">AMLLの使用を推奨</AlertTitle>
                 </div>
                 <AlertDescription className="text-green-700 dark:text-green-300 mt-1 pl-7">
-                  標準機能よりも遥かに優れた同期表示が可能です！
+                  標準機能よりも優れた同期表示が可能です！
                 </AlertDescription>
               </Alert>
               <Card>
@@ -725,17 +725,41 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         <Clock className="h-4 w-4" />
                         歌詞タイミング調整（秒）
                       </Label>
-                      <Input
-                        id="lyricOffset"
-                        type="number"
-                        step="0.1"
-                        value={settings.lyricOffset}
-                        onChange={(e) => {
-                          const newOffset = Number(e.target.value);
-                          handleSettingChange('lyricOffset', newOffset);
-                        }}
-                        className="mb-2"
-                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newOffset = Number((settings.lyricOffset - 0.1).toFixed(1));
+                            handleSettingChange('lyricOffset', newOffset);
+                          }}
+                          className="px-3 py-2 text-lg font-semibold"
+                        >
+                          -
+                        </Button>
+                        <Input
+                          id="lyricOffset"
+                          type="number"
+                          step="0.1"
+                          value={settings.lyricOffset}
+                          onChange={(e) => {
+                            const newOffset = Number(e.target.value);
+                            handleSettingChange('lyricOffset', newOffset);
+                          }}
+                          className="flex-1 text-center"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newOffset = Number((settings.lyricOffset + 0.1).toFixed(1));
+                            handleSettingChange('lyricOffset', newOffset);
+                          }}
+                          className="px-3 py-2 text-lg font-semibold"
+                        >
+                          +
+                        </Button>
+                      </div>
                       <div className="mt-2">
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           プラス値: 歌詞が早く表示
