@@ -453,6 +453,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   const [hasWordTiming, setHasWordTiming] = useState<boolean>(false);
   const backgroundRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [backgroundHeights, setBackgroundHeights] = useState<Map<string, number>>(new Map());
+  const mainRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const allLyricLines: TTMLLine[] = useMemo(() => {
     if (!ttmlData) return [];
@@ -809,40 +810,27 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     
     const lineElement = document.getElementById(`ttml-line-${targetLine.begin}-${targetLine.end}`);
     if (!lineElement) return;
-    
-    let backgroundHeightAdjustment = 0;
-    if (targetLine.backgroundText) {
-      const backgroundKey = `${targetLine.begin}-${targetLine.end}-bg`;
-      const measuredBackgroundHeight = backgroundHeights.get(backgroundKey) || 0;
-      
-      if (measuredBackgroundHeight > 0) {
-        if (targetLine.backgroundPosition === 'above') {
-          // バックグラウンドボーカル上部
-          const marginAdjustment = -100;
-          backgroundHeightAdjustment = -(measuredBackgroundHeight + marginAdjustment);
-        } else {
-          // バックグラウンドボーカル下部
-          const marginAdjustment = 5;
-          backgroundHeightAdjustment = measuredBackgroundHeight + marginAdjustment;
-        }
-      }
-    }
-    
-    // スクロール位置計算
+
     const containerHeight = container.clientHeight;
     const contentHeight = container.scrollHeight;
-    const lyricOffsetTop = lineElement.offsetTop;
-    const lyricHeight = lineElement.clientHeight;
-    const offsetPercentage = settings.scrollPositionOffset !== undefined ? settings.scrollPositionOffset / 100 : 0.5;
-    
+    const offsetPercentage =
+      settings.scrollPositionOffset !== undefined ? settings.scrollPositionOffset / 100 : 0.5;
+    const anchorBase = isMobile ? window.innerHeight : containerHeight;
+    const anchorY = anchorBase * offsetPercentage;
+
+    const mainKey = `${targetLine.begin}-${targetLine.end}-main`;
+    const mainEl = mainRefs.current.get(mainKey);
+
     let targetScrollTop = 0;
-    if (isMobile) {
-      const displayHeight = window.innerHeight;
-      const offsetFromTop = displayHeight * offsetPercentage;
-      targetScrollTop = lyricOffsetTop - offsetFromTop + lyricHeight / 2 + backgroundHeightAdjustment;
+    if (mainEl) {
+      const containerRect = container.getBoundingClientRect();
+      const rect = mainEl.getBoundingClientRect();
+      const mainCenter = container.scrollTop + (rect.top - containerRect.top) + rect.height / 2;
+      targetScrollTop = mainCenter - anchorY;
     } else {
-      const scrollOffset = (1 - offsetPercentage) * containerHeight;
-      targetScrollTop = lyricOffsetTop - containerHeight / 2 + lyricHeight / 2 + scrollOffset - containerHeight / 2 + backgroundHeightAdjustment;
+      const lyricOffsetTop = lineElement.offsetTop;
+      const lyricHeight = lineElement.clientHeight;
+      targetScrollTop = lyricOffsetTop + lyricHeight / 2 - anchorY;
     }
     
     targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
@@ -1056,7 +1044,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                   key={`${line.begin}-${line.end}-${index}`}
                   id={`ttml-line-${line.begin}-${line.end}`}
                   className={`transition-all duration-700 px-2 rounded-lg :hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer relative
-                    ${isEmpty ? 'm-0 p-0' : 'my-8'} ${textColor}`}
+                    ${isEmpty ? 'm-0 p-0' : 'my-3'} ${textColor}`}
                   style={{
                     opacity,
                     fontSize: {
@@ -1112,13 +1100,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             style={{
                               opacity: isDisplaying ? 1 : 0,
                               maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                              marginBottom: isDisplaying ? '10px' : '0px',
                               overflow: 'hidden',
                               filter: isDisplaying ? 'none' : 'blur(20px)',
-                              transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, margin-bottom 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                              transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
                               pointerEvents: 'none',
                               textAlign: textAlignment
                             }}
+                            className='pl-4'
                           >
                             <div 
                               ref={(el) => {
@@ -1153,36 +1141,48 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           </div>
                         );
                       })()}
-                      {settings.useKaraokeLyric ? (
-                        hasWordTiming && settings.useWordTiming && line.words && line.words.length > 0 ? (
-                          <WordTimingKaraokeLyricLine
-                            line={line}
-                            currentTime={currentTime + (settings.lyricOffset || 0)}
-                            resolvedTheme={resolvedTheme}
-                            progressDirection={settings.lyricProgressDirection}
-                            isActive={isDisplaying}
-                            isPast={isPast}
-                          />
-                        ) : (
-                          isDisplaying ? (
-                            <KaraokeLyricLine
-                              text={line.text || ''}
-                              progressPercentage={progressPercentage}
+                      <div
+                        ref={(el) => {
+                          const key = `${line.begin}-${line.end}-main`;
+                          if (el) {
+                            mainRefs.current.set(key, el);
+                          } else {
+                            mainRefs.current.delete(key);
+                          }
+                        }}
+                        className='p-4'
+                      >
+                        {settings.useKaraokeLyric ? (
+                          hasWordTiming && settings.useWordTiming && line.words && line.words.length > 0 ? (
+                            <WordTimingKaraokeLyricLine
+                              line={line}
+                              currentTime={currentTime + (settings.lyricOffset || 0)}
                               resolvedTheme={resolvedTheme}
-                              isActive={isDisplaying}
                               progressDirection={settings.lyricProgressDirection}
+                              isActive={isDisplaying}
+                              isPast={isPast}
                             />
                           ) : (
-                            <span style={{ pointerEvents: 'none' }}>
-                              <LineBreaker text={line.text || ''} />
-                            </span>
+                            isDisplaying ? (
+                              <KaraokeLyricLine
+                                text={line.text || ''}
+                                progressPercentage={progressPercentage}
+                                resolvedTheme={resolvedTheme}
+                                isActive={isDisplaying}
+                                progressDirection={settings.lyricProgressDirection}
+                              />
+                            ) : (
+                              <span style={{ pointerEvents: 'none' }}>
+                                <LineBreaker text={line.text || ''} />
+                              </span>
+                            )
                           )
-                        )
-                      ) : (
-                        <span style={{ pointerEvents: 'none' }}>
-                          <LineBreaker text={line.text || ''} />
-                        </span>
-                      )}
+                        ) : (
+                          <span style={{ pointerEvents: 'none' }}>
+                            <LineBreaker text={line.text || ''} />
+                          </span>
+                        )}
+                      </div>
                       {line.backgroundText && (() => {
                         const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
                           ? line.backgroundWords[0].begin 
@@ -1205,13 +1205,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             style={{
                               opacity: isDisplaying ? 1 : 0,
                               maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                              marginTop: isDisplaying ? '5px' : '0px',
                               overflow: 'hidden',
                               filter: isDisplaying ? 'none' : 'blur(20px)',
-                              transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, margin-top 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                              transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
                               pointerEvents: 'none',
                               textAlign: textAlignment
                             }}
+                            className='pl-4'
                           >
                             <div 
                               ref={(el) => {
