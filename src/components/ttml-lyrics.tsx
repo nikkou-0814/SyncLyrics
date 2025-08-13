@@ -153,7 +153,7 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
   }, [currentActiveWordIndex, line.words, isActive]);
 
   if (!line.words || line.words.length === 0) {
-    return <span style={{ color: isActive ? activeColor : isPast ? activeColor : inactiveColor }}>{line.text}</span>;
+    return <span style={{ color: isActive ? activeColor : inactiveColor }}>{line.text}</span>;
   }
   
   // 単語ごとにハイライトする表示を作成
@@ -181,8 +181,9 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
     
     wordPositions.forEach(({start, end, word}, index) => {
       if (start > lastEnd) {
+        // 過去の行は非アクティブ色に戻す
         spans.push(
-          <span key={`space-${lastEnd}-${start}`} style={{ color: isPast ? activeColor : inactiveColor, whiteSpace: 'pre-wrap' }}>
+          <span key={`space-${lastEnd}-${start}`} style={{ color: inactiveColor, whiteSpace: 'pre-wrap' }}>
             {line.text?.substring(lastEnd, start)}
           </span>
         );
@@ -200,17 +201,16 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
           const wordDuration = word.end - word.begin;
           wordProgress = (currentTime - word.begin) / wordDuration;
           wordProgress = Math.max(0, Math.min(1, wordProgress));
-        } else if (wordIsCompleted || isPast) {
+        } else if (wordIsCompleted) {
           wordProgress = 1;
         }
         
         const backgroundSize = '200% 100%';
         const position = isLTR ? (1 - wordProgress) * 100 : wordProgress * 100;
-        const finalPosition = isPast 
-          ? (isLTR ? '0% 0' : '100% 0') 
-          : (isActive ? `${position}% 0` : (isLTR ? '100% 0' : '0% 0'));
+        const finalPosition = isActive ? `${position}% 0` : (isLTR ? '100% 0' : '0% 0');
         
-        const bgImage = wordIsActive || wordIsCompleted || isPast
+        const showGradient = isActive && !isPast && (wordIsActive || wordIsCompleted);
+        const bgImage = showGradient
           ? `linear-gradient(to ${isLTR ? 'right' : 'left'}, ${activeColor}, ${activeColor} 47%, ${inactiveColor} 53%, ${inactiveColor})`
           : 'none';
         
@@ -219,10 +219,10 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
             key={`word-${index}-${word.begin}-${word.end}`}
             style={{
               display: 'inline-block',
-              color: (!wordIsActive && !wordIsCompleted && !isPast) ? inactiveColor : 'transparent',
+              color: showGradient ? 'transparent' : inactiveColor,
               backgroundImage: bgImage,
               backgroundSize: backgroundSize,
-              backgroundPosition: finalPosition,
+              backgroundPosition: showGradient ? finalPosition : (isLTR ? '100% 0' : '0% 0'),
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
@@ -243,19 +243,19 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
               position: 'relative',
               transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
               transition: 'transform 1.5s ease',
-              color: isPast ? activeColor : inactiveColor,
+              color: inactiveColor,
               whiteSpace: 'pre-wrap'
             }}
           >
             {word.text}
-            {(wordIsActive || wordIsCompleted || isPast) && (
+            {(isActive && !isPast && (wordIsActive || wordIsCompleted)) && (
               <span
                 style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   color: activeColor,
-                  clipPath: isPast ? 'none' : (
+                  clipPath: (
                     progressDirection === 'btt' ? 
                       `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
                       `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
@@ -277,7 +277,7 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
     
     if (lastEnd < (line.text?.length ?? 0)) {
       spans.push(
-        <span key={`space-${lastEnd}-end`} style={{ color: isPast ? activeColor : inactiveColor, whiteSpace: 'pre-wrap' }}>
+        <span key={`space-${lastEnd}-end`} style={{ color: inactiveColor, whiteSpace: 'pre-wrap' }}>
           {line.text?.substring(lastEnd)}
         </span>
       );
