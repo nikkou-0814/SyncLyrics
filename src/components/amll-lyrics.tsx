@@ -233,7 +233,7 @@ const AMLLLyrics: React.FC<AMLLLyricsProps> = ({
           large: '4.0rem',
         }[settings.fontSize],
         fontWeight: 'bold',
-        padding: isMobile ? '' : '0 80px',
+        padding: isMobile ? undefined : '0 80px',
         color: 'var(--foreground)',
       }}
     >

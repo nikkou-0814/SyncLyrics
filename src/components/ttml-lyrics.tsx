@@ -818,29 +818,23 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     const anchorBase = isMobile ? window.innerHeight : containerHeight;
     const anchorY = anchorBase * offsetPercentage;
 
-    const mainKey = `${targetLine.begin}-${targetLine.end}-main`;
-    const mainEl = mainRefs.current.get(mainKey);
-
     let targetScrollTop = 0;
-    if (mainEl) {
-      const containerRect = container.getBoundingClientRect();
-      const rect = mainEl.getBoundingClientRect();
-      const mainCenter = container.scrollTop + (rect.top - containerRect.top) + rect.height / 2;
-      targetScrollTop = mainCenter - anchorY;
-    } else {
-      const lyricOffsetTop = lineElement.offsetTop;
-      const lyricHeight = lineElement.clientHeight;
-      targetScrollTop = lyricOffsetTop + lyricHeight / 2 - anchorY;
+    {
+      const lyricOffsetTop = (lineElement as HTMLElement).offsetTop;
+      const lyricHeight = (lineElement as HTMLElement).offsetHeight;
+
+      const lineCenter = lyricOffsetTop + lyricHeight / 2;
+      targetScrollTop = lineCenter - anchorY;
     }
     
     targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
-    
+
     const currentScrollTop = container.scrollTop;
     if (Math.abs(targetScrollTop - currentScrollTop) < 5) {
       lastScrolledLineRef.current = targetLine;
       return;
     }
-    
+
     const nextTimeDiff = getNextTimeDiffSkippingCluster(targetLine);
     
     const scrollDuration =

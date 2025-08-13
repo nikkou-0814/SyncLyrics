@@ -502,10 +502,10 @@ const Player: React.FC<PlayerProps> = ({
       position: 'absolute',
       marginTop:
         settings.fontSize === 'small'
-          ? '5px'
-          : settings.fontSize === 'medium'
           ? '10px'
-          : '15px',
+          : settings.fontSize === 'medium'
+          ? '20px'
+          : '25px',
       left:
         alignment === 'center'
           ? '50%'
