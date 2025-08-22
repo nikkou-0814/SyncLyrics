@@ -1017,7 +1017,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
           ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}
           ${settings.fullplayer ? 'h-[92vh]' : 'h-full'}
           ${settings.fullplayer && settings.showplayercontrol ? 'mb-20' : ''}
-          ${isMobile ? 'px-5 w-full' : 'px-20 w-full'}
+          ${isMobile ? 'px-3 w-full' : 'px-20 w-full'}
         `}
         style={{
           maskImage: isMobile || isLyricsHovered
