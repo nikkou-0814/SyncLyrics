@@ -1215,15 +1215,16 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           return (
                             <div 
                               style={{
-                                opacity: isDisplaying ? 1 : 0,
-                                maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                                opacity: isStage ? 1 : 0,
+                                bottom: isStage ? '0px' : settings.fontSize === 'small' ? '-100px' : settings.fontSize === 'medium' ? '-100px' : settings.fontSize === 'large' ? '-150px' : '-100px',
+                                maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
                                 overflow: 'hidden',
-                                filter: isDisplaying ? 'none' : 'blur(20px)',
-                                transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                transition: `opacity ${isStage ? '1500ms' : '220ms'} ease, max-height ${isStage ? '500ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, bottom ${isStage ? '600ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                willChange: 'opacity, max-height, filter, bottom',
                                 pointerEvents: 'none',
                                 textAlign: textAlignment
                               }}
-                              className='pl-4'
+                              className={`${textAlignment === 'right' ? 'pr-6' : 'pl-6'} relative`}
                             >
                               <div 
                                 ref={(el) => {
@@ -1320,16 +1321,17 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           return (
                             <div 
                               style={{
-                                opacity: isDisplaying ? 1 : 0,
-                                maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                                opacity: isStage ? 1 : 0,
+                                top: isStage ? '0px' : settings.fontSize === 'small' ? '-150px' : settings.fontSize === 'medium' ? '-150px' : settings.fontSize === 'large' ? '-200px' : '-150px',
+                                maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
                                 overflow: 'hidden',
-                                filter: isDisplaying ? 'none' : 'blur(20px)',
-                                transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                transition: `opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '400ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                willChange: 'opacity, max-height, filter, top',
                                 pointerEvents: 'none',
                                 textAlign: textAlignment
-                              }}
-                              className='pl-4'
-                            >
+                                }}
+                                className={`${textAlignment === 'right' ? 'pr-6' : 'pl-6'} relative`}
+                              >
                               <div 
                                 ref={(el) => {
                                   if (el) {
