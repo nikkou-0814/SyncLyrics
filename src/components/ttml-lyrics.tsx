@@ -1132,7 +1132,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                   key={`${line.begin}-${line.end}-${index}`}
                   id={`ttml-line-${line.begin}-${line.end}`}
                   className={`transition-all duration-700 px-2 rounded-lg :hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer relative
-                    ${isEmpty ? 'm-0 p-0' : settings.fontSize === 'small' ? 'my-2' : settings.fontSize === 'medium' ? 'my-4' : settings.fontSize === 'large' ? 'my-4' : 'my-3'} ${textColor}`}
+                    ${isEmpty ? 'm-0 p-0' : settings.fontSize === 'small' ? 'my-2' : 'my-4'} ${textColor}`}
                   style={{
                     opacity,
                     fontSize: {
