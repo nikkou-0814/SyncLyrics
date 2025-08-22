@@ -156,7 +156,7 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
     return <span style={{ color: isActive ? activeColor : inactiveColor }}>{line.text}</span>;
   }
   
-  // 単語ごとにハイライトする表示を作成
+  // 単語ごとにハイライトする表示
   const textWithSpans = () => {
     const wordPositions: {start: number, end: number, word: typeof line.words[0]}[] = [];
     let currentPosition = 0;
@@ -454,6 +454,32 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   const backgroundRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [backgroundHeights, setBackgroundHeights] = useState<Map<string, number>>(new Map());
   const mainRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [stageLineKeys, setStageLineKeys] = useState<string[]>([]);
+  const preStageKeyRef = useRef<string | null>(null);
+
+  const updateStageLine = useCallback(() => {
+    if (activeInterlude) {
+      preStageKeyRef.current = null;
+      setStageLineKeys(prev => (prev.length ? [] : prev));
+      return;
+    }
+    const container = lyricsContainerRef.current;
+    if (!container) return;
+    if (!isProgrammaticScrollingRef.current) return;
+    const nodes = Array.from(
+      container.querySelectorAll<HTMLDivElement>('[data-line-past="false"][data-line-key]')
+    );
+    const scrollTop = container.scrollTop + 1;
+    let picked: HTMLDivElement | null = null;
+    for (const el of nodes) {
+      if (el.offsetTop >= scrollTop) { picked = el; break; }
+    }
+    if (!picked) return;
+    const key = picked.dataset.lineKey || null;
+    if (!key) return;
+    preStageKeyRef.current = key;
+    setStageLineKeys(prev => (prev.includes(key) ? prev : [key, ...prev]));
+  }, [activeInterlude]);
 
   const allLyricLines: TTMLLine[] = useMemo(() => {
     if (!ttmlData) return [];
@@ -711,9 +737,6 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
         if (adjustedTime < nextLine.end) break;
         nextIdx++;
       }
-      
-      
-      // ← 間奏処理は activeInterlude の useEffect に集約
     }
   }, [currentTime, groupEnd, currentGroup, groupIndex, allLyricLines, isMobile, settings.scrollPositionOffset, smoothScrollTo, ttmlData, settings.lyricOffset, isAutoScrollEnabled, divLastLineIndices, activeInterlude]);
 
@@ -741,12 +764,19 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
 
     container.addEventListener('wheel', handleUserScroll, { passive: true });
     container.addEventListener('touchmove', handleUserScroll, { passive: true });
+    const rafScrollUpdate = () => {
+      if (isProgrammaticScrollingRef.current) {
+        requestAnimationFrame(updateStageLine);
+      }
+    };
+    container.addEventListener('scroll', rafScrollUpdate, { passive: true });
 
     return () => {
       container.removeEventListener('wheel', handleUserScroll);
       container.removeEventListener('touchmove', handleUserScroll);
+      container.removeEventListener('scroll', rafScrollUpdate);
     };
-  }, []);
+  }, [updateStageLine]);
 
   // 自動スクロール
   useEffect(() => {
@@ -848,6 +878,11 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       nextTimeDiff < 0.9 ? 500 :
       nextTimeDiff < 1.0 ? 600 : 1000;
     
+    if (!activeInterlude) {
+      const key = `${targetLine.begin}-${targetLine.end}`;
+      preStageKeyRef.current = key;
+      setStageLineKeys(prev => (prev.includes(key) ? prev : [key, ...prev]));
+    }
     isProgrammaticScrollingRef.current = true;
     lastScrolledLineRef.current = targetLine;
     lastUserScrollTimeRef.current = now;
@@ -858,7 +893,51 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
           isProgrammaticScrollingRef.current = false;
         }, 50);
       });
-  }, [allLyricLines, currentGroup, currentTime, settings.lyricOffset, isAutoScrollEnabled, settings.scrollPositionOffset, isMobile, smoothScrollTo, ttmlData, backgroundHeights, interludePeriods, getNextTimeDiffSkippingCluster]);
+  }, [allLyricLines, currentGroup, currentTime, settings.lyricOffset, isAutoScrollEnabled, settings.scrollPositionOffset, isMobile, smoothScrollTo, ttmlData, backgroundHeights, interludePeriods, getNextTimeDiffSkippingCluster, activeInterlude]);
+
+  useEffect(() => {
+    if (activeInterlude) {
+      preStageKeyRef.current = null;
+      setStageLineKeys(prev => (prev.length ? [] : prev));
+      return;
+    }
+    const t = currentTime + (settings.lyricOffset || 0);
+
+    if (currentGroup.length === 0 || groupEnd == null || t >= groupEnd) {
+      preStageKeyRef.current = null;
+      setStageLineKeys(prev => (prev.length ? [] : prev));
+      return;
+    }
+
+    const preKey = preStageKeyRef.current;
+    if (preKey) {
+      const b = parseFloat(preKey.split('-')[0] || '');
+      if (!Number.isNaN(b) && t >= b) {
+        preStageKeyRef.current = null;
+      }
+    }
+
+    const groupKeysSet = new Set(currentGroup.map(l => `${l.begin}-${l.end}`));
+    const includePre = preStageKeyRef.current ? groupKeysSet.has(preStageKeyRef.current) : false;
+
+    setStageLineKeys(prev => {
+      const carryOver: string[] = prev.filter(k => groupKeysSet.has(k));
+      const started: string[] = currentGroup
+        .filter(l => t >= l.begin)
+        .map(l => `${l.begin}-${l.end}`);
+      const nextRaw = [
+        ...(includePre && preStageKeyRef.current ? [preStageKeyRef.current] : []),
+        ...carryOver,
+        ...started,
+      ];
+      const next: string[] = [];
+      for (const k of nextRaw) if (!next.includes(k)) next.push(k);
+      if (next.length === prev.length && next.every((v, i) => v === prev[i])) {
+        return prev;
+      }
+      return next;
+    });
+  }, [currentTime, currentGroup, groupEnd, activeInterlude, settings.lyricOffset]);
 
   useEffect(() => {
     if (currentGroup.length === 0 || groupEnd === null) {
@@ -915,6 +994,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     setIsLyricsHovered(false);
   };
 
+  useEffect(() => {
+    updateStageLine();
+  }, [currentTime, currentGroup, groupEnd, isAutoScrollEnabled, updateStageLine]);
+
   if (!ttmlData) {
     return null;
   }
@@ -970,6 +1053,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
             const isPast = isGroupActive && isInCurrentGroup ? false : lineEnd < now;
             const isDisplaying = isActive || (isGroupActive && isInCurrentGroup);
             const isEmpty = !line.text || line.text.trim() === '';
+            const lineKey = `${line.begin}-${line.end}`;
+            const isStage = !activeInterlude && stageLineKeys.includes(lineKey) && !isPast;
             const agent = line.agent ? ttmlData.agents.find(a => a.id === line.agent) : null;
             
             let textColor = '';
@@ -1013,6 +1098,15 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
               textAlignment = settings.lyricposition;
             }
             
+            const isRightAligned = textAlignment === 'right';
+            const stageShiftPx = (() => {
+              const base =
+                settings.fontSize === 'small' ? 2 :
+                settings.fontSize === 'medium' ? 3 :
+                settings.fontSize === 'large' ? 3 : 0;
+              return isRightAligned ? -base : base;
+            })();
+            
             // 間奏か
             const isDivEnd = divLastLineIndices.includes(index);
             const interludePeriod = isDivEnd ? 
@@ -1048,11 +1142,15 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                     }[settings.fontSize],
                     fontWeight: 'bold',
                     textAlign: textAlignment,
-                    transform: isAfterInterludeDiv
-                      ? `${settings.fontSize === 'small' ? 'translateY(55px)'
-                        : settings.fontSize === 'medium' ? 'translateY(70px)'
-                        : 'translateY(80px)'}`
-                      : 'translateY(0)',
+                    transform: `${
+                      isAfterInterludeDiv
+                        ? (settings.fontSize === 'small'
+                            ? 'translateY(55px)'
+                            : settings.fontSize === 'medium'
+                              ? 'translateY(70px)'
+                              : 'translateY(80px)')
+                        : 'translateY(0)'
+                    }`,
                     transition: `transform ${(() => {
                       const diff = getNextTimeDiffSkippingCluster(line);
                       return diff < 0.2 ? '0.15s' :
@@ -1069,178 +1167,204 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                     wordBreak: 'break-word',
                   }}
                   onClick={() => { onLyricClick(line.begin); setIsAutoScrollEnabled(true); }}
+                  data-line-active={isDisplaying ? 'true' : 'false'}
+                  data-line-past={isPast ? 'true' : 'false'}
+                  data-line-key={lineKey}
+                  data-line-begin={String(line.begin)}
+                  data-line-group-end={String(lineEnd)}
                 >
                   {!isEmpty && (
-                    <div>
-                      {line.backgroundText && (() => {
-                        const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
-                          ? line.backgroundWords[0].begin 
-                          : null;
-                        const mainStartTime = line.words && line.words.length > 0 
-                          ? line.words[0].begin 
-                          : line.begin;
-                        
-                        const shouldShowAbove = backgroundStartTime !== null 
-                          ? backgroundStartTime < mainStartTime
-                          : line.backgroundPosition === 'above';
-                        
-                        if (!shouldShowAbove) return null;
-                        
-                        const backgroundKey = `${line.begin}-${line.end}-bg`;
-                        const actualHeight = backgroundHeights.get(backgroundKey) || 0;
-                        
-                        return (
-                          <div 
-                            style={{
-                              opacity: isDisplaying ? 1 : 0,
-                              maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                              overflow: 'hidden',
-                              filter: isDisplaying ? 'none' : 'blur(20px)',
-                              transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
-                              pointerEvents: 'none',
-                              textAlign: textAlignment
-                            }}
-                            className='pl-4'
-                          >
+                    <span
+                      className="inline-block will-change-transform"
+                      data-stage-span={isStage ? 'true' : 'false'}
+                      style={{
+                        transform: isStage ? `translateX(${stageShiftPx}px) scale(1.03)` : 'translateX(0) scale(1.0)',
+                        transformOrigin: isRightAligned ? 'right center' : 'left center',
+                        transition: `transform ${(() => {
+                          const diff = getNextTimeDiffSkippingCluster(line);
+                          return diff < 0.2 ? '0.15s' :
+                                  diff < 0.3 ? '0.2s'  :
+                                  diff < 0.4 ? '0.25s' :
+                                  diff < 0.5 ? '0.3s'  :
+                                  diff < 0.6 ? '0.35s' :
+                                  diff < 0.7 ? '0.4s'  :
+                                  diff < 0.8 ? '0.45s' :
+                                  diff < 0.9 ? '0.5s'  :
+                                  diff < 1.0 ? '0.6s'  : '1s';
+                        })()} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`
+                      }}
+                    >
+                      <div>
+                        {line.backgroundText && (() => {
+                          const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
+                            ? line.backgroundWords[0].begin 
+                            : null;
+                          const mainStartTime = line.words && line.words.length > 0 
+                            ? line.words[0].begin 
+                            : line.begin;
+                          
+                          const shouldShowAbove = backgroundStartTime !== null 
+                            ? backgroundStartTime < mainStartTime
+                            : line.backgroundPosition === 'above';
+                          
+                          if (!shouldShowAbove) return null;
+                          
+                          const backgroundKey = `${line.begin}-${line.end}-bg`;
+                          const actualHeight = backgroundHeights.get(backgroundKey) || 0;
+                          
+                          return (
                             <div 
-                              ref={(el) => {
-                                if (el) {
-                                  backgroundRefs.current.set(backgroundKey, el);
-                                }
+                              style={{
+                                opacity: isDisplaying ? 1 : 0,
+                                maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                                overflow: 'hidden',
+                                filter: isDisplaying ? 'none' : 'blur(20px)',
+                                transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                pointerEvents: 'none',
+                                textAlign: textAlignment
                               }}
+                              className='pl-4'
                             >
-                              {line.backgroundWords && line.backgroundWords.length > 0 ? (
-                                <BackgroundWordTimingLyricLine
-                                  backgroundWords={line.backgroundWords}
-                                  currentTime={currentTime + (settings.lyricOffset || 0)}
-                                  resolvedTheme={resolvedTheme}
-                                  progressDirection={settings.lyricProgressDirection}
-                                  fontSize={settings.fontSize}
-                                />
-                              ) : (
-                                <span style={{ 
-                                  fontSize: {
-                                    small: '1.2rem',
-                                    medium: '1.5rem',
-                                    large: '2.0rem',
-                                  }[settings.fontSize],
-                                  color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
-                                  fontWeight: 'normal',
-                                  pointerEvents: 'none'
-                                }}>
-                                  <LineBreaker text={line.backgroundText} />
-                                </span>
-                              )}
+                              <div 
+                                ref={(el) => {
+                                  if (el) {
+                                    backgroundRefs.current.set(backgroundKey, el);
+                                  }
+                                }}
+                              >
+                                {line.backgroundWords && line.backgroundWords.length > 0 ? (
+                                  <BackgroundWordTimingLyricLine
+                                    backgroundWords={line.backgroundWords}
+                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    resolvedTheme={resolvedTheme}
+                                    progressDirection={settings.lyricProgressDirection}
+                                    fontSize={settings.fontSize}
+                                  />
+                                ) : (
+                                  <span style={{ 
+                                    fontSize: {
+                                      small: '1.2rem',
+                                      medium: '1.5rem',
+                                      large: '2.0rem',
+                                    }[settings.fontSize],
+                                    color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                                    fontWeight: 'normal',
+                                    pointerEvents: 'none'
+                                  }}>
+                                    <LineBreaker text={line.backgroundText} />
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })()}
-                      <div
-                        ref={(el) => {
-                          const key = `${line.begin}-${line.end}-main`;
-                          if (el) {
-                            mainRefs.current.set(key, el);
-                          } else {
-                            mainRefs.current.delete(key);
-                          }
-                        }}
-                        className='p-4'
-                      >
-                        {settings.useKaraokeLyric ? (
-                          hasWordTiming && settings.useWordTiming && line.words && line.words.length > 0 ? (
-                            <WordTimingKaraokeLyricLine
-                              line={line}
-                              currentTime={currentTime + (settings.lyricOffset || 0)}
-                              resolvedTheme={resolvedTheme}
-                              progressDirection={settings.lyricProgressDirection}
-                              isActive={isDisplaying}
-                              isPast={isPast}
-                            />
-                          ) : (
-                            isDisplaying ? (
-                              <KaraokeLyricLine
-                                text={line.text || ''}
-                                progressPercentage={progressPercentage}
+                          );
+                        })()}
+                        <div
+                          ref={(el) => {
+                            const key = `${line.begin}-${line.end}-main`;
+                            if (el) {
+                              mainRefs.current.set(key, el);
+                            } else {
+                              mainRefs.current.delete(key);
+                            }
+                          }}
+                          className='p-4'
+                        >
+                          {settings.useKaraokeLyric ? (
+                            hasWordTiming && settings.useWordTiming && line.words && line.words.length > 0 ? (
+                              <WordTimingKaraokeLyricLine
+                                line={line}
+                                currentTime={currentTime + (settings.lyricOffset || 0)}
                                 resolvedTheme={resolvedTheme}
-                                isActive={isDisplaying}
                                 progressDirection={settings.lyricProgressDirection}
+                                isActive={isDisplaying}
+                                isPast={isPast}
                               />
                             ) : (
-                              <span style={{ pointerEvents: 'none' }}>
-                                <LineBreaker text={line.text || ''} />
-                              </span>
-                            )
-                          )
-                        ) : (
-                          <span style={{ pointerEvents: 'none' }}>
-                            <LineBreaker text={line.text || ''} />
-                          </span>
-                        )}
-                      </div>
-                      {line.backgroundText && (() => {
-                        const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
-                          ? line.backgroundWords[0].begin 
-                          : null;
-                        const mainStartTime = line.words && line.words.length > 0 
-                          ? line.words[0].begin 
-                          : line.begin;
-                        
-                        const shouldShowAbove = backgroundStartTime !== null 
-                          ? backgroundStartTime < mainStartTime
-                          : line.backgroundPosition === 'above';
-                        
-                        if (shouldShowAbove) return null;
-                        
-                        const backgroundKey = `${line.begin}-${line.end}-bg`;
-                        const actualHeight = backgroundHeights.get(backgroundKey) || 0;
-                        
-                        return (
-                          <div 
-                            style={{
-                              opacity: isDisplaying ? 1 : 0,
-                              maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                              overflow: 'hidden',
-                              filter: isDisplaying ? 'none' : 'blur(20px)',
-                              transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
-                              pointerEvents: 'none',
-                              textAlign: textAlignment
-                            }}
-                            className='pl-4'
-                          >
-                            <div 
-                              ref={(el) => {
-                                if (el) {
-                                  backgroundRefs.current.set(backgroundKey, el);
-                                }
-                              }}
-                            >
-                              {line.backgroundWords && line.backgroundWords.length > 0 ? (
-                                <BackgroundWordTimingLyricLine
-                                  backgroundWords={line.backgroundWords}
-                                  currentTime={currentTime + (settings.lyricOffset || 0)}
+                              isDisplaying ? (
+                                <KaraokeLyricLine
+                                  text={line.text || ''}
+                                  progressPercentage={progressPercentage}
                                   resolvedTheme={resolvedTheme}
+                                  isActive={isDisplaying}
                                   progressDirection={settings.lyricProgressDirection}
-                                  fontSize={settings.fontSize}
                                 />
                               ) : (
-                                <span style={{ 
-                                  fontSize: {
-                                    small: '1.2rem',
-                                    medium: '1.5rem',
-                                    large: '2.0rem',
-                                  }[settings.fontSize],
-                                  color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
-                                  fontWeight: 'normal',
-                                  pointerEvents: 'none'
-                                }}>
-                                  <LineBreaker text={line.backgroundText} />
+                                <span style={{ pointerEvents: 'none' }}>
+                                  <LineBreaker text={line.text || ''} />
                                 </span>
-                              )}
+                              )
+                            )
+                          ) : (
+                            <span style={{ pointerEvents: 'none' }}>
+                              <LineBreaker text={line.text || ''} />
+                            </span>
+                          )}
+                        </div>
+                        {line.backgroundText && (() => {
+                          const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
+                            ? line.backgroundWords[0].begin 
+                            : null;
+                          const mainStartTime = line.words && line.words.length > 0 
+                            ? line.words[0].begin 
+                            : line.begin;
+                          
+                          const shouldShowAbove = backgroundStartTime !== null 
+                            ? backgroundStartTime < mainStartTime
+                            : line.backgroundPosition === 'above';
+                          
+                          if (shouldShowAbove) return null;
+                          
+                          const backgroundKey = `${line.begin}-${line.end}-bg`;
+                          const actualHeight = backgroundHeights.get(backgroundKey) || 0;
+                          
+                          return (
+                            <div 
+                              style={{
+                                opacity: isDisplaying ? 1 : 0,
+                                maxHeight: isDisplaying ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                                overflow: 'hidden',
+                                filter: isDisplaying ? 'none' : 'blur(20px)',
+                                transition: `${isDisplaying ? 'filter 0.4s ease-in-out' : 'filter 0.2s ease-in-out'}, opacity 0.2s ease-in-out, max-height 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                pointerEvents: 'none',
+                                textAlign: textAlignment
+                              }}
+                              className='pl-4'
+                            >
+                              <div 
+                                ref={(el) => {
+                                  if (el) {
+                                    backgroundRefs.current.set(backgroundKey, el);
+                                  }
+                                }}
+                              >
+                                {line.backgroundWords && line.backgroundWords.length > 0 ? (
+                                  <BackgroundWordTimingLyricLine
+                                    backgroundWords={line.backgroundWords}
+                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    resolvedTheme={resolvedTheme}
+                                    progressDirection={settings.lyricProgressDirection}
+                                    fontSize={settings.fontSize}
+                                  />
+                                ) : (
+                                  <span style={{ 
+                                    fontSize: {
+                                      small: '1.2rem',
+                                      medium: '1.5rem',
+                                      large: '2.0rem',
+                                    }[settings.fontSize],
+                                    color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                                    fontWeight: 'normal',
+                                    pointerEvents: 'none'
+                                  }}>
+                                    <LineBreaker text={line.backgroundText} />
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                          );
+                        })()}
+                      </div>
+                    </span>
                   )}
                 </div>
                 {shouldRenderInterlude && interludePeriod && 
