@@ -1321,14 +1321,14 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           return (
                             <div 
                               style={{
-                                opacity: isStage ? 1 : 0,
-                                top: isStage ? '0px' : settings.fontSize === 'small' ? '-150px' : settings.fontSize === 'medium' ? '-150px' : settings.fontSize === 'large' ? '-200px' : '-150px',
-                                maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                                overflow: 'hidden',
-                                transition: `opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '400ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
-                                willChange: 'opacity, max-height, filter, top',
-                                pointerEvents: 'none',
-                                textAlign: textAlignment
+                                  opacity: isStage ? 1 : 0,
+                                  top: isStage ? '0px' : settings.fontSize === 'small' ? '-150px' : settings.fontSize === 'medium' ? '-150px' : settings.fontSize === 'large' ? '-200px' : '-150px',
+                                  maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                                  overflow: 'hidden',
+                                  transition: `opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '400ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                  willChange: 'opacity, max-height, filter, top',
+                                  pointerEvents: 'none',
+                                  textAlign: textAlignment
                                 }}
                                 className={`${textAlignment === 'right' ? 'pr-6' : 'pl-6'} relative`}
                               >
