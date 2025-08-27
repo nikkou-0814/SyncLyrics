@@ -1268,7 +1268,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               mainRefs.current.delete(key);
                             }
                           }}
-                          className='p-4'
+                          className={settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}
                         >
                           {settings.useKaraokeLyric ? (
                             hasWordTiming && settings.useWordTiming && line.words && line.words.length > 0 ? (

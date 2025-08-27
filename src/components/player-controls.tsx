@@ -153,7 +153,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
         className={`fixed z-50 ${positionClass} ${roundedClass} shadow-lg ${isMobile && shouldShowControls ? 'backdrop-blur-sm' : ''}`}
       >
         <Card 
-          className="shadow-none bg-background/40 dark:bg-background/30 border border-white/10 dark:border-white/5 rounded-t-2xl"
+          className={`shadow-none bg-background/40 dark:bg-background/20 border border-white/10 dark:border-white/10 rounded-t-2xl ${isMobile ? 'rounded-b-none' : undefined}`}
           onClick={() => {
             if (isMobile && onMobileControlsToggle) {
               onMobileControlsToggle();

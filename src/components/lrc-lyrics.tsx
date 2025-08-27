@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import LineBreaker from '@/components/linebreak';
 import { PlayerLyricsProps, KaraokeLyricLineProps } from '@/types';
 
@@ -112,7 +112,7 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
   );
 };
 
-const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
+const LrcLyrics: React.FC<PlayerLyricsProps> = ({
   lyricsData,
   currentTime,
   duration,
@@ -130,6 +130,8 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState<boolean>(true);
   const scrollDisableTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isProgrammaticScrollingRef = useRef<boolean>(false);
+  const [stageLineKeys, setStageLineKeys] = useState<string[]>([]);
+  const preStageKeyRef = useRef<string | null>(null);
   const lastUserScrollTimeRef = useRef<number>(0);
   const scrollCooldownPeriod = 200;
 
@@ -185,6 +187,33 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
     };
   }, []);
 
+  const updateStageLine = useCallback(() => {
+    const container = lyricsContainerRef.current;
+    if (!container) return;
+    if (!isProgrammaticScrollingRef.current) return;
+    const nodes = Array.from(
+      container.querySelectorAll<HTMLDivElement>('[data-line-past="false"][data-line-key]')
+    );
+    const scrollTop = container.scrollTop + 1;
+    let picked: HTMLDivElement | null = null;
+    for (const el of nodes) {
+      if (el.offsetTop >= scrollTop) { picked = el; break; }
+    }
+    if (!picked) return;
+    const key = picked.dataset.lineKey || null;
+    if (!key) return;
+    preStageKeyRef.current = key;
+    setStageLineKeys(prev => (prev.includes(key) ? prev : [key, ...prev]));
+  }, []);
+
+  useEffect(() => {
+    const container = lyricsContainerRef.current;
+    if (!container) return;
+    const onScroll = () => { if (isProgrammaticScrollingRef.current) requestAnimationFrame(updateStageLine); };
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, [updateStageLine]);
+
   // 自動スクロール
   useEffect(() => {
     if (!isAutoScrollEnabled) return;
@@ -231,6 +260,15 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
       );
 
       isProgrammaticScrollingRef.current = true;
+
+      {
+        let stageEnd = nextLyricTime;
+        const hasNext = currentLineIndex + 1 < lyricsData.length;
+        if (hasNext) stageEnd += 0.7;
+        const key = `${currentLyricTime}-${stageEnd}`;
+        preStageKeyRef.current = key;
+        setStageLineKeys(prev => (prev.includes(key) ? prev : [key, ...prev]));
+      }
       
       (smoothScrollTo as (element: HTMLElement, to: number, duration: number) => Promise<void>)(container, targetScrollTop, scrollDuration)
         .finally(() => {
@@ -240,6 +278,33 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
         });
     }
   }, [currentLineIndex, lyricsData, duration, isMobile, smoothScrollTo, isAutoScrollEnabled, settings.scrollPositionOffset]);
+
+  useEffect(() => {
+    if (currentLineIndex < 0 || currentLineIndex >= lyricsData.length) {
+      setStageLineKeys([]);
+      preStageKeyRef.current = null;
+      return;
+    }
+    const now = currentTime + settings.lyricOffset;
+    const line = lyricsData[currentLineIndex];
+    const nextTime =
+      currentLineIndex + 1 < lyricsData.length ? lyricsData[currentLineIndex + 1].time : duration;
+    let endTime = nextTime - 0.5;
+    if (endTime < line.time) endTime = line.time;
+    if (currentLineIndex + 1 < lyricsData.length) endTime += 0.7;
+    const curKey = `${line.time}-${endTime}`;
+
+    setStageLineKeys(() => {
+      const includePre = preStageKeyRef.current && now < line.time
+        ? [preStageKeyRef.current]
+        : [];
+      if (preStageKeyRef.current && now >= line.time) {
+        preStageKeyRef.current = null;
+      }
+      const next = [...includePre, curKey];
+      return next;
+    });
+  }, [currentTime, currentLineIndex, lyricsData, duration, settings.lyricOffset]);
 
   const handleLyricsMouseEnter = () => {
     setIsLyricsHovered(true);
@@ -263,7 +328,7 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
           ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}
           ${settings.fullplayer ? 'h-[92vh]' : 'h-full'}
           ${settings.fullplayer && settings.showplayercontrol ? 'mb-20' : ''}
-          ${isMobile ? 'p-5 w-5/6' : 'w-4/5'}
+          ${isMobile ? 'px-3 w-full' : 'px-20 w-full'}
         `}
         style={{
           maskImage: isMobile || isLyricsHovered
@@ -277,8 +342,6 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
               ? '92px'
               : '0'
             : '0',
-          padding: isMobile ? '20px' : '',
-          maxWidth: '1000px'
         }}
         ref={lyricsContainerRef}
         onMouseEnter={handleLyricsMouseEnter}
@@ -313,15 +376,25 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
               ? 0
               : 1;
 
+            const lineKey = (() => {
+              return `${line.time}-${endTime}`;
+            })();
+            const isStage = stageLineKeys.includes(lineKey) && !isPast;
+            const isRightAligned = settings.lyricposition === 'right';
+            const stageShiftPx =
+              settings.fontSize === 'small' ? (isRightAligned ? -2 : 2)
+              : settings.fontSize === 'medium' ? (isRightAligned ? -3 : 3)
+              : (isRightAligned ? -3 : 3);
+
             return (
               <div
                 key={index}
                 id={`lyric-${index}`}
-                className={`transition-all duration-700 px-2 rounded-lg :hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer
+                className={`transition-all duration-700 px-2 rounded-lg :hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer relative
                   ${
                     isInterlude
                       ? 'm-0 p-0'
-                      : `my-8 
+                      : `${settings.fontSize === 'small' ? 'my-2' : 'my-4'}
                         ${
                           isActive
                             ? 'font-bold'
@@ -349,24 +422,55 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
                   wordBreak: 'break-word',
                 }}
                 onClick={() => { onLyricClick(line.time); setIsAutoScrollEnabled(true);}}
+                data-line-active={isActive ? 'true' : 'false'}
+                data-line-past={index < currentLineIndex ? 'true' : 'false'}
+                data-line-key={lineKey}
+                data-line-begin={String(line.time)}
+                data-line-end={String(endTime)}
               >
                 {isInterlude
                   ? isActive
-                    ? renderInterludeDots(line.time, endTime, settings.lyricposition === 'right' ? 'right' : settings.lyricposition === 'center' ? 'center' : 'left')
-                    : null
-                  : isActive && settings.useKaraokeLyric
-                  ? (
-                    <KaraokeLyricLine
-                      text={line.text}
-                      progressPercentage={progressPercentage}
-                      resolvedTheme={resolvedTheme}
-                      isActive={isActive}
-                      progressDirection={settings.lyricProgressDirection}
-                    />
-                  )
+                  ? renderInterludeDots(line.time, endTime, settings.lyricposition === 'right' ? 'right' : settings.lyricposition === 'center' ? 'center' : 'left')
+                  : null
                   : (
-                    <span style={{ pointerEvents: 'none' }}>
-                      <LineBreaker text={line.text} />
+                    <span
+                      className="inline-block will-change-transform"
+                      data-stage-span={isStage ? 'true' : 'false'}
+                      style={{
+                        transform: isStage ? `translateX(${stageShiftPx}px) scale(1.03)` : 'translateX(0) scale(1.0)',
+                        transformOrigin: isRightAligned ? 'right center' : 'left center',
+                        transition: `transform ${(() => {
+                          const dt = Math.min(Math.max((endTime - line.time), 0.01), 1.0);
+                          return dt < 0.2 ? '0.15s'
+                                : dt < 0.3 ? '0.2s'
+                                : dt < 0.4 ? '0.25s'
+                                : dt < 0.5 ? '0.3s'
+                                : dt < 0.6 ? '0.35s'
+                                : dt < 0.7 ? '0.4s'
+                                : dt < 0.8 ? '0.45s'
+                                : dt < 0.9 ? '0.5s'
+                                : '0.6s';
+                        })()} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`
+                      }}
+                    >
+                      <div className={settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}>
+                      {isActive && settings.useKaraokeLyric
+                        ? (
+                          <KaraokeLyricLine
+                          text={line.text}
+                          progressPercentage={progressPercentage}
+                          resolvedTheme={resolvedTheme}
+                          isActive={isActive}
+                          progressDirection={settings.lyricProgressDirection}
+                          />
+                        )
+                        : (
+                          <span style={{ pointerEvents: 'none' }}>
+                          <LineBreaker text={line.text} />
+                          </span>
+                        )
+                      }
+                      </div>
                     </span>
                   )
                 }
@@ -380,4 +484,4 @@ const PlayerLyrics: React.FC<PlayerLyricsProps> = ({
   );
 };
 
-export default PlayerLyrics;
+export default LrcLyrics;
