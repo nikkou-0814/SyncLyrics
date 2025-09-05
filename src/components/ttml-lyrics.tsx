@@ -163,14 +163,33 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
     
     if (line.words) {
       line.words.forEach(word => {
-        const wordIndex = line.text?.indexOf(word.text, currentPosition) ?? -1;
+        let wordIndex = line.text?.indexOf(word.text, currentPosition) ?? -1;
+        let actualWordText = word.text;
+        
+        if (wordIndex === -1) {
+          const trimmedWord = word.text.trim();
+          wordIndex = line.text?.indexOf(trimmedWord, currentPosition) ?? -1;
+          
+          if (wordIndex !== -1) {
+            let endPosition = wordIndex + trimmedWord.length;
+            const remainingText = line.text?.substring(endPosition) || '';
+            const trailingSpaces = remainingText.match(/^\s*/)?.[0] || '';
+            endPosition += trailingSpaces.length;
+            
+            actualWordText = line.text?.substring(wordIndex, endPosition) || word.text;
+          }
+        }
+        
         if (wordIndex !== -1) {
           wordPositions.push({
             start: wordIndex,
-            end: wordIndex + word.text.length,
-            word
+            end: wordIndex + actualWordText.length,
+            word: {
+              ...word,
+              text: actualWordText
+            }
           });
-          currentPosition = wordIndex + word.text.length;
+          currentPosition = wordIndex + actualWordText.length;
         }
       });
     }
