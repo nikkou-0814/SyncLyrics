@@ -479,8 +479,8 @@ const Player: React.FC<PlayerProps> = ({
         parentScale = 1.1;
         opacity = 1;
       } else if (dtExit < 1.0) {
-        transformTransition = settings.useTTML && ttmlData ? '1.2s cubic-bezier(0.19, 1, 0.22, 1)' : '1.2s cubic-bezier(0.19, 1, 0.22, 1)';
-        opacityTransition = settings.useTTML && ttmlData ? '0.4s cubic-bezier(0.19, 1, 0.22, 1)' : '0.4s cubic-bezier(0.19, 1, 0.22, 1)';
+        transformTransition = '1.3s cubic-bezier(0.19, 1, 0.22, 1)'
+        opacityTransition = '0.4s cubic-bezier(0.19, 1, 0.22, 1)'
         parentScale = 0.6;
         opacity = 0;
       }
