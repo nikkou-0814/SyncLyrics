@@ -433,7 +433,7 @@ const Player: React.FC<PlayerProps> = ({
       opacity = appearRatio;
 
       if (dt < appearEnd) {
-        opacityTransition = '4s cubic-bezier(0.19, 1, 0.22, 1)';
+        opacityTransition = '5s cubic-bezier(0.19, 1, 0.22, 1)';
         parentScale = 0.9 + (0.2 * dt / appearEnd);
       } else if (dt < exitStart - 2) {
         const pulseTime = dt - appearEnd;
@@ -475,12 +475,12 @@ const Player: React.FC<PlayerProps> = ({
       dotFills = [1, 1, 1];
 
       if (dtExit < 0.8) {
-        transformTransition = '2s cubic-bezier(0.19, 1, 0.22, 1)';
+        transformTransition = '2.5s cubic-bezier(0.19, 1, 0.22, 1)';
         parentScale = 1.1;
         opacity = 1;
       } else if (dtExit < 1.0) {
-        transformTransition = settings.useTTML && ttmlData ? '0.5s cubic-bezier(0.19, 1, 0.22, 1)' : '0.4s cubic-bezier(0.19, 1, 0.22, 1)';
-        opacityTransition = settings.useTTML && ttmlData ? '0.2s cubic-bezier(0.19, 1, 0.22, 1)' : '0.4s cubic-bezier(0.19, 1, 0.22, 1)';
+        transformTransition = settings.useTTML && ttmlData ? '1.2s cubic-bezier(0.19, 1, 0.22, 1)' : '1.2s cubic-bezier(0.19, 1, 0.22, 1)';
+        opacityTransition = settings.useTTML && ttmlData ? '0.4s cubic-bezier(0.19, 1, 0.22, 1)' : '0.4s cubic-bezier(0.19, 1, 0.22, 1)';
         parentScale = 0.6;
         opacity = 0;
       }
@@ -537,7 +537,7 @@ const Player: React.FC<PlayerProps> = ({
         height: '16px',
         borderRadius: '50%',
         backgroundColor: `${getInterludeDotsColor()}${alpha})`,
-        margin: '0 6px',
+        margin: '0 5px',
         transition: `background-color ${transformTransition}`,
       } as React.CSSProperties;
     };

@@ -1261,14 +1261,33 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                         })()}
                         <div
                           ref={(el) => {
-                            const key = `${line.begin}-${line.end}-main`;
+                          const key = `${line.begin}-${line.end}-main`;
                             if (el) {
                               mainRefs.current.set(key, el);
                             } else {
                               mainRefs.current.delete(key);
                             }
                           }}
-                          className={settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}
+                          className={(() => {
+                            if (line.backgroundText && isStage) {
+                              const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
+                                ? line.backgroundWords[0].begin 
+                                : null;
+                              const mainStartTime = line.words && line.words.length > 0 
+                                ? line.words[0].begin 
+                                : line.begin;
+                              
+                              const shouldShowAbove = backgroundStartTime !== null 
+                                ? backgroundStartTime < mainStartTime
+                                : line.backgroundPosition === 'above';
+                              
+                              return shouldShowAbove ? 'px-5 pb-5' : 'px-5 pt-5';
+                            }
+                            return settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4';
+                          })()}
+                          style={{ 
+                            transition: `padding ${isStage ? '500ms' : '500ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`
+                          }}
                         >
                           {settings.useKaraokeLyric ? (
                             hasWordTiming && settings.useWordTiming && line.words && line.words.length > 0 ? (
