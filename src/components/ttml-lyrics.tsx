@@ -895,7 +895,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       nextTimeDiff < 0.7 ? 400 :
       nextTimeDiff < 0.8 ? 450 :
       nextTimeDiff < 0.9 ? 500 :
-      nextTimeDiff < 1.0 ? 600 : 1000;
+      nextTimeDiff < 1.0 ? 600 : 850;
     
     if (!activeInterlude) {
       const key = `${targetLine.begin}-${targetLine.end}`;
@@ -1034,20 +1034,15 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       <div
         className={`overflow-y-auto hidden-scrollbar
           ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}
-          ${settings.fullplayer ? 'h-[92vh]' : 'h-full'}
           ${settings.fullplayer && settings.showplayercontrol ? 'mb-20' : ''}
           ${isMobile ? 'px-3 w-full' : 'px-20 w-full'}
         `}
         style={{
-          maskImage: isMobile || isLyricsHovered
-            ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)'
-            : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 20%, #000 80%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: isMobile || isLyricsHovered
-            ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)'
-            : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 20%, #000 80%, rgba(0,0,0,0) 100%)',
-          marginBottom: settings.fullplayer
+          maskImage: 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+          WebkitMaskImage: 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+          marginBottom: isMobile ? '-120px' : settings.fullplayer
             ? settings.showplayercontrol
-              ? '92px'
+              ? '120px'
               : '0'
             : '0',
         }}
@@ -1120,9 +1115,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
             const isRightAligned = textAlignment === 'right';
             const stageShiftPx = (() => {
               const base =
-                settings.fontSize === 'small' ? 2 :
-                settings.fontSize === 'medium' ? 3 :
-                settings.fontSize === 'large' ? 3 : 0;
+                settings.fontSize === 'small' ? 1 :
+                settings.fontSize === 'medium' ? 2 :
+                settings.fontSize === 'large' ? 2 : 0;
               return isRightAligned ? -base : base;
             })();
             
@@ -1151,8 +1146,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                   key={`${line.begin}-${line.end}-${index}`}
                   id={`ttml-line-${line.begin}-${line.end}`}
                   className={`transition-all duration-700 px-2 rounded-lg :hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer relative
-                    ${isEmpty ? 'm-0 p-0' : settings.fontSize === 'small' ? 'my-2' : 'my-4'} ${textColor}`}
-                  style={{
+                    ${isEmpty ? 'm-0 p-0' : settings.fontSize === 'small' ? 'my-2' : 'my-4'} ${textColor}
+                    ${hasAgents ? (
+                      textAlignment === 'left' ? 'w-5/6 mr-auto' :
+                      textAlignment === 'right' ? 'w-5/6 ml-auto' :
+                      'w-full'
+                    ) : 'w-full'}`}
+                    style={{
                     opacity,
                     fontSize: {
                       small: '2.0rem',
@@ -1164,10 +1164,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                     transform: `${
                       isAfterInterludeDiv
                         ? (settings.fontSize === 'small'
-                            ? 'translateY(55px)'
-                            : settings.fontSize === 'medium'
-                              ? 'translateY(70px)'
-                              : 'translateY(80px)')
+                          ? 'translateY(45px)'
+                          : settings.fontSize === 'medium'
+                            ? 'translateY(68px)'
+                            : 'translateY(83px)')
                         : 'translateY(0)'
                     }`,
                     transition: `transform ${(() => {
@@ -1180,8 +1180,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               diff < 0.7 ? '0.4s'  :
                               diff < 0.8 ? '0.45s' :
                               diff < 0.9 ? '0.5s'  :
-                              diff < 1.0 ? '0.6s'  : '1s';
-                    })()} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, opacity 0.8s, margin 1s, padding 1s, color 0.5s, background-color 0.5s`,
+                              diff < 1.0 ? '0.6s'  : '0.85s';
+                    })()} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, opacity 0.5s, margin 1s, padding 1s, color 0.5s, background-color 0.5s`,
                     wordWrap: 'break-word',
                     wordBreak: 'break-word',
                   }}
@@ -1197,20 +1197,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                       className="inline-block will-change-transform"
                       data-stage-span={isStage ? 'true' : 'false'}
                       style={{
-                        transform: isStage ? `translateX(${stageShiftPx}px) scale(1.03)` : 'translateX(0) scale(1.0)',
+                        transform: isStage ? `translateX(${stageShiftPx}px) scale(1.02)` : 'translateX(0) scale(1.0)',
                         transformOrigin: isRightAligned ? 'right center' : 'left center',
-                        transition: `transform ${(() => {
-                          const diff = getNextTimeDiffSkippingCluster(line);
-                          return diff < 0.2 ? '0.15s' :
-                                  diff < 0.3 ? '0.2s'  :
-                                  diff < 0.4 ? '0.25s' :
-                                  diff < 0.5 ? '0.3s'  :
-                                  diff < 0.6 ? '0.35s' :
-                                  diff < 0.7 ? '0.4s'  :
-                                  diff < 0.8 ? '0.45s' :
-                                  diff < 0.9 ? '0.5s'  :
-                                  diff < 1.0 ? '0.6s'  : '1s';
-                        })()} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`
+                        transition: `transform 0.8s ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`
                       }}
                     >
                       <div>
@@ -1238,7 +1227,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 bottom: isStage ? '0px' : settings.fontSize === 'small' ? '-100px' : settings.fontSize === 'medium' ? '-100px' : settings.fontSize === 'large' ? '-150px' : '-100px',
                                 maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
                                 overflow: 'hidden',
-                                transition: `opacity ${isStage ? '1500ms' : '220ms'} ease, max-height ${isStage ? '500ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, bottom ${isStage ? '600ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                transition: `opacity ${isStage ? '1500ms' : '220ms'} ease, max-height ${isStage ? '500ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, bottom ${isStage ? '600ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
                                 willChange: 'opacity, max-height, filter, bottom',
                                 pointerEvents: 'none',
                                 textAlign: textAlignment
@@ -1305,7 +1294,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             return settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4';
                           })()}
                           style={{ 
-                            transition: `padding ${isStage ? '500ms' : '500ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`
+                            transition: `padding ${isStage ? '500ms' : '500ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`
                           }}
                         >
                           {settings.useKaraokeLyric ? (
@@ -1363,7 +1352,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   top: isStage ? '0px' : settings.fontSize === 'small' ? '-150px' : settings.fontSize === 'medium' ? '-150px' : settings.fontSize === 'large' ? '-200px' : '-150px',
                                   maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
                                   overflow: 'hidden',
-                                  transition: `opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '400ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`,
+                                  transition: `opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '400ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
                                   willChange: 'opacity, max-height, filter, top',
                                   pointerEvents: 'none',
                                   textAlign: textAlignment

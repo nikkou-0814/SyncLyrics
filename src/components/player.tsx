@@ -420,8 +420,8 @@ const Player: React.FC<PlayerProps> = ({
     let parentScale = 1.0;
     let opacity = 1.0;
     const transitionDuration = Math.min(Math.max(total * 0.4, 2), 6);
-    let transformTransition = `${transitionDuration}s cubic-bezier(0.19, 1, 0.22, 1)`;
-    let opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+    let transformTransition = `${transitionDuration}s cubic-bezier(0.22, 1, 0.36, 1)`;
+    let opacityTransition = '0.5s cubic-bezier(0.22, 1, 0.36, 1)';
     let dotFills: [number, number, number] = [0, 0, 0];
     const availableDuration = exitStart - appearEnd - 2;
     const pulseCycleDuration = 5;
@@ -433,7 +433,7 @@ const Player: React.FC<PlayerProps> = ({
       opacity = appearRatio;
 
       if (dt < appearEnd) {
-        opacityTransition = '5s cubic-bezier(0.19, 1, 0.22, 1)';
+        opacityTransition = '5s cubic-bezier(0.22, 1, 0.36, 1)';
         parentScale = 0.9 + (0.2 * dt / appearEnd);
       } else if (dt < exitStart - 2) {
         const pulseTime = dt - appearEnd;
@@ -475,12 +475,12 @@ const Player: React.FC<PlayerProps> = ({
       dotFills = [1, 1, 1];
 
       if (dtExit < 0.8) {
-        transformTransition = '2.5s cubic-bezier(0.19, 1, 0.22, 1)';
+        transformTransition = '2.5s cubic-bezier(0.22, 1, 0.36, 1)';
         parentScale = 1.1;
         opacity = 1;
       } else if (dtExit < 1.2) {
-        transformTransition = '1s cubic-bezier(0.19, 1, 0.22, 1)'
-        opacityTransition = '0.5s cubic-bezier(0.19, 1, 0.22, 1)'
+        transformTransition = '1s cubic-bezier(0.22, 1, 0.36, 1)'
+        opacityTransition = '0.5s cubic-bezier(0.22, 1, 0.36, 1)'
         parentScale = 0.8;
         opacity = 0;
       }

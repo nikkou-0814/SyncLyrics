@@ -417,7 +417,7 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                         : 'translateY(80px)'}`
                       : 'translateY(0)',
                   transition:
-                    `transform 1s ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}, opacity 0.8s, margin 1s, padding 1s, color 0.5s, background-color 0.5s`,
+                    `transform 1s ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, opacity 0.8s, margin 1s, padding 1s, color 0.5s, background-color 0.5s`,
                   wordWrap: 'break-word',
                   wordBreak: 'break-word',
                 }}
@@ -450,7 +450,7 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                                 : dt < 0.8 ? '0.45s'
                                 : dt < 0.9 ? '0.5s'
                                 : '0.6s';
-                        })()} ${settings.CustomEasing || 'cubic-bezier(0.19, 1, 0.22, 1)'}`
+                        })()} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`
                       }}
                     >
                       <div className={settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}>
