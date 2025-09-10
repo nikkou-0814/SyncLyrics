@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import '../app/globals.css';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ import { parseTTML } from '@/utils/ttml-parser';
 const Player = dynamic(() => import('@/components/player'), { ssr: false });
 
 export default function Home() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [urlQuery, setUrlQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
@@ -187,9 +189,18 @@ export default function Home() {
         return;
       }
       setLyricsData(data.lyricsData);
-      setShowPlayer(true);
       const prev = JSON.parse(localStorage.getItem('playerSettings') || '{}');
       localStorage.setItem('playerSettings', JSON.stringify({ ...prev, useTTML: false }));
+
+      const state = {
+        mode: 'lrc' as const,
+        lyricsData: data.lyricsData,
+        audioUrl: videoId,
+        selectedTrack: track,
+        ttmlData: null,
+      };
+      localStorage.setItem('currentPlayerState', JSON.stringify(state));
+      router.push('/lrcplay');
     } catch (err: unknown) {
       if (err instanceof Error) {
         console.error(err);
@@ -263,16 +274,26 @@ export default function Home() {
       setTtmlData(parsed);
       setLyricsData(lyricsLines);
       setAudioUrl(videoId);
-      setSelectedTrack({
+      const selected = {
         id: 0,
         trackName: youtubeTitle,
         artistName: parsed.songwriter || 'Unknown Artist',
         albumName: '',
         duration: parsed.duration || 0
-      });
-      setShowPlayer(true);
+      } as SearchResult;
+      setSelectedTrack(selected);
       const prev = JSON.parse(localStorage.getItem('playerSettings') || '{}');
       localStorage.setItem('playerSettings', JSON.stringify({ ...prev, useTTML: true }));
+
+      const state = {
+        mode: 'ttml' as const,
+        lyricsData: lyricsLines,
+        audioUrl: videoId,
+        selectedTrack: selected,
+        ttmlData: parsed,
+      };
+      localStorage.setItem('currentPlayerState', JSON.stringify(state));
+      router.push('/ttmlplay');
     } catch (err) {
       console.error('TTML解析エラー:', err);
       setError({

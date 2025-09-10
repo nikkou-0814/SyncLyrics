@@ -232,7 +232,7 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
   
     const timeDiff = nextLyricTime - currentLyricTime;
 
-    const scrollDuration = timeDiff < 0.2 ? 150 : timeDiff < 0.3 ? 200 : timeDiff < 0.4 ? 250 : timeDiff < 0.5 ? 300 : timeDiff < 0.6 ? 350 : timeDiff < 0.7 ? 400 : timeDiff < 0.8 ? 450 : timeDiff < 0.9 ? 500 : timeDiff < 1 ? 600 : 1000;
+    const scrollDuration = timeDiff < 0.2 ? 150 : timeDiff < 0.3 ? 200 : timeDiff < 0.4 ? 250 : timeDiff < 0.5 ? 300 : timeDiff < 0.6 ? 350 : timeDiff < 0.7 ? 400 : timeDiff < 0.8 ? 450 : timeDiff < 0.9 ? 500 : timeDiff < 1 ? 600 : 850;
   
     if (activeLyric) {
       const containerHeight = container.clientHeight;
@@ -331,15 +331,11 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
           ${isMobile ? 'px-3 w-full' : 'px-20 w-full'}
         `}
         style={{
-          maskImage: isMobile || isLyricsHovered
-            ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)'
-            : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 20%, #000 80%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage: isMobile || isLyricsHovered
-            ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 30%, #000 70%, rgba(0,0,0,0) 100%)'
-            : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 20%, #000 80%, rgba(0,0,0,0) 100%)',
-          marginBottom: settings.fullplayer
+          maskImage: 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+          WebkitMaskImage: 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+          marginBottom: isMobile ? '-120px' : settings.fullplayer
             ? settings.showplayercontrol
-              ? '92px'
+              ? '120px'
               : '0'
             : '0',
         }}
@@ -382,9 +378,9 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
             const isStage = stageLineKeys.includes(lineKey) && !isPast;
             const isRightAligned = settings.lyricposition === 'right';
             const stageShiftPx =
-              settings.fontSize === 'small' ? (isRightAligned ? -2 : 2)
-              : settings.fontSize === 'medium' ? (isRightAligned ? -3 : 3)
-              : (isRightAligned ? -3 : 3);
+              settings.fontSize === 'small' ? (isRightAligned ? -1 : 1)
+              : settings.fontSize === 'medium' ? (isRightAligned ? -2 : 2)
+              : (isRightAligned ? -2 : 2);
 
             return (
               <div
@@ -412,12 +408,12 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                   textAlign: settings.lyricposition,
                   transform:
                     isCurrentLineInterlude && index > currentLineIndex
-                      ? `${settings.fontSize === 'small' ? 'translateY(55px)'
-                        : settings.fontSize === 'medium' ? 'translateY(70px)'
-                        : 'translateY(80px)'}`
+                      ? `${settings.fontSize === 'small' ? 'translateY(45px)'
+                        : settings.fontSize === 'medium' ? 'translateY(68px)'
+                        : 'translateY(83px)'}`
                       : 'translateY(0)',
                   transition:
-                    `transform 1s ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, opacity 0.8s, margin 1s, padding 1s, color 0.5s, background-color 0.5s`,
+                    `transform 0.85s ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, opacity 0.8s, margin 1s, padding 1s, color 0.5s, background-color 0.5s`,
                   wordWrap: 'break-word',
                   wordBreak: 'break-word',
                 }}
