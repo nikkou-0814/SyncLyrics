@@ -331,8 +331,12 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
           ${isMobile ? 'px-3 w-full' : 'px-20 w-full'}
         `}
         style={{
-          maskImage: 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
-          WebkitMaskImage: 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+          maskImage: isMobile 
+            ? 'linear-gradient(0deg, rgba(0,0,0,0) 10%, #000 30%, #000 80%, rgba(0,0,0,0) 98%)'
+            : 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+          WebkitMaskImage: isMobile 
+            ? 'linear-gradient(0deg, rgba(0,0,0,0) 15%, #000 30%, #000 80%, rgba(0,0,0,0) 98%)'
+            : 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
           marginBottom: isMobile ? '-120px' : settings.fullplayer
             ? settings.showplayercontrol
               ? '120px'

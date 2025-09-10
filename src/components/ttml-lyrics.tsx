@@ -1038,8 +1038,12 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
           ${isMobile ? 'px-3 w-full' : 'px-20 w-full'}
         `}
         style={{
-          maskImage: 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
-          WebkitMaskImage: 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+          maskImage: isMobile 
+            ? 'linear-gradient(0deg, rgba(0,0,0,0) 10%, #000 30%, #000 80%, rgba(0,0,0,0) 98%)'
+            : 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+          WebkitMaskImage: isMobile 
+            ? 'linear-gradient(0deg, rgba(0,0,0,0) 15%, #000 30%, #000 80%, rgba(0,0,0,0) 98%)'
+            : 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
           marginBottom: isMobile ? '-120px' : settings.fullplayer
             ? settings.showplayercontrol
               ? '120px'
@@ -1224,7 +1228,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             <div 
                               style={{
                                 opacity: isStage ? 1 : 0,
-                                bottom: isStage ? '0px' : settings.fontSize === 'small' ? '-100px' : settings.fontSize === 'medium' ? '-100px' : settings.fontSize === 'large' ? '-150px' : '-100px',
+                                bottom: isStage ? '0px' : settings.fontSize === 'small' ? '-80px' : settings.fontSize === 'medium' ? '-100px' : settings.fontSize === 'large' ? '-150px' : '-100px',
                                 maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
                                 overflow: 'hidden',
                                 transition: `opacity ${isStage ? '1500ms' : '220ms'} ease, max-height ${isStage ? '500ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, bottom ${isStage ? '600ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
@@ -1232,7 +1236,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 pointerEvents: 'none',
                                 textAlign: textAlignment
                               }}
-                              className={`${textAlignment === 'right' ? 'pr-6' : 'pl-6'} relative`}
+                              className={`${textAlignment === 'right' ? 'pr-4' : 'pl-3'} relative`}
                             >
                               <div 
                                 ref={(el) => {
@@ -1289,7 +1293,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 ? backgroundStartTime < mainStartTime
                                 : line.backgroundPosition === 'above';
                               
-                              return shouldShowAbove ? 'px-5 pb-5' : 'px-5 pt-5';
+                              return shouldShowAbove ? 'px-3 pb-5' : 'px-3 pt-5';
                             }
                             return settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4';
                           })()}
@@ -1349,7 +1353,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             <div 
                               style={{
                                   opacity: isStage ? 1 : 0,
-                                  top: isStage ? '0px' : settings.fontSize === 'small' ? '-150px' : settings.fontSize === 'medium' ? '-150px' : settings.fontSize === 'large' ? '-200px' : '-150px',
+                                  top: isStage ? '0px' : settings.fontSize === 'small' ? '-80px' : settings.fontSize === 'medium' ? '-130px' : settings.fontSize === 'large' ? '-200px' : '-150px',
                                   maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
                                   overflow: 'hidden',
                                   transition: `opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '400ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
@@ -1357,7 +1361,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   pointerEvents: 'none',
                                   textAlign: textAlignment
                                 }}
-                                className={`${textAlignment === 'right' ? 'pr-6' : 'pl-6'} relative`}
+                                className={`${textAlignment === 'right' ? 'pr-4' : 'pl-3'} relative`}
                               >
                               <div 
                                 ref={(el) => {
