@@ -113,6 +113,122 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
   );
 };
 
+type SimpleKaraokeProps = {
+  text: string;
+  progressPercentage: number;
+  resolvedTheme: string;
+  isActive: boolean;
+  progressDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
+};
+
+const PronunciationKaraokeLyricLine: React.FC<SimpleKaraokeProps> = ({
+  text,
+  progressPercentage,
+  resolvedTheme,
+  isActive,
+  progressDirection,
+}) => {
+  const isDark = resolvedTheme === 'dark';
+  const activeColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+
+  useEffect(() => {
+    let animationFrameId: number | null = null;
+    let timerId: NodeJS.Timeout | null = null;
+
+    if (progressDirection === 'ttb' || progressDirection === 'btt') {
+      animationFrameId = requestAnimationFrame(() => setShouldAnimate(true));
+    } else {
+      timerId = setTimeout(() => setShouldAnimate(true), 50);
+    }
+
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [isActive, progressDirection]);
+
+  if (progressDirection === 'ttb' || progressDirection === 'btt') {
+    const getClipPath = (): string => {
+      switch (progressDirection) {
+        case 'btt':
+          return `inset(${100 - progressPercentage}% 0 0 0)`;
+        case 'ttb':
+          return `inset(0 0 ${100 - progressPercentage}% 0)`;
+        default:
+          return `inset(0 0 ${100 - progressPercentage}% 0)`;
+      }
+    };
+
+    return (
+      <span style={{ position: 'relative', display: 'inline-block', whiteSpace: 'pre-wrap' }}>
+        <span style={{ color: inactiveColor, pointerEvents: 'none' }}>
+          <LineBreaker text={text} />
+        </span>
+        <span
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            color: activeColor,
+            clipPath: getClipPath(),
+            transition: shouldAnimate ? 'clip-path 0.1s linear' : 'none',
+            whiteSpace: 'pre-wrap',
+            pointerEvents: 'none',
+          }}
+        >
+          <LineBreaker text={text} />
+        </span>
+      </span>
+    );
+  }
+
+  const getGradient = (): string => {
+    switch (progressDirection) {
+      case 'rtl':
+        return `linear-gradient(to left, ${activeColor}, ${activeColor} 50%, ${inactiveColor} 50%, ${inactiveColor})`;
+      case 'ltr':
+      default:
+        return `linear-gradient(to right, ${activeColor}, ${activeColor} 50%, ${inactiveColor} 50%, ${inactiveColor})`;
+    }
+  };
+
+  const getBackgroundSize = (): string => '200% 100%';
+
+  const getBackgroundPosition = (): string => {
+    const progress = progressPercentage / 100;
+    switch (progressDirection) {
+      case 'rtl':
+        return `${progress * 100}% 0`;
+      case 'ltr':
+      default:
+        return `${(1 - progress) * 100}% 0`;
+    }
+  };
+
+  return (
+    <span
+      style={{
+        display: 'inline',
+        whiteSpace: 'pre-wrap',
+        color: 'transparent',
+        backgroundImage: getGradient(),
+        backgroundSize: getBackgroundSize(),
+        backgroundPosition: getBackgroundPosition(),
+        backgroundClip: 'text',
+        WebkitBackgroundClip: 'text',
+        transition: shouldAnimate ? 'background-position 0.1s linear' : 'none',
+        pointerEvents: 'none'
+      }}
+    >
+      <LineBreaker text={text} />
+    </span>
+  );
+};
+
 const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
   line,
   currentTime,
@@ -120,10 +236,13 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
   progressDirection,
   isActive,
   isPast = false,
+  showPronunciation = false,
 }) => {
   const isDark = resolvedTheme === 'dark';
   const activeColor = isDark ? '#FFFFFF' : '#000000';
   const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
+  const pronActiveColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+  const pronInactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const [delayedIndex, setDelayedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -152,17 +271,43 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
     return () => clearTimeout(timerId);
   }, [currentActiveWordIndex, line.words, isActive]);
 
+  const pronMap = useMemo(() => {
+    if (!showPronunciation || !line.pronunciationWords || !line.words) return null;
+    const res = new Array(line.words.length).fill('');
+    for (let i = 0; i < line.words.length; i++) {
+      const w = line.words[i];
+      const overlaps: string[] = [];
+      for (const pw of line.pronunciationWords) {
+        const overlap = Math.min(w.end, pw.end) - Math.max(w.begin, pw.begin);
+        if (overlap > 0.01) overlaps.push(pw.text);
+      }
+      if (overlaps.length === 0) {
+        let best: { pw: (typeof line.pronunciationWords)[number]; d: number } | null = null;
+        for (const pw of line.pronunciationWords) {
+          const d = Math.abs(pw.begin - w.begin);
+          if (best == null || d < best.d) best = { pw, d };
+        }
+        if (best && best.d <= 0.15) {
+          overlaps.push(best.pw.text);
+        }
+      }
+      res[i] = overlaps.join(' ');
+    }
+    return res;
+  }, [showPronunciation, line]);
+
   if (!line.words || line.words.length === 0) {
     return <span style={{ color: isActive ? activeColor : inactiveColor }}>{line.text}</span>;
   }
   
   // 単語ごとにハイライトする表示
   const textWithSpans = () => {
-    const wordPositions: {start: number, end: number, word: typeof line.words[0]}[] = [];
+    type AugWord = NonNullable<TTMLLine['words']>[number] & { __origIndex: number };
+    const wordPositions: { start: number; end: number; word: AugWord }[] = [];
     let currentPosition = 0;
     
     if (line.words) {
-      line.words.forEach(word => {
+      line.words.forEach((word, wIdx) => {
         let wordIndex = line.text?.indexOf(word.text, currentPosition) ?? -1;
         let actualWordText = word.text;
         
@@ -186,7 +331,8 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
             end: wordIndex + actualWordText.length,
             word: {
               ...word,
-              text: actualWordText
+              text: actualWordText,
+              __origIndex: wIdx
             }
           });
           currentPosition = wordIndex + actualWordText.length;
@@ -234,60 +380,187 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
           : 'none';
         
         spans.push(
-          <span
-            key={`word-${index}-${word.begin}-${word.end}`}
-            style={{
-              display: 'inline-block',
-              color: showGradient ? 'transparent' : inactiveColor,
-              backgroundImage: bgImage,
-              backgroundSize: backgroundSize,
-              backgroundPosition: showGradient ? finalPosition : (isLTR ? '100% 0' : '0% 0'),
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
-              transition: animationEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'transform 1s ease',
-              whiteSpace: 'pre-wrap'
-            }}
-          >
-            {word.text}
-          </span>
-        );
-      } else {
-        // btt/ttb
-        spans.push(
-          <span
-            key={`word-${index}-${word.begin}-${word.end}`}
-            style={{
-              display: 'inline-block',
-              position: 'relative',
-              transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
-              transition: 'transform 1.5s ease',
-              color: inactiveColor,
-              whiteSpace: 'pre-wrap'
-            }}
-          >
-            {word.text}
-            {(isActive && !isPast && (wordIsActive || wordIsCompleted)) && (
+          showPronunciation && (line.pronunciationWords && line.pronunciationWords.length > 0)
+            ? (
               <span
+                key={`word-${index}-${word.begin}-${word.end}`}
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  color: activeColor,
-                  clipPath: (
-                    progressDirection === 'btt' ? 
-                      `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
-                      `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
-                  ),
-                  transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
-                  pointerEvents: 'none',
+                  display: 'inline-flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-block',
+                    color: showGradient ? 'transparent' : inactiveColor,
+                    backgroundImage: bgImage,
+                    backgroundSize: backgroundSize,
+                    backgroundPosition: showGradient ? finalPosition : (isLTR ? '100% 0' : '0% 0'),
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
+                    transition: animationEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'transform 1s ease',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
+                  {word.text}
+                </span>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    fontSize: '0.6em',
+                    whiteSpace: 'pre-wrap',
+                    textAlign: 'left',
+                    color: showGradient ? 'transparent' : pronInactiveColor,
+                    backgroundImage: showGradient ? `linear-gradient(to ${isLTR ? 'right' : 'left'}, ${pronActiveColor}, ${pronActiveColor} 47%, ${pronInactiveColor} 53%, ${pronInactiveColor})` : 'none',
+                    backgroundSize: backgroundSize,
+                    backgroundPosition: showGradient ? finalPosition : (isLTR ? '100% 0' : '0% 0'),
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    transition: animationEnabled ? 'background-position 0.1s linear' : 'none'
+                  }}
+                >
+                  {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
+                </span>
+              </span>
+            ) : (
+              <span
+                key={`word-${index}-${word.begin}-${word.end}`}
+                style={{
+                  display: 'inline-block',
+                  color: showGradient ? 'transparent' : inactiveColor,
+                  backgroundImage: bgImage,
+                  backgroundSize: backgroundSize,
+                  backgroundPosition: showGradient ? finalPosition : (isLTR ? '100% 0' : '0% 0'),
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
+                  transition: animationEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'transform 1s ease',
                   whiteSpace: 'pre-wrap'
                 }}
               >
                 {word.text}
               </span>
-            )}
-          </span>
+            )
+        );
+      } else {
+        // btt/ttb
+        spans.push(
+          showPronunciation && (line.pronunciationWords && line.pronunciationWords.length > 0)
+            ? (
+              <span
+                key={`word-${index}-${word.begin}-${word.end}`}
+                style={{
+                  display: 'inline-flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-block',
+                    position: 'relative',
+                    transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
+                    transition: 'transform 1.5s ease',
+                    color: inactiveColor,
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
+                  {word.text}
+                  {(isActive && !isPast && (wordIsActive || wordIsCompleted)) && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        color: activeColor,
+                        clipPath: (
+                          progressDirection === 'btt' ? 
+                            `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
+                            `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
+                        ),
+                        transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
+                        pointerEvents: 'none',
+                        whiteSpace: 'pre-wrap'
+                      }}
+                    >
+                      {word.text}
+                    </span>
+                  )}
+                </span>
+              <span
+                style={{
+                  display: 'inline-block',
+                  position: 'relative',
+                  fontSize: '0.6em',
+                  color: pronInactiveColor,
+                  whiteSpace: 'pre-wrap',
+                  textAlign: 'left'
+                }}
+              >
+                  {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
+                  {(isActive && !isPast && (wordIsActive || wordIsCompleted)) && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        color: pronActiveColor,
+                        clipPath: (
+                          progressDirection === 'btt' ? 
+                            `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
+                            `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
+                        ),
+                        transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
+                        pointerEvents: 'none',
+                        whiteSpace: 'pre-wrap'
+                      }}
+                    >
+                      {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
+                    </span>
+                  )}
+                </span>
+              </span>
+            ) : (
+              <span
+                key={`word-${index}-${word.begin}-${word.end}`}
+                style={{
+                  display: 'inline-block',
+                  position: 'relative',
+                  transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
+                  transition: 'transform 1.5s ease',
+                  color: inactiveColor,
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                {word.text}
+                {(isActive && !isPast && (wordIsActive || wordIsCompleted)) && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      color: activeColor,
+                      clipPath: (
+                        progressDirection === 'btt' ? 
+                          `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
+                          `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
+                      ),
+                      transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
+                      pointerEvents: 'none',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    {word.text}
+                  </span>
+                )}
+              </span>
+            )
         );
       }
       
@@ -312,18 +585,40 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
   );
 };
 
-const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps> = ({
+const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps & { karaokeEnabled?: boolean; persistActive?: boolean }> = ({
   backgroundWords,
   currentTime,
   resolvedTheme,
   progressDirection,
   fontSize,
+  pronunciationWords,
+  showPronunciation,
+  karaokeEnabled,
+  persistActive,
 }) => {
   const isDark = resolvedTheme === 'dark';
   const activeColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
   const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
+
+  const pronActiveColor = activeColor;
+  const pronInactiveColor = inactiveColor;
+
+  const getPronForWord = useCallback((w: { begin: number; end: number }): string => {
+    if (!showPronunciation || !pronunciationWords || pronunciationWords.length === 0) return '';
+    const overlaps = pronunciationWords
+      .filter(pw => Math.min(w.end, pw.end) - Math.max(w.begin, pw.begin) > 0.01)
+      .map(pw => pw.text);
+    if (overlaps.length > 0) return overlaps.join(' ');
+    let best: { t: string; d: number } | null = null;
+    for (const pw of pronunciationWords) {
+      const d = Math.abs(pw.begin - w.begin);
+      if (!best || d < best.d) best = { t: pw.text, d };
+    }
+    if (best && best.d <= 0.15) return best.t;
+    return '';
+  }, [showPronunciation, pronunciationWords]);
 
   useEffect(() => {
     const frameId = requestAnimationFrame(() => {
@@ -341,6 +636,10 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
     large: '2.0rem',
   }[fontSize];
   
+  const lineBegin = backgroundWords && backgroundWords.length > 0 ? backgroundWords[0].begin : 0;
+  const lineEnd = backgroundWords && backgroundWords.length > 0 ? backgroundWords[backgroundWords.length - 1].end : 0;
+  const lineActivePlain = !karaokeEnabled && ((currentTime >= lineBegin && currentTime < lineEnd) || !!persistActive);
+
   // 単語の表示処理
   const renderWords = () => {
     if (!backgroundWords || backgroundWords.length === 0) return null;
@@ -350,43 +649,121 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
       const wordIsActive = currentTime >= word.begin && currentTime < word.end;
       
       // btt/ttb
-      if (progressDirection === 'btt' || progressDirection === 'ttb') {
+      if (karaokeEnabled && (progressDirection === 'btt' || progressDirection === 'ttb')) {
         return (
-          <span
-            key={`bg-word-${index}-${word.begin}-${word.end}`}
-            style={{
-              display: 'inline-block',
-              position: 'relative',
-              transform: wordIsActive || wordIsCompleted ? 'translateY(-3px)' : 'translateY(0px)',
-              transition: 'transform 1s ease',
-              color: inactiveColor,
-              whiteSpace: 'pre-wrap',
-              fontSize: bgfontSizeValue,
-              fontWeight: 'normal'
-            }}
-          >
-            {word.text}
-            {(wordIsActive || wordIsCompleted) && (
+          showPronunciation && pronunciationWords && pronunciationWords.length > 0 ? (
+            <span
+              key={`bg-word-${index}-${word.begin}-${word.end}`}
+              style={{
+                display: 'inline-flex',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                lineHeight: 1.1,
+                whiteSpace: 'pre-wrap'
+              }}
+            >
               <span
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  color: activeColor,
-                  clipPath: (
-                    progressDirection === 'btt' ? 
-                      `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
-                      `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
-                  ),
-                  transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
-                  pointerEvents: 'none',
-                  whiteSpace: 'pre-wrap'
+                  display: 'inline-block',
+                  position: 'relative',
+                  transform: wordIsActive || wordIsCompleted ? 'translateY(-3px)' : 'translateY(0px)',
+                  transition: 'transform 1s ease',
+                  color: inactiveColor,
+                  whiteSpace: 'pre-wrap',
+                  fontSize: bgfontSizeValue,
                 }}
               >
                 {word.text}
+                {(wordIsActive || wordIsCompleted) && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      color: activeColor,
+                      clipPath: (
+                        progressDirection === 'btt' ? 
+                          `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
+                          `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
+                      ),
+                      transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
+                      pointerEvents: 'none',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    {word.text}
+                  </span>
+                )}
               </span>
-            )}
-          </span>
+              <span
+                style={{
+                  display: 'inline-block',
+                  position: 'relative',
+                  fontSize: '0.48em',
+                  color: pronInactiveColor,
+                  whiteSpace: 'pre-wrap',
+                  textAlign: karaokeEnabled ? 'left' : 'inherit'
+                }}
+              >
+                {getPronForWord(word)}
+                {(wordIsActive || wordIsCompleted) && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      color: pronActiveColor,
+                      clipPath: (
+                        progressDirection === 'btt' ? 
+                          `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
+                          `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
+                      ),
+                      transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
+                      pointerEvents: 'none',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    {getPronForWord(word)}
+                  </span>
+                )}
+              </span>
+            </span>
+          ) : (
+            <span
+              key={`bg-word-${index}-${word.begin}-${word.end}`}
+              style={{
+                display: 'inline-block',
+                position: 'relative',
+                transform: wordIsActive || wordIsCompleted ? 'translateY(-3px)' : 'translateY(0px)',
+                transition: 'transform 1s ease',
+                color: inactiveColor,
+                whiteSpace: 'pre-wrap',
+                fontSize: bgfontSizeValue,
+              }}
+            >
+              {word.text}
+              {(wordIsActive || wordIsCompleted) && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    color: activeColor,
+                    clipPath: (
+                      progressDirection === 'btt' ? 
+                        `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
+                        `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
+                    ),
+                    transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
+                    pointerEvents: 'none',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
+                  {word.text}
+                </span>
+              )}
+            </span>
+          )
         );
       } else {
         // ltr/rtl
@@ -404,31 +781,83 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
         const position = isLTR ? (1 - wordProgress) * 100 : wordProgress * 100;
         const finalPosition = wordIsActive ? `${position}% 0` : (wordIsCompleted ? (isLTR ? '0% 0' : '100% 0') : (isLTR ? '100% 0' : '0% 0'));
         
-        // 未到達の単語にはグラデーションを適用しない
-        const bgImage = wordIsActive || wordIsCompleted
-          ? `linear-gradient(to ${isLTR ? 'right' : 'left'}, ${activeColor}, ${activeColor} 48%, ${inactiveColor} 52%, ${inactiveColor})`
+        const bgImage = (karaokeEnabled && (wordIsActive || wordIsCompleted))
+          ? `linear-gradient(to ${isLTR ? 'right' : 'left'}, ${activeColor}, ${activeColor} 47%, ${inactiveColor} 53%, ${inactiveColor})`
           : 'none';
         
         return (
-          <span
-            key={`bg-word-${index}-${word.begin}-${word.end}`}
-            style={{
-              display: 'inline-block',
-              color: (!wordIsActive && !wordIsCompleted) ? inactiveColor : 'transparent',
-              backgroundImage: bgImage,
-              backgroundSize: backgroundSize,
-              backgroundPosition: finalPosition,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              transform: wordIsActive || wordIsCompleted ? 'translateY(-3px)' : 'translateY(0px)',
-              transition: animationEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'transform 0.5s ease',
-              whiteSpace: 'pre-wrap',
-              fontSize: bgfontSizeValue,
-              fontWeight: 'bold'
-            }}
-          >
-            {word.text}
-          </span>
+          showPronunciation && pronunciationWords && pronunciationWords.length > 0 ? (
+            <span
+              key={`bg-word-${index}-${word.begin}-${word.end}`}
+              style={{
+                display: 'inline-flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                lineHeight: 1.5,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  color: (!karaokeEnabled) ? (lineActivePlain ? activeColor : inactiveColor) : ((!wordIsActive && !wordIsCompleted) ? inactiveColor : 'transparent'),
+                  backgroundImage: bgImage,
+                  backgroundSize: backgroundSize,
+                  backgroundPosition: finalPosition,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  transform: (karaokeEnabled && (wordIsActive || wordIsCompleted)) ? 'translateY(-3px)' : 'translateY(0px)',
+                  transition: animationEnabled
+                    ? (karaokeEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'background-position 0.1s linear, transform 1.5s ease, color 0.5s ease')
+                    : (karaokeEnabled ? 'transform 0.5s ease' : 'transform 0.5s ease, color 0.5s ease'),
+                  whiteSpace: 'pre-wrap',
+                  fontSize: bgfontSizeValue,
+                }}
+              >
+                {word.text}
+              </span>
+              <span
+                style={{
+                  display: 'inline-block',
+                  fontSize: '0.48em',
+                  whiteSpace: 'pre-wrap',
+                  textAlign: karaokeEnabled ? 'left' : 'inherit',
+                  color: (!karaokeEnabled) ? (lineActivePlain ? pronActiveColor : pronInactiveColor) : ((wordIsActive || wordIsCompleted) ? 'transparent' : pronInactiveColor),
+                  backgroundImage: (!karaokeEnabled) ? 'none' : ((wordIsActive || wordIsCompleted)
+                    ? `linear-gradient(to ${isLTR ? 'right' : 'left'}, ${pronActiveColor}, ${pronActiveColor} 47%, ${pronInactiveColor} 53%, ${pronInactiveColor})`
+                    : 'none'),
+                  backgroundSize: backgroundSize,
+                  backgroundPosition: finalPosition,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  transition: karaokeEnabled ? (animationEnabled ? 'background-position 0.1s linear' : 'none') : 'color 0.5s ease'
+                }}
+              >
+                {getPronForWord(word)}
+              </span>
+            </span>
+          ) : (
+            <span
+              key={`bg-word-${index}-${word.begin}-${word.end}`}
+              style={{
+                  display: 'inline-block',
+                  color: (!karaokeEnabled) ? (lineActivePlain ? activeColor : inactiveColor) : ((!wordIsActive && !wordIsCompleted) ? inactiveColor : 'transparent'),
+                backgroundImage: bgImage,
+                backgroundSize: backgroundSize,
+                backgroundPosition: finalPosition,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                transform: (karaokeEnabled && (wordIsActive || wordIsCompleted)) ? 'translateY(-3px)' : 'translateY(0px)',
+                  transition: animationEnabled
+                    ? (karaokeEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'background-position 0.1s linear, transform 1.5s ease, color 0.5s ease')
+                    : (karaokeEnabled ? 'transform 0.5s ease' : 'transform 0.5s ease, color 0.5s ease'),
+                whiteSpace: 'pre-wrap',
+                fontSize: bgfontSizeValue,
+              }}
+            >
+              {word.text}
+            </span>
+          )
         );
       }
     });
@@ -437,6 +866,148 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
   return (
     <span ref={containerRef} style={{ display: 'inline-block', whiteSpace: 'pre-wrap' }}>
       {renderWords()}
+    </span>
+  );
+};
+
+type TranslationWordTimingLyricLineProps = BackgroundWordTimingLyricLineProps & { karaokeEnabled?: boolean; persistActive?: boolean };
+
+const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLineProps> = ({
+  backgroundWords,
+  currentTime,
+  resolvedTheme,
+  progressDirection,
+  fontSize,
+  karaokeEnabled,
+  persistActive,
+}) => {
+  const isDark = resolvedTheme === 'dark';
+  const activeColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const [animationEnabled, setAnimationEnabled] = useState(false);
+  const containerRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const frameId = requestAnimationFrame(() => setAnimationEnabled(true));
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  const bgfontSizeValue = {
+    small: '1.2rem',
+    medium: '1.5rem',
+    large: '2.0rem',
+  }[fontSize];
+
+  const lineBegin = backgroundWords[0]?.begin ?? 0;
+  const lineEnd = backgroundWords[backgroundWords.length - 1]?.end ?? 0;
+  const lineActivePlain = !karaokeEnabled && ((currentTime >= lineBegin && currentTime < lineEnd) || !!persistActive);
+
+  if (!backgroundWords || backgroundWords.length === 0) return null;
+
+  return (
+    <span ref={containerRef} style={{ display: 'inline-block', whiteSpace: 'pre-wrap' }}>
+      {backgroundWords.map((word, index) => {
+        const wordIsCompleted = currentTime >= word.end;
+        const wordIsActive = currentTime >= word.begin && currentTime < word.end;
+
+        if (karaokeEnabled && (progressDirection === 'btt' || progressDirection === 'ttb')) {
+          return (
+            <span
+              key={`tr-word-${index}-${word.begin}-${word.end}`}
+              style={{
+                display: 'inline-block',
+                position: 'relative',
+                transform: wordIsActive || wordIsCompleted ? 'translateY(-3px)' : 'translateY(0px)',
+                transition: 'transform 1s ease',
+                color: inactiveColor,
+                whiteSpace: 'pre-wrap',
+                fontSize: bgfontSizeValue,
+              }}
+            >
+              {word.text}
+              {(wordIsActive || wordIsCompleted) && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    color: activeColor,
+                    clipPath:
+                      progressDirection === 'btt'
+                        ? `inset(${
+                            100 -
+                            (wordIsActive
+                              ? ((currentTime - word.begin) / (word.end - word.begin)) * 100
+                              : 100)
+                          }% 0 0 0)`
+                        : `inset(0 0 ${
+                            100 -
+                            (wordIsActive
+                              ? ((currentTime - word.begin) / (word.end - word.begin)) * 100
+                              : 100)
+                          }% 0)`,
+                    transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
+                    pointerEvents: 'none',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {word.text}
+                </span>
+              )}
+            </span>
+          );
+        } else {
+          const isLTR = progressDirection === 'ltr';
+          let wordProgress = 0;
+          if (wordIsActive) {
+            const wordDuration = word.end - word.begin;
+            wordProgress = (currentTime - word.begin) / wordDuration;
+            wordProgress = Math.max(0, Math.min(1, wordProgress));
+          } else if (wordIsCompleted) {
+            wordProgress = 1;
+          }
+
+          const backgroundSize = '200% 100%';
+          const position = isLTR ? (1 - wordProgress) * 100 : wordProgress * 100;
+          const finalPosition = wordIsActive
+            ? `${position}% 0`
+            : wordIsCompleted
+              ? isLTR
+                ? '0% 0'
+                : '100% 0'
+              : isLTR
+                ? '100% 0'
+                : '0% 0';
+
+          const bgImage =
+            (karaokeEnabled && (wordIsActive || wordIsCompleted))
+              ? `linear-gradient(to ${isLTR ? 'right' : 'left'}, ${activeColor}, ${activeColor} 47%, ${inactiveColor} 53%, ${inactiveColor})`
+              : 'none';
+
+          return (
+            <span
+              key={`tr-word-${index}-${word.begin}-${word.end}`}
+              style={{
+                display: 'inline-block',
+                color: (!karaokeEnabled) ? (lineActivePlain ? activeColor : inactiveColor) : ((!wordIsActive && !wordIsCompleted) ? inactiveColor : 'transparent'),
+                backgroundImage: bgImage,
+                backgroundSize: backgroundSize,
+                backgroundPosition: finalPosition,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                transform: (karaokeEnabled && (wordIsActive || wordIsCompleted)) ? 'translateY(-3px)' : 'translateY(0px)',
+                transition: animationEnabled
+                  ? (karaokeEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'background-position 0.1s linear, transform 1.5s ease, color 0.5s ease')
+                  : (karaokeEnabled ? 'transform 0.5s ease' : 'transform 0.5s ease, color 0.5s ease'),
+                whiteSpace: 'pre-wrap',
+                fontSize: bgfontSizeValue,
+              }}
+            >
+              {word.text}
+            </span>
+          );
+        }
+      })}
     </span>
   );
 };
@@ -1126,6 +1697,19 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
             })();
             
             // 間奏か
+            const normalizeForCompare = (s?: string) => (s ?? '').replace(/\s+/g, '').toLowerCase();
+            const mainTextForCompare = normalizeForCompare(
+              (line.text && line.text.trim() !== '')
+                ? line.text
+                : (line.words && line.words.length > 0 ? line.words.map(w => w.text).join(' ') : '')
+            );
+            const pronTextForCompare = normalizeForCompare(
+              (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')
+                ? line.pronunciationText
+                : (line.pronunciationWords && line.pronunciationWords.length > 0 ? line.pronunciationWords.map(w => w.text).join(' ') : '')
+            );
+            const hidePronLine = mainTextForCompare !== '' && pronTextForCompare !== '' && mainTextForCompare === pronTextForCompare;
+
             const isDivEnd = divLastLineIndices.includes(index);
             const interludePeriod = isDivEnd ? 
               interludePeriods.find(ip => ip.divIndex === divLastLineIndices.indexOf(index)) : 
@@ -1207,6 +1791,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                       }}
                     >
                       <div>
+                            
                         {line.backgroundText && (() => {
                           const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
                             ? line.backgroundWords[0].begin 
@@ -1234,7 +1819,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 transition: `opacity ${isStage ? '1500ms' : '220ms'} ease, max-height ${isStage ? '500ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, bottom ${isStage ? '600ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
                                 willChange: 'opacity, max-height, filter, bottom',
                                 pointerEvents: 'none',
-                                textAlign: textAlignment
+                                textAlign: textAlignment,
+                                marginBottom: '15px'
                               }}
                               className={`${textAlignment === 'right' ? 'pr-4' : 'pl-3'} relative`}
                             >
@@ -1252,20 +1838,101 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     resolvedTheme={resolvedTheme}
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
+                                    pronunciationWords={line.backgroundPronunciationWords}
+                                    showPronunciation={!!(settings.showPronunciation && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0)}
+                                    karaokeEnabled={settings.useKaraokeLyric}
+                                    persistActive={isDisplaying}
                                   />
                                 ) : (
-                                  <span style={{ 
-                                    fontSize: {
-                                      small: '1.2rem',
-                                      medium: '1.5rem',
-                                      large: '2.0rem',
-                                    }[settings.fontSize],
-                                    color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
-                                    fontWeight: 'normal',
-                                    pointerEvents: 'none'
-                                  }}>
-                                    <LineBreaker text={line.backgroundText} />
-                                  </span>
+                                  <div>
+                                    <span style={{ 
+                                      fontSize: {
+                                        small: '1.2rem',
+                                        medium: '1.5rem',
+                                        large: '2.0rem',
+                                      }[settings.fontSize],
+                                      color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                                      pointerEvents: 'none',
+                                      transition: 'color 0.5s ease'
+                                    }}>
+                                      <LineBreaker text={line.backgroundText} />
+                                    </span>
+                                    {settings.showPronunciation && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
+                                      settings.useWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
+                                        <div
+                                          style={{
+                                            fontSize: '0.48em',
+                                            color: (() => {
+                                              const begin = line.begin;
+                                              const end = (line.originalEnd || line.end);
+                                              const active = isDisplaying || ((currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end);
+                                              const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
+                                              const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
+                                              return resolvedTheme === 'dark' ? dark : light;
+                                            })(),
+                                            pointerEvents: 'none',
+                                            textAlign: (settings.useKaraokeLyric && settings.useWordTiming) ? 'left' : textAlignment,
+                                            transition: 'color 0.5s ease',
+                                            marginTop: '0.1em',
+                                          }}
+                                        >
+                                          <TranslationWordTimingLyricLine
+                                            backgroundWords={line.backgroundPronunciationWords}
+                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            resolvedTheme={resolvedTheme}
+                                            progressDirection={settings.lyricProgressDirection}
+                                            fontSize={settings.fontSize}
+                                            karaokeEnabled={settings.useKaraokeLyric}
+                                            persistActive={isDisplaying}
+                                          />
+                                        </div>
+                                      ) : (settings.useKaraokeLyric && ((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))) ? (
+                                        <div
+                                          style={{
+                                            fontSize: '0.48em',
+                                            pointerEvents: 'none',
+                                            textAlign: textAlignment,
+                                            marginTop: '0.1em',
+                                          }}
+                                        >
+                                          <PronunciationKaraokeLyricLine
+                                            text={line.backgroundPronunciationText || (line.backgroundPronunciationWords ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')}
+                                            progressPercentage={
+                                              (() => {
+                                                const now = currentTime + (settings.lyricOffset || 0);
+                                                const end = (line.originalEnd || line.end);
+                                                if (now <= line.begin) return 0;
+                                                if (now >= end) return 100;
+                                                return ((now - line.begin) / (end - line.begin)) * 100;
+                                              })()
+                                            }
+                                            resolvedTheme={resolvedTheme}
+                                            isActive={((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))}
+                                            progressDirection={settings.lyricProgressDirection}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          style={{
+                                            fontSize: '0.48em',
+                                            color: (() => {
+                                              const begin = line.begin;
+                                              const end = (line.originalEnd || line.end);
+                                              const active = (currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end;
+                                              const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
+                                              const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
+                                              return resolvedTheme === 'dark' ? dark : light;
+                                            })(),
+                                            pointerEvents: 'none',
+                                            textAlign: textAlignment,
+                                            marginTop: '0.1em',
+                                          }}
+                                        >
+                                          <LineBreaker text={line.backgroundPronunciationText || (line.backgroundPronunciationWords ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')} />
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -1310,6 +1977,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 progressDirection={settings.lyricProgressDirection}
                                 isActive={isDisplaying}
                                 isPast={isPast}
+                                showPronunciation={settings.showPronunciation && !hidePronLine && !!(line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0)}
                               />
                             ) : (
                               isDisplaying ? (
@@ -1331,6 +1999,58 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               <LineBreaker text={line.text || ''} />
                             </span>
                           )}
+                          {settings.showPronunciation && !hidePronLine && !(settings.useKaraokeLyric && settings.useWordTiming && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) && ((line.pronunciationWords && line.pronunciationWords.length > 0) || (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')) && (
+                            <div
+                              style={{
+                                fontSize: '0.6em',
+                                color: (() => {
+                                  const begin = line.begin;
+                                  const end = (line.originalEnd || line.end);
+                                  const active = isDisplaying || (now >= begin && now < end);
+                                  const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
+                                  const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
+                                  return resolvedTheme === 'dark' ? dark : light;
+                                })(),
+                                fontWeight: 'bold',
+                                pointerEvents: 'none',
+                                textAlign: textAlignment,
+                                transition: 'color 0.5s ease',
+                                marginBottom: '0.15em',
+                              }}
+                            >
+                              {settings.useWordTiming && line.pronunciationWords && line.pronunciationWords.length > 0 ? (
+                                  <TranslationWordTimingLyricLine
+                                    backgroundWords={line.pronunciationWords}
+                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    resolvedTheme={resolvedTheme}
+                                    progressDirection={settings.lyricProgressDirection}
+                                    fontSize={settings.fontSize}
+                                    karaokeEnabled={settings.useKaraokeLyric}
+                                    persistActive={isDisplaying}
+                                  />
+                              ) : (settings.useKaraokeLyric && (now >= line.begin && now < (line.originalEnd || line.end))) ? (
+                                <PronunciationKaraokeLyricLine
+                                  text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')}
+                                  progressPercentage={
+                                    (() => {
+                                      const end = (line.originalEnd || line.end);
+                                      if (now <= line.begin) return 0;
+                                      if (now >= end) return 100;
+                                      return ((now - line.begin) / (end - line.begin)) * 100;
+                                    })()
+                                  }
+                                  resolvedTheme={resolvedTheme}
+                                  isActive={(now >= line.begin && now < (line.originalEnd || line.end))}
+                                  progressDirection={settings.lyricProgressDirection}
+                                />
+                              ) : (
+                                <span style={{ whiteSpace: 'pre-wrap' }}>
+                                  <LineBreaker text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')} />
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
                         </div>
                         {line.backgroundText && (() => {
                           const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
@@ -1377,25 +2097,172 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     resolvedTheme={resolvedTheme}
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
+                                    pronunciationWords={line.backgroundPronunciationWords}
+                                    showPronunciation={!!(settings.showPronunciation && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0)}
+                                    karaokeEnabled={settings.useKaraokeLyric}
+                                    persistActive={isDisplaying}
                                   />
                                 ) : (
-                                  <span style={{ 
-                                    fontSize: {
-                                      small: '1.2rem',
-                                      medium: '1.5rem',
-                                      large: '2.0rem',
-                                    }[settings.fontSize],
-                                    color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
-                                    fontWeight: 'normal',
-                                    pointerEvents: 'none'
-                                  }}>
-                                    <LineBreaker text={line.backgroundText} />
-                                  </span>
+                                  <div>
+                                    <span style={{ 
+                                      fontSize: {
+                                        small: '1.2rem',
+                                        medium: '1.5rem',
+                                        large: '2.0rem',
+                                      }[settings.fontSize],
+                                      color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                                      pointerEvents: 'none',
+                                      transition: 'color 0.5s ease'
+                                    }}>
+                                      <LineBreaker text={line.backgroundText} />
+                                    </span>
+                                    {settings.showPronunciation && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
+                                      settings.useWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
+                                        <div
+                                          style={{
+                                            fontSize: '0.48em',
+                                            color: (() => {
+                                              const begin = line.begin;
+                                              const end = (line.originalEnd || line.end);
+                                              const active = (currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end;
+                                              const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
+                                              const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
+                                              return resolvedTheme === 'dark' ? dark : light;
+                                            })(),
+                                            pointerEvents: 'none',
+                                            textAlign: (settings.useKaraokeLyric && settings.useWordTiming) ? 'left' : textAlignment,
+                                            transition: 'color 0.5s ease',
+                                            marginTop: '0.1em',
+                                          }}
+                                        >
+                                          <TranslationWordTimingLyricLine
+                                            backgroundWords={line.backgroundPronunciationWords}
+                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            resolvedTheme={resolvedTheme}
+                                            progressDirection={settings.lyricProgressDirection}
+                                            fontSize={settings.fontSize}
+                                            karaokeEnabled={settings.useKaraokeLyric}
+                                            persistActive={isDisplaying}
+                                          />
+                                        </div>
+                                      ) : (settings.useKaraokeLyric && ((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))) ? (
+                                        <div
+                                          style={{
+                                            fontSize: '0.48em',
+                                            pointerEvents: 'none',
+                                            textAlign: textAlignment,
+                                            transition: 'color 0.5s ease',
+                                            marginTop: '0.1em',
+                                          }}
+                                        >
+                                          <PronunciationKaraokeLyricLine
+                                            text={line.backgroundPronunciationText || (line.backgroundPronunciationWords ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')}
+                                            progressPercentage={
+                                              (() => {
+                                                const now = currentTime + (settings.lyricOffset || 0);
+                                                const end = (line.originalEnd || line.end);
+                                                if (now <= line.begin) return 0;
+                                                if (now >= end) return 100;
+                                                return ((now - line.begin) / (end - line.begin)) * 100;
+                                              })()
+                                            }
+                                            resolvedTheme={resolvedTheme}
+                                            isActive={((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))}
+                                            progressDirection={settings.lyricProgressDirection}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div
+                                          style={{
+                                            fontSize: '0.48em',
+                                            color: (() => {
+                                              const begin = line.begin;
+                                              const end = (line.originalEnd || line.end);
+                                              const active = isDisplaying || ((currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end);
+                                              const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
+                                              const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
+                                              return resolvedTheme === 'dark' ? dark : light;
+                                            })(),
+                                            pointerEvents: 'none',
+                                            textAlign: textAlignment,
+                                            transition: 'color 0.5s ease',
+                                            marginTop: '0.1em',
+                                          }}
+                                        >
+                                          <LineBreaker text={line.backgroundPronunciationText || (line.backgroundPronunciationWords ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')} />
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
                           );
                         })()}
+                          {settings.showTranslation && (((line.translationWords1 && line.translationWords1.length > 0) || (typeof line.translationText1 === 'string' && line.translationText1.trim() !== '') || (line.translationWords2 && line.translationWords2.length > 0) || (typeof line.translationText2 === 'string' && line.translationText2.trim() !== ''))) && (
+                          <>
+                            {(line.translationWords1 || line.translationText1) && (
+                              <div
+                                className={`${textAlignment === 'right' ? 'pr-4' : 'pl-4'}`}
+                                style={{
+                                  fontSize: {
+                                    small: '1.2rem',
+                                    medium: '1.5rem',
+                                    large: '2.0rem',
+                                  }[settings.fontSize],
+                                  color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                                  pointerEvents: 'none',
+                                  textAlign: textAlignment,
+                                  marginTop: '0.15em',
+                                }}
+                              >
+                                {settings.useWordTiming && line.translationWords1 && line.translationWords1.length > 0 ? (
+                                  <TranslationWordTimingLyricLine
+                                    backgroundWords={line.translationWords1}
+                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    resolvedTheme={resolvedTheme}
+                                    progressDirection={settings.lyricProgressDirection}
+                                    fontSize={settings.fontSize}
+                                  />
+                                ) : (
+                                  <span style={{ whiteSpace: 'pre-wrap' }}>
+                                    <LineBreaker text={line.translationText1 || ''} />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {(line.translationWords2 || line.translationText2) && (
+                              <div
+                                style={{
+                                  fontSize: {
+                                    small: '1.2rem',
+                                    medium: '1.5rem',
+                                    large: '2.0rem',
+                                  }[settings.fontSize],
+                                  color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                                  fontWeight: 'bold',
+                                  pointerEvents: 'none',
+                                  textAlign: textAlignment,
+                                  marginTop: '0.15em',
+                                }}
+                              >
+                                {settings.useWordTiming && line.translationWords2 && line.translationWords2.length > 0 ? (
+                                  <TranslationWordTimingLyricLine
+                                    backgroundWords={line.translationWords2}
+                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    resolvedTheme={resolvedTheme}
+                                    progressDirection={settings.lyricProgressDirection}
+                                    fontSize={settings.fontSize}
+                                  />
+                                ) : (
+                                  <span style={{ whiteSpace: 'pre-wrap' }}>
+                                    <LineBreaker text={line.translationText2 || ''} />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     </span>
                   )}

@@ -37,6 +37,15 @@ export interface TTMLLine {
   timing?: 'Line' | 'Word';
   groupEnd?: number;
   originalEnd?: number;
+  itunesKey?: string;
+  pronunciationWords?: TTMLWord[];
+  pronunciationText?: string;
+  backgroundPronunciationWords?: TTMLWord[];
+  backgroundPronunciationText?: string;
+  translationWords1?: TTMLWord[];
+  translationText1?: string;
+  translationWords2?: TTMLWord[];
+  translationText2?: string;
 }
 
 export interface TTMLDiv {
@@ -72,6 +81,7 @@ export interface WordTimingKaraokeLyricLineProps {
   progressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
   isActive: boolean;
   isPast?: boolean;
+  showPronunciation?: boolean;
 }
 
 export interface BackgroundWordTimingLyricLineProps {
@@ -80,6 +90,8 @@ export interface BackgroundWordTimingLyricLineProps {
   resolvedTheme: string;
   progressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
   fontSize: 'small' | 'medium' | 'large';
+  pronunciationWords?: TTMLWord[];
+  showPronunciation?: boolean;
 }
 
 export interface Settings {
@@ -109,6 +121,8 @@ export interface Settings {
     tension?: number;
     friction?: number;
   };
+  showPronunciation?: boolean;
+  showTranslation?: boolean;
 }
 
 export interface PlayerLyricsProps {

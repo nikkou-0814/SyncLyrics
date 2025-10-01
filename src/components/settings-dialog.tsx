@@ -232,6 +232,30 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   </div>
 
                   <div className="flex items-center justify-between">
+                    <Label htmlFor="showPronunciation" className="text-sm font-medium flex items-center gap-2">
+                      <Type className="h-4 w-4" />
+                      発音を表示
+                    </Label>
+                    <Switch
+                      id="showPronunciation"
+                      checked={settings.showPronunciation ?? false}
+                      onCheckedChange={(checked) => handleSettingChange('showPronunciation', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="showTranslation" className="text-sm font-medium flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      翻訳を表示
+                    </Label>
+                    <Switch
+                      id="showTranslation"
+                      checked={settings.showTranslation ?? false}
+                      onCheckedChange={(checked) => handleSettingChange('showTranslation', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <Label htmlFor="useTTML" className="text-sm font-medium flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       TTML形式を使用
@@ -822,7 +846,31 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     )}
                   </div>
 
-                    <Separator />
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="showPronunciation" className="text-sm font-medium flex items-center gap-2">
+                      <Type className="h-4 w-4" />
+                      発音を表示
+                    </Label>
+                    <Switch
+                      id="showPronunciation"
+                      checked={settings.showPronunciation ?? false}
+                      onCheckedChange={(checked) => handleSettingChange('showPronunciation', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="showTranslation" className="text-sm font-medium flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      翻訳を表示
+                    </Label>
+                    <Switch
+                      id="showTranslation"
+                      checked={settings.showTranslation ?? false}
+                      onCheckedChange={(checked) => handleSettingChange('showTranslation', checked)}
+                    />
+                  </div>
 
                   <div className="flex items-center justify-between">
                     <Label htmlFor="useTTML" className="text-sm font-medium flex items-center gap-2">
