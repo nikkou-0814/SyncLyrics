@@ -436,8 +436,8 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       />
                     </div>
                     <div className="flex justify-between mt-2">
-                      <span className="text-xs text-muted-foreground">不透明</span>
                       <span className="text-xs text-muted-foreground">透明</span>
+                      <span className="text-xs text-muted-foreground">不透明</span>
                     </div>
                   </div>
 
@@ -1025,8 +1025,8 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       />
                     </div>
                     <div className="flex justify-between mt-2">
-                      <span className="text-xs text-muted-foreground">不透明</span>
                       <span className="text-xs text-muted-foreground">透明</span>
+                      <span className="text-xs text-muted-foreground">不透明</span>
                     </div>
                   </div>
 
