@@ -1709,6 +1709,17 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                 : (line.pronunciationWords && line.pronunciationWords.length > 0 ? line.pronunciationWords.map(w => w.text).join(' ') : '')
             );
             const hidePronLine = mainTextForCompare !== '' && pronTextForCompare !== '' && mainTextForCompare === pronTextForCompare;
+            const backgroundTextForCompare = normalizeForCompare(
+              (line.backgroundText && line.backgroundText.trim() !== '')
+                ? line.backgroundText
+                : (line.backgroundWords && line.backgroundWords.length > 0 ? line.backgroundWords.map(w => w.text).join(' ') : '')
+            );
+            const backgroundPronTextForCompare = normalizeForCompare(
+              (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== '')
+                ? line.backgroundPronunciationText
+                : (line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')
+            );
+            const hideBackgroundPronLine = backgroundTextForCompare !== '' && backgroundPronTextForCompare !== '' && backgroundTextForCompare === backgroundPronTextForCompare;
 
             const isDivEnd = divLastLineIndices.includes(index);
             const interludePeriod = isDivEnd ? 
@@ -1839,7 +1850,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
                                     pronunciationWords={line.backgroundPronunciationWords}
-                                    showPronunciation={!!(settings.showPronunciation && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0)}
+                                    showPronunciation={!!(settings.showPronunciation && !hideBackgroundPronLine && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0)}
                                     karaokeEnabled={settings.useKaraokeLyric}
                                     persistActive={isDisplaying}
                                   />
@@ -1857,7 +1868,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     }}>
                                       <LineBreaker text={line.backgroundText} />
                                     </span>
-                                    {settings.showPronunciation && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
+                                    {settings.showPronunciation && !hideBackgroundPronLine && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
                                       settings.useWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
                                         <div
                                           style={{
@@ -2098,7 +2109,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
                                     pronunciationWords={line.backgroundPronunciationWords}
-                                    showPronunciation={!!(settings.showPronunciation && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0)}
+                                    showPronunciation={!!(settings.showPronunciation && !hideBackgroundPronLine && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0)}
                                     karaokeEnabled={settings.useKaraokeLyric}
                                     persistActive={isDisplaying}
                                   />
@@ -2116,7 +2127,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     }}>
                                       <LineBreaker text={line.backgroundText} />
                                     </span>
-                                    {settings.showPronunciation && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
+                                    {settings.showPronunciation && !hideBackgroundPronLine && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
                                       settings.useWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
                                         <div
                                           style={{
