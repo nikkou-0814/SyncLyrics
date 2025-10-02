@@ -28,7 +28,6 @@ const DEFAULT_SETTINGS: Settings = {
   lyricProgressDirection: 'ltr',
   CustomEasing: 'cubic-bezier(0.22, 1, 0.36, 1)',
   scrollPositionOffset: 50,
-  useTTML: false,
   useWordTiming: true,
   useAMLL: true,
   amllEnableSpring: true,
@@ -74,6 +73,9 @@ const Player: React.FC<PlayerProps> = ({
     const savedSettings = localStorage.getItem('playerSettings');
     if (savedSettings) {
       const parsed = JSON.parse(savedSettings);
+      if (parsed && typeof parsed === 'object' && 'useTTML' in parsed) {
+        delete parsed.useTTML;
+      }
       return { ...DEFAULT_SETTINGS, ...parsed };
     }
     return DEFAULT_SETTINGS;
@@ -181,11 +183,6 @@ const Player: React.FC<PlayerProps> = ({
     }
     if (key === 'fullplayer') {
       setWasFullPlayerManuallySet(true);
-    }
-    
-    if (key === 'useAMLL' && value === true) {
-      updateSettings({ [key]: value, useTTML: true });
-      return;
     }
     
     updateSettings({ [key]: value });
@@ -439,7 +436,7 @@ const Player: React.FC<PlayerProps> = ({
     if (dt < 0 || dt >= total) return null;
 
     const appearEnd = 2;
-    const exitStart = settings.useTTML && ttmlData ? total - 1.0 : total - 1.1;
+    const exitStart = ttmlData ? total - 1.0 : total - 1.2;
     let parentScale = 1.0;
     let opacity = 1.0;
     const transitionDuration = Math.min(Math.max(total * 0.4, 2), 6);
@@ -583,7 +580,7 @@ const Player: React.FC<PlayerProps> = ({
 
   return (
     <>
-      {settings.useTTML && ttmlData && settings.useAMLL ? (
+      {ttmlData && settings.useAMLL ? (
         <AMLLLyrics
           ttmlData={ttmlData}
           currentTime={currentTime}
@@ -593,7 +590,7 @@ const Player: React.FC<PlayerProps> = ({
           isPlaying={isPlaying}
           resolvedTheme={theme}
         />
-      ) : settings.useTTML && ttmlData ? (
+      ) : ttmlData ? (
         <TTMLLyrics
           lyricsData={processedLyricsData}
           currentTime={currentTime}

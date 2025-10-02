@@ -190,7 +190,10 @@ export default function Home() {
       }
       setLyricsData(data.lyricsData);
       const prev = JSON.parse(localStorage.getItem('playerSettings') || '{}');
-      localStorage.setItem('playerSettings', JSON.stringify({ ...prev, useTTML: false }));
+      if (prev && typeof prev === 'object' && 'useTTML' in prev) {
+        delete prev.useTTML;
+        localStorage.setItem('playerSettings', JSON.stringify(prev));
+      }
 
       const state = {
         mode: 'lrc' as const,
@@ -283,7 +286,10 @@ export default function Home() {
       } as SearchResult;
       setSelectedTrack(selected);
       const prev = JSON.parse(localStorage.getItem('playerSettings') || '{}');
-      localStorage.setItem('playerSettings', JSON.stringify({ ...prev, useTTML: true }));
+      if (prev && typeof prev === 'object' && 'useTTML' in prev) {
+        delete prev.useTTML;
+        localStorage.setItem('playerSettings', JSON.stringify(prev));
+      }
 
       const state = {
         mode: 'ttml' as const,

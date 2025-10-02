@@ -32,10 +32,10 @@ export default function LrcPlayPage() {
       setTrack(parsed.selectedTrack || null);
 
       const prev = JSON.parse(localStorage.getItem("playerSettings") || "{}");
-      localStorage.setItem(
-        "playerSettings",
-        JSON.stringify({ ...prev, useTTML: false })
-      );
+      if (prev && typeof prev === "object" && "useTTML" in prev) {
+        delete prev.useTTML;
+        localStorage.setItem("playerSettings", JSON.stringify(prev));
+      }
     } catch (e) {
       console.error("Failed to restore player state:", e);
     }

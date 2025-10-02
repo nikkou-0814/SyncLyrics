@@ -113,7 +113,6 @@ export interface Settings {
   lyricProgressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
   CustomEasing: string;
   scrollPositionOffset: number;
-  useTTML?: boolean;
   useWordTiming: boolean;
   useAMLL?: boolean;
   amllEnableSpring?: boolean;

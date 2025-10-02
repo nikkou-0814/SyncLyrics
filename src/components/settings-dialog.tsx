@@ -289,6 +289,29 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   <Separator />
 
                   <div className="flex items-center justify-between">
+                    <Label htmlFor="useWordTiming" className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      単語単位の同期を使用
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                        <p className="max-w-xs">
+                          TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。AMLLがオンの場合は使用できません
+                        </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </Label>
+                    <Switch
+                      id="useWordTiming"
+                      checked={settings.useWordTiming}
+                      onCheckedChange={(checked) => handleSettingChange('useWordTiming', checked)}
+                      disabled={settings.useAMLL}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <Label htmlFor="useKaraokeLyric" className="text-sm font-medium flex items-center gap-2">
                       <MicVocal className="h-4 w-4" />
                       カラオケ風歌詞
@@ -350,10 +373,22 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     </div>
                   </div>
 
+                  <Separator />
+
                   <div className="flex items-center justify-between">
                     <Label htmlFor="showPronunciation" className="text-sm font-medium flex items-center gap-2">
                       <Type className="h-4 w-4" />
                       発音を表示
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            TTMLを使用していて、発音に対応している場合に使用することが出来ます
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
                     </Label>
                     <Switch
                       id="showPronunciation"
@@ -366,54 +401,21 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="showTranslation" className="text-sm font-medium flex items-center gap-2">
                       <Layers className="h-4 w-4" />
                       翻訳を表示
-                    </Label>
-                    <Switch
-                      id="showTranslation"
-                      checked={settings.showTranslation ?? false}
-                      onCheckedChange={(checked) => handleSettingChange('showTranslation', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="useTTML" className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      TTML形式を使用
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="max-w-xs">TTML形式の歌詞データが利用可能な場合に使用します</p>
+                          <p className="max-w-xs">
+                            TTMLを使用していて、翻訳に対応している場合に使用することが出来ます
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </Label>
                     <Switch
-                      id="useTTML"
-                      checked={settings.useTTML}
-                      onCheckedChange={(checked) => handleSettingChange('useTTML', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="useWordTiming" className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      単語単位の同期を使用
-                      {!settings.useTTML && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">TTML形式がオフの場合は使用できません</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                      </Label>
-                    <Switch
-                      id="useWordTiming"
-                      checked={settings.useWordTiming}
-                      onCheckedChange={(checked) => handleSettingChange('useWordTiming', checked)}
-                      disabled={!settings.useTTML}
+                      id="showTranslation"
+                      checked={settings.showTranslation ?? false}
+                      onCheckedChange={(checked) => handleSettingChange('showTranslation', checked)}
                     />
                   </div>
 
@@ -423,29 +425,18 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="useAMLL" className="text-sm font-medium flex items-center gap-2">
                       <Music className="h-4 w-4" />
                       AMLLを使用
-                      {!settings.useTTML && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">TTML形式がオフの場合は使用できません</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
                     </Label>
                     <Switch
                       id="useAMLL"
                       checked={settings.useAMLL}
                       onCheckedChange={(checked) => handleSettingChange('useAMLL', checked)}
-                      disabled={!settings.useTTML}
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
                     <Label htmlFor="amllHidePassedLines" className="text-sm font-medium flex items-center gap-2">
                       <Layers className="h-4 w-4" />
-                      過去の歌詞行を非表示
+                      過去の歌詞を非表示
                       {!settings.useAMLL && (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -514,7 +505,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   <div className="flex items-center justify-between">
                     <Label htmlFor="useCustomColors" className="text-sm font-medium flex items-center gap-2">
                       <Palette className="h-4 w-4" />
-                      カスタムカラーを有効化
+                      カスタムカラーを使用
                     </Label>
                     <Switch
                       id="useCustomColors"
@@ -532,12 +523,12 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                         </Label>
                         <div className="grid grid-cols-2 gap-3">
                           <ColorWithAlphaPicker
-                            label="アクティブ"
+                            label="アクティブな歌詞"
                             value={settings.activeLyricColor}
                             onChange={(v) => handleSettingChange('activeLyricColor', v)}
                           />
                           <ColorWithAlphaPicker
-                            label="非アクティブ"
+                            label="非アクティブな歌詞"
                             value={settings.inactiveLyricColor}
                             onChange={(v) => handleSettingChange('inactiveLyricColor', v)}
                           />
@@ -959,6 +950,22 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                   <Separator />
 
                   <div className="flex items-center justify-between">
+                    <Label htmlFor="useWordTiming" className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      単語単位の同期を使用
+                    </Label>
+                    <Switch
+                      id="useWordTiming"
+                      checked={settings.useWordTiming}
+                      onCheckedChange={(checked) => handleSettingChange('useWordTiming', checked)}
+                      disabled={settings.useAMLL}
+                    />
+                  </div>
+                  <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                    TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。AMLLがオンの場合は使用できません
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <Label htmlFor="useKaraokeLyric" className="text-sm font-medium flex items-center gap-2">
                       <MicVocal className="h-4 w-4" />
                       カラオケ風歌詞
@@ -1033,35 +1040,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="useTTML" className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      TTML形式を使用
-                    </Label>
-                    <Switch
-                      id="useTTML"
-                      checked={settings.useTTML}
-                      onCheckedChange={(checked) => handleSettingChange('useTTML', checked)}
-                    />
+                  <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                    TTMLを使用していて、発音または翻訳に対応している場合に各機能を使用することが出来ます
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="useWordTiming" className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      単語単位の同期を使用
-                    </Label>
-                    <Switch
-                      id="useWordTiming"
-                      checked={settings.useWordTiming}
-                      onCheckedChange={(checked) => handleSettingChange('useWordTiming', checked)}
-                      disabled={!settings.useTTML}
-                    />
-                  </div>
-                  {!settings.useTTML && (
-                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
-                      TTML形式がオフの場合は使用できません
-                    </div>
-                  )}
 
                   <Separator />
 
@@ -1074,19 +1055,13 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       id="useAMLL"
                       checked={settings.useAMLL}
                       onCheckedChange={(checked) => handleSettingChange('useAMLL', checked)}
-                      disabled={!settings.useTTML}
                     />
                   </div>
-                  {!settings.useTTML && (
-                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
-                      TTML形式がオフの場合は使用できません
-                    </div>
-                  )}
 
                   <div className="flex items-center justify-between">
                     <Label htmlFor="amllHidePassedLines" className="text-sm font-medium flex items-center gap-2">
                       <Layers className="h-4 w-4" />
-                      過去の歌詞行を非表示
+                      過去の歌詞を非表示
                     </Label>
                     <Switch
                       id="amllHidePassedLines"
@@ -1145,7 +1120,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                   <div className="flex items-center justify-between">
                     <Label htmlFor="useCustomColors" className="text-sm font-medium flex items-center gap-2">
                       <Palette className="h-4 w-4" />
-                      カスタムカラーを有効化
+                      カスタムカラーを使用
                     </Label>
                     <Switch
                       id="useCustomColors"
@@ -1163,12 +1138,12 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         </Label>
                         <div className="grid grid-cols-2 gap-3">
                           <ColorWithAlphaPicker
-                            label="アクティブ"
+                            label="アクティブな歌詞"
                             value={settings.activeLyricColor}
                             onChange={(v) => handleSettingChange('activeLyricColor', v)}
                           />
                           <ColorWithAlphaPicker
-                            label="非アクティブ"
+                            label="非アクティブな歌詞"
                             value={settings.inactiveLyricColor}
                             onChange={(v) => handleSettingChange('inactiveLyricColor', v)}
                           />
