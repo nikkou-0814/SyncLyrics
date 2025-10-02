@@ -7,13 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline, FileText, Info } from 'lucide-react';
+import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline, FileText } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { SettingsSidebarProps } from '@/types';
 import { Slider } from '@/components/ui/slider';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { SiGithub } from 'react-icons/si';
 
 type RgbaColor = { r: number; g: number; b: number; a: number };
@@ -191,15 +190,6 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             </TabsList>
             
             <TabsContent value="display" className="space-y-4">
-              <Alert variant="default" className="bg-green-100 border-green-500 dark:bg-green-950/50 dark:border-green-600/50 mb-4">
-                <div className="flex items-center gap-2">
-                  <Info className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <AlertTitle className="text-green-700 dark:text-green-300 font-medium">AMLLの使用を推奨</AlertTitle>
-                </div>
-                <AlertDescription className="text-green-700 dark:text-green-300 mt-1 pl-7">
-                  標準機能よりも優れた同期表示が可能です！
-                </AlertDescription>
-              </Alert>
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-md">レイアウトと表示</CardTitle>
@@ -288,10 +278,10 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     />
                     <div className="mt-2">
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        プラス値: 歌詞が早く表示
+                        プラス値: 早く表示
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        マイナス値: 歌詞が遅く表示
+                        マイナス値: 遅く表示
                       </p>
                     </div>
                   </div>
@@ -554,16 +544,14 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                         </div>
                       </div>
 
-                      <Separator />
-
                       <div className="space-y-2">
                         <Label className="text-sm font-medium flex items-center gap-2">
                           <Palette className="h-4 w-4" />
-                          間奏ドット色
+                          間奏の色
                         </Label>
                         <div className="grid grid-cols-1 gap-3">
                           <ColorPicker
-                            label="間奏ドット"
+                            label=""
                             value={settings.interludeDotsColor}
                             onChange={(v) => handleSettingChange('interludeDotsColor', v)}
                           />
@@ -855,15 +843,6 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
             </TabsList>
             
             <TabsContent value="display" className="space-y-4 pb-8">
-              <Alert variant="default" className="bg-green-100 border-green-500 dark:bg-green-950/50 dark:border-green-600/50 mb-4">
-                <div className="flex items-center gap-2">
-                  <Info className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <AlertTitle className="text-green-700 dark:text-green-300 font-medium">AMLLの使用を推奨</AlertTitle>
-                </div>
-                <AlertDescription className="text-green-700 dark:text-green-300 mt-1 pl-7">
-                  標準機能よりも優れた同期表示が可能です！
-                </AlertDescription>
-              </Alert>
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-md">レイアウトと表示</CardTitle>
@@ -968,10 +947,10 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       </div>
                       <div className="mt-2">
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          プラス値: 歌詞が早く表示
+                          プラス値: 早く表示
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          マイナス値: 歌詞が遅く表示
+                          マイナス値: 遅く表示
                         </p>
                       </div>
                     </div>
@@ -1196,16 +1175,14 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         </div>
                       </div>
 
-                      <Separator />
-
                       <div className="space-y-2">
                         <Label className="text-sm font-medium flex items-center gap-2">
                           <Palette className="h-4 w-4" />
-                          間奏ドット色
+                          間奏の色
                         </Label>
                         <div className="grid grid-cols-1 gap-3">
                           <ColorPicker
-                            label="間奏ドット"
+                            label=""
                             value={settings.interludeDotsColor}
                             onChange={(v) => handleSettingChange('interludeDotsColor', v)}
                           />

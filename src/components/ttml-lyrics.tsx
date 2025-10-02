@@ -1623,7 +1623,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
         ${hasAgents ? 'items-center text-center' : 
           settings.lyricposition === 'center' ? 'items-center text-center' : 
           settings.lyricposition === 'right' ? `items-end ${isMobile ? 'right-0' : 'right-20'}` : 
-          `items-start ${isMobile ? 'left-0' : 'left-20'}`}
+          `items-start`}
         text-gray-900 dark:text-white
       `}
     >
@@ -1889,7 +1889,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         medium: '1.5rem',
                                         large: '2.0rem',
                                       }[settings.fontSize],
-                                      color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                                      color: settings.useCustomColors
+                                        ? (isDisplaying ? activeLyricColor : inactiveLyricColor)
+                                        : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'),
                                       pointerEvents: 'none',
                                       transition: 'color 0.5s ease'
                                     }}>
@@ -1904,6 +1906,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               const begin = line.begin;
                                               const end = (line.originalEnd || line.end);
                                               const active = isDisplaying || ((currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end);
+                                              if (settings.useCustomColors) {
+                                                return active ? activeLyricColor : inactiveLyricColor;
+                                              }
                                               const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
                                               const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
                                               return resolvedTheme === 'dark' ? dark : light;
@@ -1947,6 +1952,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             resolvedTheme={resolvedTheme}
                                             isActive={((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))}
                                             progressDirection={settings.lyricProgressDirection}
+                                            activeColor={settings.useCustomColors ? activeLyricColor : undefined}
+                                            inactiveColor={settings.useCustomColors ? inactiveLyricColor : undefined}
                                           />
                                         </div>
                                       ) : (
@@ -1957,6 +1964,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               const begin = line.begin;
                                               const end = (line.originalEnd || line.end);
                                               const active = (currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end;
+                                              if (settings.useCustomColors) {
+                                                return active ? activeLyricColor : inactiveLyricColor;
+                                              }
                                               const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
                                               const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
                                               return resolvedTheme === 'dark' ? dark : light;
@@ -2037,7 +2047,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               )
                             )
                           ) : (
-                            <span style={{ pointerEvents: 'none' }}>
+                            <span
+                              style={{
+                                pointerEvents: 'none',
+                                color: isDisplaying ? activeLyricColor : inactiveLyricColor,
+                                transition: 'color 0.5s ease'
+                              }}
+                            >
                               <LineBreaker text={line.text || ''} />
                             </span>
                           )}
@@ -2049,6 +2065,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   const begin = line.begin;
                                   const end = (line.originalEnd || line.end);
                                   const active = isDisplaying || (now >= begin && now < end);
+                                  if (settings.useCustomColors) {
+                                    return active ? activeLyricColor : inactiveLyricColor;
+                                  }
                                   const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
                                   const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
                                   return resolvedTheme === 'dark' ? dark : light;
@@ -2158,7 +2177,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         medium: '1.5rem',
                                         large: '2.0rem',
                                       }[settings.fontSize],
-                                      color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)',
+                                      color: settings.useCustomColors
+                                        ? (isDisplaying ? activeLyricColor : inactiveLyricColor)
+                                        : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'),
                                       pointerEvents: 'none',
                                       transition: 'color 0.5s ease'
                                     }}>
@@ -2173,6 +2194,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               const begin = line.begin;
                                               const end = (line.originalEnd || line.end);
                                               const active = (currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end;
+                                              if (settings.useCustomColors) {
+                                                return active ? activeLyricColor : inactiveLyricColor;
+                                              }
                                               const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
                                               const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
                                               return resolvedTheme === 'dark' ? dark : light;
@@ -2219,6 +2243,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             resolvedTheme={resolvedTheme}
                                             isActive={((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))}
                                             progressDirection={settings.lyricProgressDirection}
+                                            activeColor={settings.useCustomColors ? activeLyricColor : undefined}
+                                            inactiveColor={settings.useCustomColors ? inactiveLyricColor : undefined}
                                           />
                                         </div>
                                       ) : (
@@ -2229,6 +2255,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               const begin = line.begin;
                                               const end = (line.originalEnd || line.end);
                                               const active = isDisplaying || ((currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end);
+                                              if (settings.useCustomColors) {
+                                                return active ? activeLyricColor : inactiveLyricColor;
+                                              }
                                               const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
                                               const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
                                               return resolvedTheme === 'dark' ? dark : light;

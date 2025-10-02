@@ -325,7 +325,7 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
       className={`fixed inset-0 flex flex-col justify-center z-50 
         ${settings.lyricposition === 'center' ? 'items-center text-center' : 
           settings.lyricposition === 'right' ? `items-end ${isMobile ? 'right-0' : 'right-20'}` : 
-          `items-start ${isMobile ? 'left-0' : 'left-20'}`}
+          `items-start`}
         text-gray-900 dark:text-white
       `}
     >
