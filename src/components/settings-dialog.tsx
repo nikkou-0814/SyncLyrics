@@ -14,8 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { SettingsSidebarProps } from '@/types';
 import { Slider } from '@/components/ui/slider';
 import { SiGithub } from 'react-icons/si';
-
-type RgbaColor = { r: number; g: number; b: number; a: number };
+import type { RgbaColor, ColorWithAlphaPickerProps, ColorPickerProps } from '@/types';
 
 const clamp = (n: number, min = 0, max = 255) => Math.min(Math.max(n, min), max);
 const toHex = (n: number) => clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0').toUpperCase();
@@ -77,12 +76,6 @@ const combineHexAndAlphaToRgba = (hexBase: string, alphaPercent: number): string
   return `rgba(${r}, ${g}, ${b}, ${aStr})`;
 };
 
-type ColorWithAlphaPickerProps = {
-  label: string;
-  value: string;
-  onChange: (newColor: string) => void;
-};
-
 const ColorWithAlphaPicker: React.FC<ColorWithAlphaPickerProps> = ({ label, value, onChange }) => {
   const rgba = parseColorToRgba(value);
   const baseHex = rgbToHex(rgba.r, rgba.g, rgba.b);
@@ -118,12 +111,6 @@ const ColorWithAlphaPicker: React.FC<ColorWithAlphaPickerProps> = ({ label, valu
       </div>
     </div>
   );
-};
-
-type ColorPickerProps = {
-  label: string;
-  value: string;
-  onChange: (newColor: string) => void;
 };
 
 const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => {

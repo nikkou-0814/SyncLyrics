@@ -257,3 +257,45 @@ export interface AMLLLyricsProps {
   isPlaying: boolean;
   resolvedTheme: string;
 }
+
+export interface PlayerState {
+  mode: "lrc" | "ttml";
+  lyricsData: LyricLine[];
+  audioUrl: string;
+  selectedTrack: SearchResult;
+  ttmlData?: TTMLData | null;
+}
+
+export type SimpleKaraokeProps = {
+  text: string;
+  progressPercentage: number;
+  resolvedTheme: string;
+  isActive: boolean;
+  progressDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
+  activeColor?: string;
+  inactiveColor?: string;
+};
+
+export type TranslationWordTimingLyricLineProps = BackgroundWordTimingLyricLineProps & {
+  karaokeEnabled?: boolean;
+  persistActive?: boolean;
+};
+
+export type RgbaColor = {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+
+export type ColorWithAlphaPickerProps = {
+  label: string;
+  value: string;
+  onChange: (newColor: string) => void;
+};
+
+export type ColorPickerProps = {
+  label: string;
+  value: string;
+  onChange: (newColor: string) => void;
+};

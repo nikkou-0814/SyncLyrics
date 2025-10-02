@@ -3,17 +3,10 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { LyricLine, SearchResult, TTMLData } from "@/types";
+import { LyricLine, SearchResult } from "@/types";
+import { PlayerState } from "@/types";
 
 const Player = dynamic(() => import("@/components/player"), { ssr: false });
-
-interface PlayerState {
-  mode: "lrc" | "ttml";
-  lyricsData: LyricLine[];
-  audioUrl: string;
-  selectedTrack: SearchResult;
-  ttmlData?: TTMLData | null;
-}
 
 export default function LrcPlayPage() {
   const router = useRouter();

@@ -6,7 +6,7 @@ import { ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import PlayerLyrics from '@/components/lrc-lyrics';
-import TTMLLyrics from '@/components/ttml-lyrics';
+import TTMLLyrics from '@/components/ttml/lyrics';
 import AMLLLyrics from '@/components/amll-lyrics';
 import PlayerControls from '@/components/player-controls';
 import SettingsSidebar from '@/components/settings-dialog';
