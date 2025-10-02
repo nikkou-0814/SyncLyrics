@@ -11,10 +11,14 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
   resolvedTheme,
   isActive,
   progressDirection,
+  activeColor: activeColorProp,
+  inactiveColor: inactiveColorProp,
 }) => {
   const isDark = resolvedTheme === 'dark';
-  const activeColor = isDark ? '#FFFFFF' : '#000000';
-  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
+  const defaultActive = isDark ? '#FFFFFF' : '#000000';
+  const defaultInactive = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
+  const activeColor = activeColorProp ?? defaultActive;
+  const inactiveColor = inactiveColorProp ?? defaultInactive;
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
@@ -113,12 +117,15 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
   );
 };
 
+
 type SimpleKaraokeProps = {
   text: string;
   progressPercentage: number;
   resolvedTheme: string;
   isActive: boolean;
   progressDirection: 'ltr' | 'rtl' | 'ttb' | 'btt';
+  activeColor?: string;
+  inactiveColor?: string;
 };
 
 const PronunciationKaraokeLyricLine: React.FC<SimpleKaraokeProps> = ({
@@ -127,10 +134,14 @@ const PronunciationKaraokeLyricLine: React.FC<SimpleKaraokeProps> = ({
   resolvedTheme,
   isActive,
   progressDirection,
+  activeColor: activeColorProp,
+  inactiveColor: inactiveColorProp,
 }) => {
   const isDark = resolvedTheme === 'dark';
-  const activeColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
-  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const defaultActiveColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+  const defaultInactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const activeColor = activeColorProp ?? defaultActiveColor;
+  const inactiveColor = inactiveColorProp ?? defaultInactiveColor;
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
@@ -237,12 +248,16 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
   isActive,
   isPast = false,
   showPronunciation = false,
+  activeColor: activeColorProp,
+  inactiveColor: inactiveColorProp,
 }) => {
   const isDark = resolvedTheme === 'dark';
-  const activeColor = isDark ? '#FFFFFF' : '#000000';
-  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
-  const pronActiveColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
-  const pronInactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const defaultActive = isDark ? '#FFFFFF' : '#000000';
+  const defaultInactive = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
+  const activeColor = activeColorProp ?? defaultActive;
+  const inactiveColor = inactiveColorProp ?? defaultInactive;
+  const pronActiveColor = activeColor;
+  const pronInactiveColor = inactiveColor;
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const [delayedIndex, setDelayedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -595,10 +610,14 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
   showPronunciation,
   karaokeEnabled,
   persistActive,
+  activeColor: activeColorProp,
+  inactiveColor: inactiveColorProp,
 }) => {
   const isDark = resolvedTheme === 'dark';
-  const activeColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
-  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const defaultActive = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+  const defaultInactive = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const activeColor = activeColorProp ?? defaultActive;
+  const inactiveColor = inactiveColorProp ?? defaultInactive;
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
 
@@ -880,10 +899,14 @@ const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLinePro
   fontSize,
   karaokeEnabled,
   persistActive,
+  activeColor: activeColorProp,
+  inactiveColor: inactiveColorProp,
 }) => {
   const isDark = resolvedTheme === 'dark';
-  const activeColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
-  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const defaultActive = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+  const defaultInactive = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+  const activeColor = activeColorProp ?? defaultActive;
+  const inactiveColor = inactiveColorProp ?? defaultInactive;
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
 
@@ -1041,6 +1064,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   const lastInterludeKeyRef = useRef<string | null>(null);
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
   const [hasWordTiming, setHasWordTiming] = useState<boolean>(false);
+  const activeLyricColor = settings.useCustomColors ? settings.activeLyricColor : (resolvedTheme === 'dark' ? '#FFFFFF' : '#000000');
+  const inactiveLyricColor = settings.useCustomColors ? settings.inactiveLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)');
   const backgroundRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [backgroundHeights, setBackgroundHeights] = useState<Map<string, number>>(new Map());
   const mainRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -1853,6 +1878,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     showPronunciation={!!(settings.showPronunciation && !hideBackgroundPronLine && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0)}
                                     karaokeEnabled={settings.useKaraokeLyric}
                                     persistActive={isDisplaying}
+                                    activeColor={activeLyricColor}
+                                    inactiveColor={inactiveLyricColor}
                                   />
                                 ) : (
                                   <div>
@@ -1989,6 +2016,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 isActive={isDisplaying}
                                 isPast={isPast}
                                 showPronunciation={settings.showPronunciation && !hidePronLine && !!(line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0)}
+                                activeColor={activeLyricColor}
+                                inactiveColor={inactiveLyricColor}
                               />
                             ) : (
                               isDisplaying ? (
@@ -1998,9 +2027,11 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   resolvedTheme={resolvedTheme}
                                   isActive={isDisplaying}
                                   progressDirection={settings.lyricProgressDirection}
+                                  activeColor={activeLyricColor}
+                                  inactiveColor={inactiveLyricColor}
                                 />
                               ) : (
-                                <span style={{ pointerEvents: 'none' }}>
+                                <span style={{ pointerEvents: 'none', color: isDisplaying ? activeLyricColor : inactiveLyricColor }}>
                                   <LineBreaker text={line.text || ''} />
                                 </span>
                               )
@@ -2038,22 +2069,26 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     fontSize={settings.fontSize}
                                     karaokeEnabled={settings.useKaraokeLyric}
                                     persistActive={isDisplaying}
+                                    activeColor={activeLyricColor}
+                                    inactiveColor={inactiveLyricColor}
                                   />
                               ) : (settings.useKaraokeLyric && (now >= line.begin && now < (line.originalEnd || line.end))) ? (
-                                <PronunciationKaraokeLyricLine
-                                  text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')}
-                                  progressPercentage={
-                                    (() => {
-                                      const end = (line.originalEnd || line.end);
-                                      if (now <= line.begin) return 0;
-                                      if (now >= end) return 100;
-                                      return ((now - line.begin) / (end - line.begin)) * 100;
-                                    })()
-                                  }
-                                  resolvedTheme={resolvedTheme}
-                                  isActive={(now >= line.begin && now < (line.originalEnd || line.end))}
-                                  progressDirection={settings.lyricProgressDirection}
-                                />
+                                          <PronunciationKaraokeLyricLine
+                                            text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')}
+                                            progressPercentage={
+                                              (() => {
+                                                const end = (line.originalEnd || line.end);
+                                                if (now <= line.begin) return 0;
+                                                if (now >= end) return 100;
+                                                return ((now - line.begin) / (end - line.begin)) * 100;
+                                              })()
+                                            }
+                                            resolvedTheme={resolvedTheme}
+                                            isActive={(now >= line.begin && now < (line.originalEnd || line.end))}
+                                            progressDirection={settings.lyricProgressDirection}
+                                            activeColor={activeLyricColor}
+                                            inactiveColor={inactiveLyricColor}
+                                          />
                               ) : (
                                 <span style={{ whiteSpace: 'pre-wrap' }}>
                                   <LineBreaker text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')} />
@@ -2112,6 +2147,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     showPronunciation={!!(settings.showPronunciation && !hideBackgroundPronLine && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0)}
                                     karaokeEnabled={settings.useKaraokeLyric}
                                     persistActive={isDisplaying}
+                                    activeColor={activeLyricColor}
+                                    inactiveColor={inactiveLyricColor}
                                   />
                                 ) : (
                                   <div>
@@ -2154,6 +2191,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             fontSize={settings.fontSize}
                                             karaokeEnabled={settings.useKaraokeLyric}
                                             persistActive={isDisplaying}
+                                            activeColor={activeLyricColor}
+                                            inactiveColor={inactiveLyricColor}
                                           />
                                         </div>
                                       ) : (settings.useKaraokeLyric && ((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))) ? (
@@ -2234,6 +2273,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     resolvedTheme={resolvedTheme}
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
+                                    activeColor={activeLyricColor}
+                                    inactiveColor={inactiveLyricColor}
                                   />
                                 ) : (
                                   <span style={{ whiteSpace: 'pre-wrap' }}>
@@ -2264,6 +2305,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     resolvedTheme={resolvedTheme}
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
+                                    activeColor={activeLyricColor}
+                                    inactiveColor={inactiveLyricColor}
                                   />
                                 ) : (
                                   <span style={{ whiteSpace: 'pre-wrap' }}>

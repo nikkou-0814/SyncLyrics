@@ -82,6 +82,8 @@ export interface WordTimingKaraokeLyricLineProps {
   isActive: boolean;
   isPast?: boolean;
   showPronunciation?: boolean;
+  activeColor?: string;
+  inactiveColor?: string;
 }
 
 export interface BackgroundWordTimingLyricLineProps {
@@ -92,6 +94,8 @@ export interface BackgroundWordTimingLyricLineProps {
   fontSize: 'small' | 'medium' | 'large';
   pronunciationWords?: TTMLWord[];
   showPronunciation?: boolean;
+  activeColor?: string;
+  inactiveColor?: string;
 }
 
 export interface Settings {
@@ -123,6 +127,10 @@ export interface Settings {
   };
   showPronunciation?: boolean;
   showTranslation?: boolean;
+  useCustomColors: boolean;
+  activeLyricColor: string;
+  inactiveLyricColor: string;
+  interludeDotsColor: string;
 }
 
 export interface PlayerLyricsProps {
@@ -149,6 +157,8 @@ export interface KaraokeLyricLineProps {
   resolvedTheme: string;
   isActive: boolean;
   progressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
+  activeColor?: string;
+  inactiveColor?: string;
 }
 
 export interface PlayerProps {

@@ -40,6 +40,10 @@ const DEFAULT_SETTINGS: Settings = {
     tension: 280,
     friction: 60,
   },
+  useCustomColors: false,
+  activeLyricColor: 'rgba(255, 255, 255, 0.9)',
+  inactiveLyricColor: 'rgba(255, 255, 255, 0.5)',
+  interludeDotsColor: 'rgba(255, 255, 255, 0.7)',
 };
 
 const Player: React.FC<PlayerProps> = ({
@@ -405,7 +409,26 @@ const Player: React.FC<PlayerProps> = ({
   };
 
   const getInterludeDotsColor = (): string => {
-    return resolvedTheme === 'dark' ? 'rgba(255,255,255,' : 'rgba(0,0,0,';
+    if (!settings.useCustomColors) {
+      return resolvedTheme === 'dark' ? 'rgba(255, 255, 255, ' : 'rgba(0, 0, 0, ';
+    }
+    
+    const baseColor = settings.interludeDotsColor;
+    
+    const rgbaMatch = baseColor.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+)\s*)?\)$/i);
+    if (rgbaMatch) {
+      return `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, `;
+    }
+    
+    const hex = baseColor.startsWith('#') ? baseColor.slice(1) : baseColor;
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, `;
+    }
+    
+    return resolvedTheme === 'dark' ? 'rgba(255, 255, 255, ' : 'rgba(0, 0, 0, ';
   };
 
   const renderInterludeDots = (startTime: number, endTime: number, alignment: 'left' | 'center' | 'right' = 'center') => {

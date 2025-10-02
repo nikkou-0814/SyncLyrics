@@ -16,6 +16,135 @@ import { Slider } from '@/components/ui/slider';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { SiGithub } from 'react-icons/si';
 
+type RgbaColor = { r: number; g: number; b: number; a: number };
+
+const clamp = (n: number, min = 0, max = 255) => Math.min(Math.max(n, min), max);
+const toHex = (n: number) => clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0').toUpperCase();
+const rgbToHex = (r: number, g: number, b: number) => `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+
+const parseColorToRgba = (input: string | undefined | null): RgbaColor => {
+  if (!input || typeof input !== 'string') return { r: 0, g: 0, b: 0, a: 1 };
+  const s = input.trim();
+
+  if (s.startsWith('#')) {
+    const h = s.slice(1);
+    if (h.length === 3) {
+      const r = parseInt(h[0] + h[0], 16);
+      const g = parseInt(h[1] + h[1], 16);
+      const b = parseInt(h[2] + h[2], 16);
+      return { r, g, b, a: 1 };
+    }
+    if (h.length === 4) {
+      const r = parseInt(h[0] + h[0], 16);
+      const g = parseInt(h[1] + h[1], 16);
+      const b = parseInt(h[2] + h[2], 16);
+      const a = parseInt(h[3] + h[3], 16) / 255;
+      return { r, g, b, a };
+    }
+    if (h.length === 6) {
+      const r = parseInt(h.slice(0, 2), 16);
+      const g = parseInt(h.slice(2, 4), 16);
+      const b = parseInt(h.slice(4, 6), 16);
+      return { r, g, b, a: 1 };
+    }
+    if (h.length === 8) {
+      const r = parseInt(h.slice(0, 2), 16);
+      const g = parseInt(h.slice(2, 4), 16);
+      const b = parseInt(h.slice(4, 6), 16);
+      const a = parseInt(h.slice(6, 8), 16) / 255;
+      return { r, g, b, a };
+    }
+  }
+
+  const rgbaMatch = s.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+)\s*)?\)$/i);
+  if (rgbaMatch) {
+    const r = clamp(parseFloat(rgbaMatch[1]), 0, 255);
+    const g = clamp(parseFloat(rgbaMatch[2]), 0, 255);
+    const b = clamp(parseFloat(rgbaMatch[3]), 0, 255);
+    const a = rgbaMatch[4] !== undefined ? Math.min(Math.max(parseFloat(rgbaMatch[4]), 0), 1) : 1;
+    return { r, g, b, a };
+  }
+
+  return { r: 0, g: 0, b: 0, a: 1 };
+};
+
+const combineHexAndAlphaToRgba = (hexBase: string, alphaPercent: number): string => {
+  const h = hexBase.startsWith('#') ? hexBase.slice(1) : hexBase;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const a = Math.min(Math.max(alphaPercent, 0), 100) / 100;
+  const aStr = a.toFixed(3).replace(/\.?0+$/, '');
+  return `rgba(${r}, ${g}, ${b}, ${aStr})`;
+};
+
+type ColorWithAlphaPickerProps = {
+  label: string;
+  value: string;
+  onChange: (newColor: string) => void;
+};
+
+const ColorWithAlphaPicker: React.FC<ColorWithAlphaPickerProps> = ({ label, value, onChange }) => {
+  const rgba = parseColorToRgba(value);
+  const baseHex = rgbToHex(rgba.r, rgba.g, rgba.b);
+  const alpha = Math.round((rgba.a ?? 1) * 100);
+
+  return (
+    <div className="space-y-2">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <Input
+        type="color"
+        value={baseHex}
+        onChange={(e) => {
+          const newHex = e.target.value;
+          onChange(combineHexAndAlphaToRgba(newHex, alpha));
+        }}
+      />
+      <div className="pt-1 px-1">
+        <Slider
+          value={[alpha]}
+          min={0}
+          max={100}
+          step={1}
+          onValueChange={(values) => {
+            const newAlpha = values[0];
+            onChange(combineHexAndAlphaToRgba(baseHex, newAlpha));
+          }}
+        />
+        <div className="flex justify-between mt-1">
+          <span className="text-xs text-muted-foreground">透明</span>
+          <span className="text-xs text-muted-foreground">{alpha}%</span>
+          <span className="text-xs text-muted-foreground">不透明</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+type ColorPickerProps = {
+  label: string;
+  value: string;
+  onChange: (newColor: string) => void;
+};
+
+const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => {
+  const rgba = parseColorToRgba(value);
+  const baseHex = rgbToHex(rgba.r, rgba.g, rgba.b);
+
+  return (
+    <div className="space-y-2">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <Input
+        type="color"
+        value={baseHex}
+        onChange={(e) => {
+          onChange(e.target.value);
+        }}
+      />
+    </div>
+  );
+};
+
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   showSettings,
   setShowSettings,
@@ -389,6 +518,59 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <span className="text-sm text-muted-foreground">下部</span>
                     </div>
                   </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="useCustomColors" className="text-sm font-medium flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      カスタムカラーを有効化
+                    </Label>
+                    <Switch
+                      id="useCustomColors"
+                      checked={settings.useCustomColors}
+                      onCheckedChange={(checked) => handleSettingChange('useCustomColors', checked)}
+                    />
+                  </div>
+
+                  {settings.useCustomColors && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <Palette className="h-4 w-4" />
+                          歌詞カラー
+                        </Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <ColorWithAlphaPicker
+                            label="アクティブ"
+                            value={settings.activeLyricColor}
+                            onChange={(v) => handleSettingChange('activeLyricColor', v)}
+                          />
+                          <ColorWithAlphaPicker
+                            label="非アクティブ"
+                            value={settings.inactiveLyricColor}
+                            onChange={(v) => handleSettingChange('inactiveLyricColor', v)}
+                          />
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <Palette className="h-4 w-4" />
+                          間奏ドット色
+                        </Label>
+                        <div className="grid grid-cols-1 gap-3">
+                          <ColorPicker
+                            label="間奏ドット"
+                            value={settings.interludeDotsColor}
+                            onChange={(v) => handleSettingChange('interludeDotsColor', v)}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -978,6 +1160,59 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         <span className="text-sm text-muted-foreground">下部</span>
                       </div>
                     </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="useCustomColors" className="text-sm font-medium flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      カスタムカラーを有効化
+                    </Label>
+                    <Switch
+                      id="useCustomColors"
+                      checked={settings.useCustomColors}
+                      onCheckedChange={(checked) => handleSettingChange('useCustomColors', checked)}
+                    />
+                  </div>
+
+                  {settings.useCustomColors && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <Palette className="h-4 w-4" />
+                          歌詞カラー
+                        </Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <ColorWithAlphaPicker
+                            label="アクティブ"
+                            value={settings.activeLyricColor}
+                            onChange={(v) => handleSettingChange('activeLyricColor', v)}
+                          />
+                          <ColorWithAlphaPicker
+                            label="非アクティブ"
+                            value={settings.inactiveLyricColor}
+                            onChange={(v) => handleSettingChange('inactiveLyricColor', v)}
+                          />
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <Palette className="h-4 w-4" />
+                          間奏ドット色
+                        </Label>
+                        <div className="grid grid-cols-1 gap-3">
+                          <ColorPicker
+                            label="間奏ドット"
+                            value={settings.interludeDotsColor}
+                            onChange={(v) => handleSettingChange('interludeDotsColor', v)}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 

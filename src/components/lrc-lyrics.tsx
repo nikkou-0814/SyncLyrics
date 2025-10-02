@@ -10,10 +10,14 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
   resolvedTheme,
   isActive,
   progressDirection,
+  activeColor: activeColorProp,
+  inactiveColor: inactiveColorProp,
 }) => {
   const isDark = resolvedTheme === 'dark';
-  const activeColor = isDark ? '#FFFFFF' : '#000000';
-  const inactiveColor = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
+  const defaultActive = isDark ? '#FFFFFF' : '#000000';
+  const defaultInactive = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
+  const activeColor = activeColorProp ?? defaultActive;
+  const inactiveColor = inactiveColorProp ?? defaultInactive;
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
@@ -134,6 +138,8 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
   const preStageKeyRef = useRef<string | null>(null);
   const lastUserScrollTimeRef = useRef<number>(0);
   const scrollCooldownPeriod = 200;
+  const activeLyricColor = settings.useCustomColors ? settings.activeLyricColor : (resolvedTheme === 'dark' ? '#FFFFFF' : '#000000');
+  const inactiveLyricColor = settings.useCustomColors ? settings.inactiveLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)');
 
   useEffect(() => {
     if (currentLineIndex < 0 || currentLineIndex >= lyricsData.length) return;
@@ -462,10 +468,12 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                           resolvedTheme={resolvedTheme}
                           isActive={isActive}
                           progressDirection={settings.lyricProgressDirection}
+                          activeColor={activeLyricColor}
+                          inactiveColor={inactiveLyricColor}
                           />
                         )
                         : (
-                          <span style={{ pointerEvents: 'none' }}>
+                          <span style={{ pointerEvents: 'none', color: isActive ? activeLyricColor : inactiveLyricColor }}>
                           <LineBreaker text={line.text} />
                           </span>
                         )
