@@ -294,12 +294,12 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       単語単位の同期を使用
                       <Tooltip>
                         <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                        <p className="max-w-xs">
-                          TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。AMLLがオンの場合は使用できません
-                        </p>
+                          <p className="max-w-xs">
+                            TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。AMLLがオンの場合は使用できません
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </Label>
@@ -341,13 +341,13 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       {(!settings.useKaraokeLyric || settings.useAMLL) && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                        <p className="max-w-xs">
-                          {!settings.useKaraokeLyric && "カラオケ風歌詞がオフの場合は使用できません"}
-                          {settings.useAMLL && "AMLLがオンの場合は使用できません"}
-                        </p>
+                          <p className="max-w-xs">
+                            {!settings.useKaraokeLyric && "カラオケ風歌詞がオフの場合は使用できません"}
+                            {settings.useAMLL && "AMLLがオンの場合は使用できません"}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                       )}

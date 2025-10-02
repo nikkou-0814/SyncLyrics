@@ -896,7 +896,6 @@ const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLinePro
   currentTime,
   resolvedTheme,
   progressDirection,
-  fontSize,
   karaokeEnabled,
   persistActive,
   activeColor: activeColorProp,
@@ -914,12 +913,6 @@ const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLinePro
     const frameId = requestAnimationFrame(() => setAnimationEnabled(true));
     return () => cancelAnimationFrame(frameId);
   }, []);
-
-  const bgfontSizeValue = {
-    small: '1.2rem',
-    medium: '1.5rem',
-    large: '2.0rem',
-  }[fontSize];
 
   const lineBegin = backgroundWords[0]?.begin ?? 0;
   const lineEnd = backgroundWords[backgroundWords.length - 1]?.end ?? 0;
@@ -944,7 +937,6 @@ const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLinePro
                 transition: 'transform 1s ease',
                 color: inactiveColor,
                 whiteSpace: 'pre-wrap',
-                fontSize: bgfontSizeValue,
               }}
             >
               {word.text}
@@ -1023,7 +1015,6 @@ const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLinePro
                   ? (karaokeEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'background-position 0.1s linear, transform 1.5s ease, color 0.5s ease')
                   : (karaokeEnabled ? 'transform 0.5s ease' : 'transform 0.5s ease, color 0.5s ease'),
                 whiteSpace: 'pre-wrap',
-                fontSize: bgfontSizeValue,
               }}
             >
               {word.text}
@@ -2289,10 +2280,20 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     medium: '1.5rem',
                                     large: '2.0rem',
                                   }[settings.fontSize],
-                                  color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                                  color: (() => {
+                                    if (settings.useCustomColors) {
+                                      const begin = line.begin;
+                                      const end = line.originalEnd || line.end;
+                                      const now = currentTime + (settings.lyricOffset || 0);
+                                      const active = isDisplaying || (now >= begin && now < end);
+                                      return active ? activeLyricColor : inactiveLyricColor;
+                                    }
+                                    return resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+                                  })(),
                                   pointerEvents: 'none',
                                   textAlign: textAlignment,
                                   marginTop: '0.15em',
+                                  transition: 'color 0.5s ease',
                                 }}
                               >
                                 {settings.useWordTiming && line.translationWords1 && line.translationWords1.length > 0 ? (
@@ -2320,11 +2321,21 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     medium: '1.5rem',
                                     large: '2.0rem',
                                   }[settings.fontSize],
-                                  color: resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
+                                  color: (() => {
+                                    if (settings.useCustomColors) {
+                                      const begin = line.begin;
+                                      const end = line.originalEnd || line.end;
+                                      const now = currentTime + (settings.lyricOffset || 0);
+                                      const active = isDisplaying || (now >= begin && now < end);
+                                      return active ? activeLyricColor : inactiveLyricColor;
+                                    }
+                                    return resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+                                  })(),
                                   fontWeight: 'bold',
                                   pointerEvents: 'none',
                                   textAlign: textAlignment,
                                   marginTop: '0.15em',
+                                  transition: 'color 0.5s ease',
                                 }}
                               >
                                 {settings.useWordTiming && line.translationWords2 && line.translationWords2.length > 0 ? (
