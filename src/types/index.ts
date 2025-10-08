@@ -266,6 +266,21 @@ export interface PlayerState {
   ttmlData?: TTMLData | null;
 }
 
+export interface PlaybackHistoryEntry {
+  id: string;
+  mode: PlayerState["mode"];
+  playerState: PlayerState;
+  youtubeUrl: string;
+  videoId: string;
+  trackName: string;
+  artistName: string;
+  firstLine: string;
+  lyricsSignature: string;
+  lyricsSnapshot: string;
+  lyricTiming: 'line' | 'word';
+  createdAt: string;
+}
+
 export type SimpleKaraokeProps = {
   text: string;
   progressPercentage: number;
@@ -298,4 +313,10 @@ export type ColorPickerProps = {
   label: string;
   value: string;
   onChange: (newColor: string) => void;
+};
+
+export type HistoryDisplayItem = {
+  entry: PlaybackHistoryEntry;
+  displayLine: string;
+  highlightRange: { start: number; end: number } | null;
 };
