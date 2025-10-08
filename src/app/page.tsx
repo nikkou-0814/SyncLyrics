@@ -48,6 +48,53 @@ const getLyricsSnapshot = (lyrics: LyricLine[]): string => {
     .join('\n');
 };
 
+const getBackgroundLyricsSnapshot = (ttml?: TTMLData | null): string => {
+  if (!ttml) return '';
+
+  const lines: string[] = [];
+  const seen = new Set<string>();
+
+  ttml.divs.forEach((div) => {
+    div.lines.forEach((line) => {
+      const candidates: Array<string | undefined> = [
+        line.backgroundText,
+        line.backgroundPronunciationText,
+      ];
+
+      if (line.backgroundWords && line.backgroundWords.length > 0) {
+        const joined = line.backgroundWords
+          .map((word) => (word.text ?? '').trim())
+          .filter((text) => text.length > 0)
+          .join(' ');
+        candidates.push(joined);
+      }
+
+      if (line.spans && line.spans.length > 0) {
+        const spanJoined = line.spans
+          .filter((span) => span.isBackground)
+          .map((span) => (span.text ?? '').trim())
+          .filter((text) => text.length > 0)
+          .join(' ');
+        candidates.push(spanJoined);
+      }
+
+      candidates.forEach((candidate) => {
+        const normalised = (candidate ?? '').replace(/\s+/g, ' ').trim();
+        if (!normalised) {
+          return;
+        }
+        if (seen.has(normalised)) {
+          return;
+        }
+        seen.add(normalised);
+        lines.push(normalised);
+      });
+    });
+  });
+
+  return lines.join('\n');
+};
+
 const isWordTimingTTML = (ttml?: TTMLData | null): boolean => {
   if (!ttml) return false;
   if (ttml.timing === 'Word') return true;
@@ -134,6 +181,12 @@ export default function Home() {
       const artistName = entry.artistName || '';
       const firstLine = entry.firstLine || '';
       const lyricsSnapshot = entry.lyricsSnapshot || '';
+      const backgroundSnapshot =
+        entry.backgroundLyricsSnapshot && entry.backgroundLyricsSnapshot.length > 0
+          ? entry.backgroundLyricsSnapshot
+          : entry.mode === 'ttml'
+            ? getBackgroundLyricsSnapshot(entry.playerState?.ttmlData)
+            : '';
 
       const trackMatchIndex = trackName.toLowerCase().indexOf(keyword);
       const artistMatchIndex = artistName.toLowerCase().indexOf(keyword);
@@ -153,11 +206,26 @@ export default function Home() {
         }
       }
 
+      let backgroundMatchLine: string | null = null;
+      let backgroundMatchIndex = -1;
+      if (backgroundSnapshot) {
+        const lines = backgroundSnapshot.split('\n');
+        for (const line of lines) {
+          const idx = line.toLowerCase().indexOf(keyword);
+          if (idx !== -1) {
+            backgroundMatchLine = line;
+            backgroundMatchIndex = idx;
+            break;
+          }
+        }
+      }
+
       if (
         trackMatchIndex === -1 &&
         artistMatchIndex === -1 &&
         firstLineMatchIndex === -1 &&
-        lyricsMatchIndex === -1
+        lyricsMatchIndex === -1 &&
+        backgroundMatchIndex === -1
       ) {
         return acc;
       }
@@ -165,7 +233,13 @@ export default function Home() {
       let displayLine = firstLine;
       let highlightRange: { start: number; end: number } | null = null;
 
-      if (lyricsMatchLine !== null) {
+      if (backgroundMatchLine !== null) {
+        displayLine = backgroundMatchLine;
+        highlightRange = {
+          start: backgroundMatchIndex,
+          end: backgroundMatchIndex + keyword.length,
+        };
+      } else if (lyricsMatchLine !== null) {
         displayLine = lyricsMatchLine;
         highlightRange = {
           start: lyricsMatchIndex,
@@ -231,6 +305,12 @@ export default function Home() {
               entry.lyricsSnapshot && entry.lyricsSnapshot.length > 0
                 ? entry.lyricsSnapshot
                 : getLyricsSnapshot(entry.playerState?.lyricsData || []);
+            const backgroundSnapshot =
+              entry.mode === 'ttml'
+                ? entry.backgroundLyricsSnapshot && entry.backgroundLyricsSnapshot.length > 0
+                  ? entry.backgroundLyricsSnapshot
+                  : getBackgroundLyricsSnapshot(entry.playerState?.ttmlData)
+                : undefined;
             const firstLine =
               entry.firstLine && entry.firstLine.trim().length > 0
                 ? entry.firstLine
@@ -244,6 +324,8 @@ export default function Home() {
               lyricsSnapshot,
               firstLine,
               lyricTiming,
+              backgroundLyricsSnapshot:
+                backgroundSnapshot && backgroundSnapshot.trim().length > 0 ? backgroundSnapshot : undefined,
             };
           });
           setPlaybackHistory(normalised);
@@ -273,6 +355,12 @@ export default function Home() {
               entry.lyricsSnapshot && entry.lyricsSnapshot.length > 0
                 ? entry.lyricsSnapshot
                 : getLyricsSnapshot(entry.playerState?.lyricsData || []);
+            const backgroundSnapshot =
+              entry.mode === 'ttml'
+                ? entry.backgroundLyricsSnapshot && entry.backgroundLyricsSnapshot.length > 0
+                  ? entry.backgroundLyricsSnapshot
+                  : getBackgroundLyricsSnapshot(entry.playerState?.ttmlData)
+                : undefined;
             const lyricTiming =
               entry.lyricTiming === 'word' || entry.lyricTiming === 'line'
                 ? entry.lyricTiming
@@ -285,6 +373,8 @@ export default function Home() {
                   ? entry.firstLine
                   : getFirstLyricLine(entry.playerState?.lyricsData || [], lyricsSnapshot) || '歌詞情報なし',
               lyricTiming,
+              backgroundLyricsSnapshot:
+                backgroundSnapshot && backgroundSnapshot.trim().length > 0 ? backgroundSnapshot : undefined,
             };
           });
           setPlaybackHistory(normalised);
@@ -330,6 +420,10 @@ export default function Home() {
     const firstLine = getFirstLyricLine(state.lyricsData || [], lyricsSnapshot) || '歌詞情報なし';
     const lyricTiming = determineLyricTiming(state);
     const timestamp = new Date().toISOString();
+    const backgroundLyricsSnapshotRaw =
+      state.mode === 'ttml' ? getBackgroundLyricsSnapshot(state.ttmlData) : '';
+    const backgroundLyricsSnapshot =
+      backgroundLyricsSnapshotRaw.trim().length > 0 ? backgroundLyricsSnapshotRaw : undefined;
 
     setPlaybackHistory((prevHistory) => {
       const existingIndex = prevHistory.findIndex((entry) => entry.lyricsSignature === signature);
@@ -346,6 +440,7 @@ export default function Home() {
           lyricsSnapshot,
           lyricTiming,
           createdAt: timestamp,
+          backgroundLyricsSnapshot: backgroundLyricsSnapshot ?? existing.backgroundLyricsSnapshot,
         };
         const reordered = [
           updatedEntry,
@@ -368,6 +463,7 @@ export default function Home() {
         lyricsSnapshot,
         lyricTiming,
         createdAt: timestamp,
+        backgroundLyricsSnapshot,
       };
 
       const updated = [newEntry, ...prevHistory];

@@ -279,6 +279,7 @@ export interface PlaybackHistoryEntry {
   lyricsSnapshot: string;
   lyricTiming: 'line' | 'word';
   createdAt: string;
+  backgroundLyricsSnapshot?: string;
 }
 
 export type SimpleKaraokeProps = {
