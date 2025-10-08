@@ -1,23 +1,11 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { 
-  Pause, 
-  Play, 
-  Volume, 
-  Volume1, 
-  Volume2, 
-  VolumeX, 
-  SkipBack, 
-  SkipForward 
-} from 'lucide-react';
+import {  Pause,  Play, Volume, Volume1, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { 
-  Card,
-  CardContent,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PlayerControlsProps } from '@/types';
 
 const PlayerControls: React.FC<PlayerControlsProps> = ({

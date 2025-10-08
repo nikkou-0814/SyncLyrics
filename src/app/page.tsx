@@ -100,6 +100,24 @@ export default function Home() {
     ignoreHistorySelectRef.current = true;
   }, []);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const body = document.body;
+    if (!body) {
+      return;
+    }
+    if (!showDeleteDialog && body.style.pointerEvents === 'none') {
+      body.style.pointerEvents = '';
+    }
+    return () => {
+      if (body.style.pointerEvents === 'none') {
+        body.style.pointerEvents = '';
+      }
+    };
+  }, [showDeleteDialog]);
+
   const filteredHistoryItems = useMemo<HistoryDisplayItem[]>(() => {
     if (!historySearch.trim()) {
       return playbackHistory.map((entry) => ({
@@ -402,21 +420,18 @@ export default function Home() {
     setShowDeleteDialog(true);
   }, []);
 
-  const handleDeleteDialogClose = useCallback((open: boolean) => {
+  const handleDeleteDialogOpenChange = useCallback((open: boolean) => {
+    setShowDeleteDialog(open);
     if (!open) {
-      setShowDeleteDialog(false);
-      setEntryPendingDelete(null);
-    } else {
-      setShowDeleteDialog(true);
+      ignoreHistorySelectRef.current = false;
     }
   }, []);
 
   const handleConfirmDelete = useCallback(() => {
     if (!entryPendingDelete) return;
     handleHistoryDelete(entryPendingDelete.id);
-    setShowDeleteDialog(false);
-    setEntryPendingDelete(null);
-  }, [entryPendingDelete, handleHistoryDelete]);
+    handleDeleteDialogOpenChange(false);
+  }, [entryPendingDelete, handleHistoryDelete, handleDeleteDialogOpenChange]);
 
   const handleStartEditHistoryTitle = useCallback((entry: PlaybackHistoryEntry) => {
     setEditingEntryId(entry.id);
@@ -886,7 +901,7 @@ export default function Home() {
             <div className="space-y-3">
               <Button
                 onClick={() => setShowHistory((prev) => !prev)}
-                variant="secondary"
+                variant="outline"
                 className="w-full"
               >
                 {showHistory ? '再生履歴を隠す' : '再生履歴を表示'}
@@ -1026,7 +1041,6 @@ export default function Home() {
                                           type="button"
                                           variant="ghost"
                                           size="icon"
-                                          aria-label="履歴アクションを表示"
                                           className="-mr-1 -mt-2 text-muted-foreground hover:text-primary"
                                           onPointerDown={(event) => {
                                             event.stopPropagation();
@@ -1066,8 +1080,8 @@ export default function Home() {
                                             handlePromptDeleteHistoryEntry(entry);
                                           }}
                                         >
-                                          <Trash2 className="h-4 w-4" />
-                                          <span>削除</span>
+                                          <Trash2 className="h-4 w-4 text-destructive" />
+                                          <span>履歴を削除</span>
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
@@ -1143,7 +1157,7 @@ export default function Home() {
         />
       )}
 
-      <Dialog open={showDeleteDialog} onOpenChange={handleDeleteDialogClose}>
+      <Dialog open={showDeleteDialog} onOpenChange={handleDeleteDialogOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>再生履歴を削除しますか？</DialogTitle>
@@ -1156,7 +1170,7 @@ export default function Home() {
             <DialogFooter className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
-                onClick={() => handleDeleteDialogClose(false)}
+                onClick={() => handleDeleteDialogOpenChange(false)}
               >
                 キャンセル
               </Button>
