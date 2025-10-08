@@ -285,7 +285,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
-                            TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。AMLLがオンの場合は使用できません
+                            TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -949,7 +949,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     />
                   </div>
                   <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
-                    TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。AMLLがオンの場合は使用できません
+                    TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -964,7 +964,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       disabled={settings.useAMLL}
                     />
                   </div>
-                  {!settings.useAMLL && (
+                  {settings.useAMLL && (
                     <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
                       AMLLがオンの場合は使用できません
                     </div>
