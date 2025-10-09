@@ -171,6 +171,8 @@ export default function Home() {
         entry,
         displayLine: entry.firstLine || '歌詞情報なし',
         highlightRange: null,
+        trackHighlightRange: null,
+        artistHighlightRange: null,
       }));
     }
 
@@ -232,6 +234,8 @@ export default function Home() {
 
       let displayLine = firstLine;
       let highlightRange: { start: number; end: number } | null = null;
+      let trackHighlightRange: { start: number; end: number } | null = null;
+      let artistHighlightRange: { start: number; end: number } | null = null;
 
       if (backgroundMatchLine !== null) {
         displayLine = backgroundMatchLine;
@@ -255,12 +259,28 @@ export default function Home() {
         displayLine = firstLine || lyricsSnapshot || '歌詞情報なし';
       }
 
+      if (trackMatchIndex !== -1 && trackName.length > 0) {
+        trackHighlightRange = {
+          start: trackMatchIndex,
+          end: trackMatchIndex + keyword.length,
+        };
+      }
+
+      if (artistMatchIndex !== -1 && artistName.length > 0) {
+        artistHighlightRange = {
+          start: artistMatchIndex,
+          end: artistMatchIndex + keyword.length,
+        };
+      }
+
       displayLine = displayLine || '歌詞情報なし';
 
       acc.push({
         entry,
         displayLine,
         highlightRange,
+        trackHighlightRange,
+        artistHighlightRange,
       });
 
       return acc;
@@ -268,25 +288,35 @@ export default function Home() {
   }, [historySearch, playbackHistory]);
 
   const renderHighlightedText = useCallback(
-    (text: string, highlightRange: { start: number; end: number } | null) => {
-      if (!highlightRange || highlightRange.start < 0 || highlightRange.start >= text.length) {
-        return text || '歌詞情報なし';
+    (
+      text: string,
+      highlightRange: { start: number; end: number } | null,
+      fallbackText: string = '歌詞情報なし'
+    ) => {
+      const safeText = text ?? '';
+
+      if (
+        !highlightRange ||
+        highlightRange.start < 0 ||
+        highlightRange.start >= safeText.length
+      ) {
+        return safeText || fallbackText;
       }
 
-      const start = Math.max(0, Math.min(highlightRange.start, text.length));
-      const end = Math.max(start, Math.min(highlightRange.end, text.length));
+      const start = Math.max(0, Math.min(highlightRange.start, safeText.length));
+      const end = Math.max(start, Math.min(highlightRange.end, safeText.length));
 
       if (start === end) {
-        return text || '歌詞情報なし';
+        return safeText || fallbackText;
       }
 
       return (
         <>
-          {text.slice(0, start)}
+          {safeText.slice(0, start)}
           <span className="rounded-sm bg-primary/20 px-0.5 font-semibold text-primary">
-            {text.slice(start, end)}
+            {safeText.slice(start, end)}
           </span>
-          {text.slice(end)}
+          {safeText.slice(end)}
         </>
       );
     },
@@ -1019,7 +1049,14 @@ export default function Home() {
                     ) : (
                       <div className="max-h-64 overflow-y-auto">
                         <div className="p-2 space-y-2">
-                          {filteredHistoryItems.map(({ entry, displayLine, highlightRange }) => (
+                          {filteredHistoryItems.map(
+                            ({
+                              entry,
+                              displayLine,
+                              highlightRange,
+                              trackHighlightRange,
+                              artistHighlightRange,
+                            }) => (
                             <div
                               key={entry.id}
                               role="button"
@@ -1121,11 +1158,19 @@ export default function Home() {
                                     </div>
                                   ) : (
                                     <p className="font-semibold text-base truncate">
-                                      {entry.trackName || 'タイトル未設定'}
+                                      {renderHighlightedText(
+                                        entry.trackName || 'タイトル未設定',
+                                        trackHighlightRange,
+                                        'タイトル未設定'
+                                      )}
                                     </p>
                                   )}
                                   <p className="mt-1 text-sm text-muted-foreground truncate">
-                                    {renderHighlightedText(displayLine || '歌詞情報なし', highlightRange)}
+                                    {renderHighlightedText(
+                                      displayLine || '歌詞情報なし',
+                                      highlightRange,
+                                      '歌詞情報なし'
+                                    )}
                                   </p>
                                 </div>
                                 <div className="relative flex items-center gap-1 shrink-0">
@@ -1186,7 +1231,11 @@ export default function Home() {
                               </div>
                               <div className='flex items-center justify-between'>
                                 <p className="mt-2 text-xs text-muted-foreground truncate">
-                                  {entry.artistName}
+                                  {renderHighlightedText(
+                                    entry.artistName || '',
+                                    artistHighlightRange,
+                                    entry.artistName || ''
+                                  )}
                                 </p>
                                 <div className="flex items-center gap-1 shrink-0">
                                   <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

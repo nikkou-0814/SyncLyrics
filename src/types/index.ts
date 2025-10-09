@@ -320,4 +320,6 @@ export type HistoryDisplayItem = {
   entry: PlaybackHistoryEntry;
   displayLine: string;
   highlightRange: { start: number; end: number } | null;
+  trackHighlightRange: { start: number; end: number } | null;
+  artistHighlightRange: { start: number; end: number } | null;
 };
