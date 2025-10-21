@@ -733,37 +733,63 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   }, [ttmlData, allLyricLines]);
 
   const agentAlignmentMap = useMemo(() => {
-    if (!ttmlData) return {} as Record<string, 'left' | 'right' | 'center'>;
+    if (!ttmlData) return {} as Record<string, 'left' | 'right'>;
 
     const agentIdsInLyrics = allLyricLines
       .map(line => line.agent)
       .filter((id): id is string => Boolean(id));
     
     if (agentIdsInLyrics.length === 0) {
-      return {} as Record<string, 'left' | 'right' | 'center'>;
+      return {} as Record<string, 'left' | 'right'>;
     }
 
     const uniqueAgentIds = [...new Set(agentIdsInLyrics)];
     const lookupAgentType = (id: string) => ttmlData.agents.find(agent => agent.id === id)?.type || '';
 
-    const personAgents = uniqueAgentIds.filter(id => lookupAgentType(id) === 'person');
-    const otherAgents = uniqueAgentIds.filter(id => lookupAgentType(id) !== 'person');
+    const alignments: Record<string, 'left' | 'right'> = {};
+    const leftAligned: string[] = [];
+    const rightAligned: string[] = [];
 
-    const alignments: Record<string, 'left' | 'right' | 'center'> = {};
+    const assign = (id: string, side: 'left' | 'right') => {
+      if (alignments[id]) return;
+      alignments[id] = side;
+      if (side === 'left') {
+        leftAligned.push(id);
+      } else {
+        rightAligned.push(id);
+      }
+    };
+
+    const sideWithFewerAgents = () => (leftAligned.length <= rightAligned.length ? 'left' : 'right') as 'left' | 'right';
+
+    const personAgents = uniqueAgentIds.filter(id => lookupAgentType(id) === 'person');
 
     if (personAgents.length > 0) {
-      personAgents.forEach((id, index) => {
-        alignments[id] = index % 2 === 0 ? 'left' : 'right';
-      });
+      assign(personAgents[0], 'left');
+    }
+    if (personAgents.length > 1) {
+      assign(personAgents[1], 'right');
     }
 
-    otherAgents.forEach((id, index) => {
+    personAgents.slice(2).forEach(id => {
       if (alignments[id]) return;
-      if (personAgents.length > 0) {
-        alignments[id] = 'right';
-        return;
+      const numericMatch = id.match(/^v(\d+)$/i);
+      if (numericMatch) {
+        const num = parseInt(numericMatch[1], 10);
+        assign(id, num % 2 === 1 ? 'left' : 'right');
+      } else {
+        assign(id, 'right');
       }
-      alignments[id] = index % 2 === 0 ? 'left' : 'right';
+    });
+
+    uniqueAgentIds.forEach(id => {
+      if (alignments[id]) return;
+      const type = lookupAgentType(id);
+      if (type === 'group') {
+        assign(id, sideWithFewerAgents());
+      } else {
+        assign(id, sideWithFewerAgents());
+      }
     });
 
     return alignments;
