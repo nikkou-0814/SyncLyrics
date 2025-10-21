@@ -732,6 +732,43 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     return (hasMultipleAgents || hasAgentLines) && allAgentIdsValid;
   }, [ttmlData, allLyricLines]);
 
+  const agentAlignmentMap = useMemo(() => {
+    if (!ttmlData) return {} as Record<string, 'left' | 'right' | 'center'>;
+
+    const agentIdsInLyrics = allLyricLines
+      .map(line => line.agent)
+      .filter((id): id is string => Boolean(id));
+    
+    if (agentIdsInLyrics.length === 0) {
+      return {} as Record<string, 'left' | 'right' | 'center'>;
+    }
+
+    const uniqueAgentIds = [...new Set(agentIdsInLyrics)];
+    const lookupAgentType = (id: string) => ttmlData.agents.find(agent => agent.id === id)?.type || '';
+
+    const personAgents = uniqueAgentIds.filter(id => lookupAgentType(id) === 'person');
+    const otherAgents = uniqueAgentIds.filter(id => lookupAgentType(id) !== 'person');
+
+    const alignments: Record<string, 'left' | 'right' | 'center'> = {};
+
+    if (personAgents.length > 0) {
+      personAgents.forEach((id, index) => {
+        alignments[id] = index % 2 === 0 ? 'left' : 'right';
+      });
+    }
+
+    otherAgents.forEach((id, index) => {
+      if (alignments[id]) return;
+      if (personAgents.length > 0) {
+        alignments[id] = 'right';
+        return;
+      }
+      alignments[id] = index % 2 === 0 ? 'left' : 'right';
+    });
+
+    return alignments;
+  }, [ttmlData, allLyricLines]);
+
   const divLastLineIndices = useMemo(() => {
     if (!ttmlData) return [];
     
@@ -1130,26 +1167,31 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
             let textAlignment: 'left' | 'center' | 'right' | 'justify' = 'center';
             if (hasAgents) {
               if (agent) {
-                const agentId = agent.id;
-                const allAgentIds = allLyricLines
-                  .filter(l => !!l.agent)
-                  .map(l => l.agent as string);
-                const firstAgentId = allAgentIds.length > 0 ? allAgentIds[0] : '';
-                
-                if (agent.type === 'person') {
-                  textAlignment = agentId === firstAgentId ? 'left' : 'right';
-                } else if (agent.type === 'group') {
-                  const numericMatches = agentId.match(/\d+/);
-                  if (numericMatches && numericMatches[0]) {
-                    const firstDigit = parseInt(numericMatches[0][0], 10);
-                    textAlignment = firstDigit % 2 === 1 ? 'left' : 'right';
+                const mappedAlignment = agentAlignmentMap[agent.id];
+                if (mappedAlignment) {
+                  textAlignment = mappedAlignment;
+                } else {
+                  const agentId = agent.id;
+                  const allAgentIds = allLyricLines
+                    .filter(l => !!l.agent)
+                    .map(l => l.agent as string);
+                  const firstAgentId = allAgentIds.length > 0 ? allAgentIds[0] : '';
+                  
+                  if (agent.type === 'person') {
+                    textAlignment = agentId === firstAgentId ? 'left' : 'right';
+                  } else if (agent.type === 'group') {
+                    const numericMatches = agentId.match(/\d+/);
+                    if (numericMatches && numericMatches[0]) {
+                      const firstDigit = parseInt(numericMatches[0][0], 10);
+                      textAlignment = firstDigit % 2 === 1 ? 'left' : 'right';
+                    } else {
+                      const asciiValue = agentId.charCodeAt(0);
+                      textAlignment = asciiValue % 2 === 1 ? 'left' : 'right';
+                    }
                   } else {
                     const asciiValue = agentId.charCodeAt(0);
-                    textAlignment = asciiValue % 2 === 1 ? 'left' : 'right';
+                    textAlignment = asciiValue % 2 === 0 ? 'left' : 'right';
                   }
-                } else {
-                  const asciiValue = agentId.charCodeAt(0);
-                  textAlignment = asciiValue % 2 === 0 ? 'left' : 'right';
                 }
               } else {
                 textAlignment = settings.lyricposition;
