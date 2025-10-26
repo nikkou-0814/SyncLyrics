@@ -283,7 +283,7 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                 style={{
                   display: 'inline-flex',
                   flexDirection: 'column',
-                  alignItems: 'stretch',
+                  alignItems: 'flex-start',
                   lineHeight: 1.5,
                   whiteSpace: 'pre-wrap'
                 }}
@@ -352,7 +352,7 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                 style={{
                   display: 'inline-flex',
                   flexDirection: 'column',
-                  alignItems: 'stretch',
+                  alignItems: 'flex-start',
                   lineHeight: 1.5,
                   whiteSpace: 'pre-wrap'
                 }}
@@ -1350,7 +1350,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                         transition: `transform 0.8s ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`
                       }}
                     >
-                      <div>
+                      <div className={`${settings.fontSize === 'small' ? 'p-4' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}`}>
                             
                         {line.backgroundText && (() => {
                           const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
@@ -1382,7 +1382,6 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 textAlign: textAlignment,
                                 marginBottom: '15px'
                               }}
-                              className={`${textAlignment === 'right' ? 'pr-4' : 'pl-3'} relative`}
                             >
                               <div 
                                 ref={(el) => {
@@ -1433,8 +1432,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               if (settings.useCustomColors) {
                                                 return active ? activeLyricColor : inactiveLyricColor;
                                               }
-                                              const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
-                                              const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
+                                              const dark = active ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.3)';
+                                              const light = active ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.3)';
                                               return resolvedTheme === 'dark' ? dark : light;
                                             })(),
                                             pointerEvents: 'none',
@@ -1506,6 +1505,86 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     )}
                                   </div>
                                 )}
+                                {settings.showTranslation && (
+                                  ((line.backgroundTranslationWords1 && line.backgroundTranslationWords1.length > 0) ||
+                                    (typeof line.backgroundTranslationText1 === 'string' && line.backgroundTranslationText1.trim() !== '') ||
+                                    (line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0) ||
+                                    (typeof line.backgroundTranslationText2 === 'string' && line.backgroundTranslationText2.trim() !== '')) && (
+                                    <>
+                                      {(line.backgroundTranslationWords1 || line.backgroundTranslationText1) && (
+                                        <div
+                                          style={{
+                                            fontSize: {
+                                              small: '1.1rem',
+                                              medium: '1.4rem',
+                                              large: '1.9rem',
+                                            }[settings.fontSize],
+                                            pointerEvents: 'none',
+                                            textAlign: textAlignment,
+                                            marginTop: '0.15em',
+                                            transition: 'color 0.5s ease',
+                                            opacity: 0.6,
+                                          }}
+                                        >
+                                          {settings.useWordTiming && line.backgroundTranslationWords1 && line.backgroundTranslationWords1.length > 0 ? (
+                                          <TranslationWordTimingLyricLine
+                                            backgroundWords={line.backgroundTranslationWords1}
+                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            resolvedTheme={resolvedTheme}
+                                            progressDirection={settings.lyricProgressDirection}
+                                            fontSize={settings.fontSize}
+                                            karaokeEnabled={settings.useKaraokeLyric}
+                                            persistActive={isDisplaying}
+                                            disableGradient
+                                            activeColor={activeLyricColor}
+                                            inactiveColor={inactiveLyricColor}
+                                          />
+                                          ) : (
+                                            <span style={{ whiteSpace: 'pre-wrap' }}>
+                                              <LineBreaker text={line.backgroundTranslationText1 || ''} />
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                      {(line.backgroundTranslationWords2 || line.backgroundTranslationText2) && (
+                                        <div
+                                          style={{
+                                            fontSize: {
+                                              small: '1.2rem',
+                                              medium: '1.5rem',
+                                              large: '2.0rem',
+                                            }[settings.fontSize],
+                                            fontWeight: 'bold',
+                                            pointerEvents: 'none',
+                                            textAlign: (settings.useKaraokeLyric && settings.useWordTiming) ? 'left' : textAlignment,
+                                            marginTop: '0.15em',
+                                            transition: 'color 0.5s ease',
+                                            opacity: 0.6,
+                                          }}
+                                        >
+                                          {settings.useWordTiming && line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0 ? (
+                                          <TranslationWordTimingLyricLine
+                                            backgroundWords={line.backgroundTranslationWords2}
+                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            resolvedTheme={resolvedTheme}
+                                            progressDirection={settings.lyricProgressDirection}
+                                            fontSize={settings.fontSize}
+                                            karaokeEnabled={settings.useKaraokeLyric}
+                                            persistActive={isDisplaying}
+                                            disableGradient
+                                            activeColor={activeLyricColor}
+                                            inactiveColor={inactiveLyricColor}
+                                          />
+                                          ) : (
+                                            <span style={{ whiteSpace: 'pre-wrap' }}>
+                                              <LineBreaker text={line.backgroundTranslationText2 || ''} />
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </>
+                                  )
+                                )}
                               </div>
                             </div>
                           );
@@ -1518,26 +1597,6 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             } else {
                               mainRefs.current.delete(key);
                             }
-                          }}
-                          className={(() => {
-                            if (line.backgroundText && isStage) {
-                              const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
-                                ? line.backgroundWords[0].begin 
-                                : null;
-                              const mainStartTime = line.words && line.words.length > 0 
-                                ? line.words[0].begin 
-                                : line.begin;
-                              
-                              const shouldShowAbove = backgroundStartTime !== null 
-                                ? backgroundStartTime < mainStartTime
-                                : line.backgroundPosition === 'above';
-                              
-                              return shouldShowAbove ? 'px-3 pb-5' : 'px-3 pt-5';
-                            }
-                            return settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4';
-                          })()}
-                          style={{ 
-                            transition: `padding ${isStage ? '500ms' : '500ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`
                           }}
                         >
                           {settings.useKaraokeLyric ? (
@@ -1641,6 +1700,77 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           )}
                           
                         </div>
+                        {settings.showTranslation && (((line.translationWords1 && line.translationWords1.length > 0) || (typeof line.translationText1 === 'string' && line.translationText1.trim() !== '') || (line.translationWords2 && line.translationWords2.length > 0) || (typeof line.translationText2 === 'string' && line.translationText2.trim() !== ''))) && (
+                          <>
+                            {(line.translationWords1 || line.translationText1) && (
+                              <div
+                                style={{
+                                  fontSize: {
+                                    small: '1.2rem',
+                                    medium: '1.5rem',
+                                    large: '2.0rem',
+                                  }[settings.fontSize],
+                                  pointerEvents: 'none',
+                                  textAlign: textAlignment,
+                                  marginTop: '0.15em',
+                                  transition: 'color 0.5s ease',
+                                  opacity: 0.8,
+                                }}
+                              >
+                                {settings.useWordTiming && line.translationWords1 && line.translationWords1.length > 0 ? (
+                                  <TranslationWordTimingLyricLine
+                                    backgroundWords={line.translationWords1}
+                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    resolvedTheme={resolvedTheme}
+                                    progressDirection={settings.lyricProgressDirection}
+                                    fontSize={settings.fontSize}
+                                    disableGradient
+                                    activeColor={activeLyricColor}
+                                    inactiveColor={inactiveLyricColor}
+                                  />
+                                ) : (
+                                  <span style={{ whiteSpace: 'pre-wrap' }}>
+                                    <LineBreaker text={line.translationText1 || ''} />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {(line.translationWords2 || line.translationText2) && (
+                              <div
+                                style={{
+                                  fontSize: {
+                                    small: '1.2rem',
+                                    medium: '1.5rem',
+                                    large: '2.0rem',
+                                  }[settings.fontSize],
+                                  fontWeight: 'bold',
+                                  pointerEvents: 'none',
+                                  textAlign: textAlignment,
+                                  marginTop: '0.15em',
+                                  transition: 'color 0.5s ease',
+                                  opacity: 0.8,
+                                }}
+                              >
+                                {settings.useWordTiming && line.translationWords2 && line.translationWords2.length > 0 ? (
+                                  <TranslationWordTimingLyricLine
+                                    backgroundWords={line.translationWords2}
+                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    resolvedTheme={resolvedTheme}
+                                    progressDirection={settings.lyricProgressDirection}
+                                    fontSize={settings.fontSize}
+                                    disableGradient
+                                    activeColor={activeLyricColor}
+                                    inactiveColor={inactiveLyricColor}
+                                  />
+                                ) : (
+                                  <span style={{ whiteSpace: 'pre-wrap' }}>
+                                    <LineBreaker text={line.translationText2 || ''} />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
                         {line.backgroundText && (() => {
                           const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
                             ? line.backgroundWords[0].begin 
@@ -1670,7 +1800,6 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   pointerEvents: 'none',
                                   textAlign: textAlignment
                                 }}
-                                className={`${textAlignment === 'right' ? 'pr-4' : 'pl-3'} relative`}
                               >
                               <div 
                                 ref={(el) => {
@@ -1798,98 +1927,90 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     )}
                                   </div>
                                 )}
+                                {settings.showTranslation && (
+                                  ((line.backgroundTranslationWords1 && line.backgroundTranslationWords1.length > 0) ||
+                                    (typeof line.backgroundTranslationText1 === 'string' && line.backgroundTranslationText1.trim() !== '') ||
+                                    (line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0) ||
+                                    (typeof line.backgroundTranslationText2 === 'string' && line.backgroundTranslationText2.trim() !== '')) && (
+                                    <>
+                                      {(line.backgroundTranslationWords1 || line.backgroundTranslationText1) && (
+                                        <div
+                                          style={{
+                                            fontSize: {
+                                              small: '1.1rem',
+                                              medium: '1.3rem',
+                                              large: '1.9rem',
+                                            }[settings.fontSize],
+                                            pointerEvents: 'none',
+                                            textAlign: textAlignment,
+                                            marginTop: '0.15em',
+                                            transition: 'color 0.5s ease',
+                                            opacity: 0.6,
+                                          }}
+                                        >
+                                        {settings.useWordTiming && line.backgroundTranslationWords1 && line.backgroundTranslationWords1.length > 0 ? (
+                                          <TranslationWordTimingLyricLine
+                                            backgroundWords={line.backgroundTranslationWords1}
+                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            resolvedTheme={resolvedTheme}
+                                            progressDirection={settings.lyricProgressDirection}
+                                            fontSize={settings.fontSize}
+                                            karaokeEnabled={settings.useKaraokeLyric}
+                                            persistActive={isDisplaying}
+                                            disableGradient
+                                            activeColor={activeLyricColor}
+                                            inactiveColor={inactiveLyricColor}
+                                          />
+                                        ) : (
+                                          <span style={{ whiteSpace: 'pre-wrap' }}>
+                                            <LineBreaker text={line.backgroundTranslationText1 || ''} />
+                                          </span>
+                                        )}
+                                        </div>
+                                      )}
+                                      {(line.backgroundTranslationWords2 || line.backgroundTranslationText2) && (
+                                        <div
+                                          style={{
+                                            fontSize: {
+                                              small: '1.2rem',
+                                              medium: '1.5rem',
+                                              large: '2.0rem',
+                                            }[settings.fontSize],
+                                            fontWeight: 'bold',
+                                            pointerEvents: 'none',
+                                            textAlign: (settings.useKaraokeLyric && settings.useWordTiming) ? 'left' : textAlignment,
+                                            marginTop: '0.15em',
+                                            transition: 'color 0.5s ease',
+                                            opacity: 0.6,
+                                          }}
+                                        >
+                                        {settings.useWordTiming && line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0 ? (
+                                          <TranslationWordTimingLyricLine
+                                            backgroundWords={line.backgroundTranslationWords2}
+                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            resolvedTheme={resolvedTheme}
+                                            progressDirection={settings.lyricProgressDirection}
+                                            fontSize={settings.fontSize}
+                                            karaokeEnabled={settings.useKaraokeLyric}
+                                            persistActive={isDisplaying}
+                                            disableGradient
+                                            activeColor={activeLyricColor}
+                                            inactiveColor={inactiveLyricColor}
+                                          />
+                                        ) : (
+                                          <span style={{ whiteSpace: 'pre-wrap' }}>
+                                            <LineBreaker text={line.backgroundTranslationText2 || ''} />
+                                          </span>
+                                        )}
+                                        </div>
+                                      )}
+                                    </>
+                                  )
+                                )}
                               </div>
                             </div>
                           );
                         })()}
-                          {settings.showTranslation && (((line.translationWords1 && line.translationWords1.length > 0) || (typeof line.translationText1 === 'string' && line.translationText1.trim() !== '') || (line.translationWords2 && line.translationWords2.length > 0) || (typeof line.translationText2 === 'string' && line.translationText2.trim() !== ''))) && (
-                          <>
-                            {(line.translationWords1 || line.translationText1) && (
-                              <div
-                                className={`${textAlignment === 'right' ? 'pr-4' : 'pl-4'}`}
-                                style={{
-                                  fontSize: {
-                                    small: '1.2rem',
-                                    medium: '1.5rem',
-                                    large: '2.0rem',
-                                  }[settings.fontSize],
-                                  color: (() => {
-                                    if (settings.useCustomColors) {
-                                      const begin = line.begin;
-                                      const end = line.originalEnd || line.end;
-                                      const now = currentTime + (settings.lyricOffset || 0);
-                                      const active = isDisplaying || (now >= begin && now < end);
-                                      return active ? activeLyricColor : inactiveLyricColor;
-                                    }
-                                    return resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-                                  })(),
-                                  pointerEvents: 'none',
-                                  textAlign: textAlignment,
-                                  marginTop: '0.15em',
-                                  transition: 'color 0.5s ease',
-                                }}
-                              >
-                                {settings.useWordTiming && line.translationWords1 && line.translationWords1.length > 0 ? (
-                                  <TranslationWordTimingLyricLine
-                                    backgroundWords={line.translationWords1}
-                                    currentTime={currentTime + (settings.lyricOffset || 0)}
-                                    resolvedTheme={resolvedTheme}
-                                    progressDirection={settings.lyricProgressDirection}
-                                    fontSize={settings.fontSize}
-                                    activeColor={activeLyricColor}
-                                    inactiveColor={inactiveLyricColor}
-                                  />
-                                ) : (
-                                  <span style={{ whiteSpace: 'pre-wrap' }}>
-                                    <LineBreaker text={line.translationText1 || ''} />
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                            {(line.translationWords2 || line.translationText2) && (
-                              <div
-                                style={{
-                                  fontSize: {
-                                    small: '1.2rem',
-                                    medium: '1.5rem',
-                                    large: '2.0rem',
-                                  }[settings.fontSize],
-                                  color: (() => {
-                                    if (settings.useCustomColors) {
-                                      const begin = line.begin;
-                                      const end = line.originalEnd || line.end;
-                                      const now = currentTime + (settings.lyricOffset || 0);
-                                      const active = isDisplaying || (now >= begin && now < end);
-                                      return active ? activeLyricColor : inactiveLyricColor;
-                                    }
-                                    return resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-                                  })(),
-                                  fontWeight: 'bold',
-                                  pointerEvents: 'none',
-                                  textAlign: textAlignment,
-                                  marginTop: '0.15em',
-                                  transition: 'color 0.5s ease',
-                                }}
-                              >
-                                {settings.useWordTiming && line.translationWords2 && line.translationWords2.length > 0 ? (
-                                  <TranslationWordTimingLyricLine
-                                    backgroundWords={line.translationWords2}
-                                    currentTime={currentTime + (settings.lyricOffset || 0)}
-                                    resolvedTheme={resolvedTheme}
-                                    progressDirection={settings.lyricProgressDirection}
-                                    fontSize={settings.fontSize}
-                                    activeColor={activeLyricColor}
-                                    inactiveColor={inactiveLyricColor}
-                                  />
-                                ) : (
-                                  <span style={{ whiteSpace: 'pre-wrap' }}>
-                                    <LineBreaker text={line.translationText2 || ''} />
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </>
-                        )}
                       </div>
                     </span>
                   )}

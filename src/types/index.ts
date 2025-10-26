@@ -46,6 +46,10 @@ export interface TTMLLine {
   translationText1?: string;
   translationWords2?: TTMLWord[];
   translationText2?: string;
+  backgroundTranslationWords1?: TTMLWord[];
+  backgroundTranslationText1?: string;
+  backgroundTranslationWords2?: TTMLWord[];
+  backgroundTranslationText2?: string;
 }
 
 export interface TTMLDiv {
@@ -295,6 +299,7 @@ export type SimpleKaraokeProps = {
 export type TranslationWordTimingLyricLineProps = BackgroundWordTimingLyricLineProps & {
   karaokeEnabled?: boolean;
   persistActive?: boolean;
+  disableGradient?: boolean;
 };
 
 export type RgbaColor = {

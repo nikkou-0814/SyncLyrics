@@ -12,6 +12,7 @@ const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLinePro
   persistActive,
   activeColor: activeColorProp,
   inactiveColor: inactiveColorProp,
+  disableGradient = false,
 }) => {
   const isDark = resolvedTheme === 'dark';
   const defaultActive = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
@@ -29,6 +30,7 @@ const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLinePro
   const lineBegin = backgroundWords[0]?.begin ?? 0;
   const lineEnd = backgroundWords[backgroundWords.length - 1]?.end ?? 0;
   const lineActivePlain = !karaokeEnabled && ((currentTime >= lineBegin && currentTime < lineEnd) || !!persistActive);
+  const shouldUseGradient = karaokeEnabled && !disableGradient;
 
   if (!backgroundWords || backgroundWords.length === 0) return null;
 
@@ -37,8 +39,34 @@ const TranslationWordTimingLyricLine: React.FC<TranslationWordTimingLyricLinePro
       {backgroundWords.map((word, index) => {
         const wordIsCompleted = currentTime >= word.end;
         const wordIsActive = currentTime >= word.begin && currentTime < word.end;
+        const wordIsPlainActive = (() => {
+          if (!karaokeEnabled) {
+            return lineActivePlain;
+          }
+          if (persistActive) {
+            return true;
+          }
+          return wordIsActive || wordIsCompleted;
+        })();
 
-        if (karaokeEnabled && (progressDirection === 'btt' || progressDirection === 'ttb')) {
+        if (!shouldUseGradient) {
+          return (
+            <span
+              key={`tr-word-${index}-${word.begin}-${word.end}`}
+              style={{
+                display: 'inline-block',
+                color: wordIsPlainActive ? activeColor : inactiveColor,
+                transform: karaokeEnabled && (wordIsActive || wordIsCompleted) ? 'translateY(-3px)' : 'translateY(0px)',
+                transition: animationEnabled ? 'color 0.1s linear, transform 1.5s ease' : 'color 0.1s linear',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {word.text}
+            </span>
+          );
+        }
+
+        if (progressDirection === 'btt' || progressDirection === 'ttb') {
           return (
             <span
               key={`tr-word-${index}-${word.begin}-${word.end}`}
