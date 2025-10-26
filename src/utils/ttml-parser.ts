@@ -67,7 +67,6 @@ export function parseTTML(xmlContent: string): TTMLData | null {
     });
 
     const ITUNES_NS = 'http://music.apple.com/lyric-ttml-internal';
-    const TT_NS = 'http://www.w3.org/ns/ttml';
 
     const addSpaceBetweenLanguages = (wordList: TTMLWord[]): string => {
       let result = '';
@@ -198,7 +197,7 @@ export function parseTTML(xmlContent: string): TTMLData | null {
             const forKey = t.getAttribute('for') || '';
             const lang = t.getAttribute('xml:lang') || '';
             if (!forKey) return;
-            let { main: mainWords, bg: backgroundWords } = collectTranslitWords(t);
+            const { main: mainWords, bg: backgroundWords } = collectTranslitWords(t);
             const plainByRole = collectTranslitPlainTextByRole(t);
             const fallbackText = (t.textContent || '').trim();
             const mainText = mainWords.length > 0
