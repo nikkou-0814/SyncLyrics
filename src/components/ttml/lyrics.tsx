@@ -1027,18 +1027,28 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     }
     const t = currentTime + (settings.lyricOffset || 0);
 
-    if (currentGroup.length === 0 || groupEnd == null || t >= groupEnd) {
+    const preKey = preStageKeyRef.current;
+    const preKeyBegin = preKey != null ? parseFloat(preKey.split('-')[0] || '') : NaN;
+    const hasUpcomingStage = preKey != null && !Number.isNaN(preKeyBegin);
+
+    if (currentGroup.length === 0 || groupEnd == null) {
+      if (hasUpcomingStage && preKey) {
+        setStageLineKeys(prev => (prev.length === 1 && prev[0] === preKey ? prev : [preKey]));
+      } else {
+        preStageKeyRef.current = null;
+        setStageLineKeys(prev => (prev.length ? [] : prev));
+      }
+      return;
+    }
+
+    if (t >= groupEnd) {
       preStageKeyRef.current = null;
       setStageLineKeys(prev => (prev.length ? [] : prev));
       return;
     }
 
-    const preKey = preStageKeyRef.current;
-    if (preKey) {
-      const b = parseFloat(preKey.split('-')[0] || '');
-      if (!Number.isNaN(b) && t >= b) {
-        preStageKeyRef.current = null;
-      }
+    if (hasUpcomingStage && preKey && t >= preKeyBegin) {
+      preStageKeyRef.current = null;
     }
 
     const groupKeysSet = new Set(currentGroup.map(l => `${l.begin}-${l.end}`));
