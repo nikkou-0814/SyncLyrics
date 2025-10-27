@@ -1372,15 +1372,17 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           return (
                             <div 
                               style={{
+                                position: 'relative',
                                 opacity: isStage ? 1 : 0,
                                 bottom: isStage ? '0px' : settings.fontSize === 'small' ? '-80px' : settings.fontSize === 'medium' ? '-100px' : settings.fontSize === 'large' ? '-150px' : '-100px',
                                 maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                                overflow: 'hidden',
-                                transition: `opacity ${isStage ? '1500ms' : '220ms'} ease, max-height ${isStage ? '500ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, bottom ${isStage ? '600ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
+                                overflow: 'visible',
+                                transition: `transform 500ms ease, opacity ${isStage ? '1500ms' : '220ms'} ease, max-height ${isStage ? '300ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, bottom ${isStage ? '600ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
                                 willChange: 'opacity, max-height, filter, bottom',
                                 pointerEvents: 'none',
                                 textAlign: textAlignment,
-                                marginBottom: '15px'
+                                marginBottom: '15px',
+                                transform: isStage ? 'scale(1) translateX(0)' : `scale(0.9) ${textAlignment === 'right' ? 'translateX(20px)' : 'translateX(-20px)'}`,
                               }}
                             >
                               <div 
@@ -1791,14 +1793,16 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           return (
                             <div 
                               style={{
+                                  position: 'relative',
                                   opacity: isStage ? 1 : 0,
                                   top: isStage ? '0px' : settings.fontSize === 'small' ? '-80px' : settings.fontSize === 'medium' ? '-130px' : settings.fontSize === 'large' ? '-200px' : '-150px',
                                   maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                                  overflow: 'hidden',
-                                  transition: `opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '400ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
+                                  overflow: 'auto',
+                                  transition: `transform 500ms ease,opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '300ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
                                   willChange: 'opacity, max-height, filter, top',
                                   pointerEvents: 'none',
-                                  textAlign: textAlignment
+                                  textAlign: textAlignment,
+                                  transform: isStage ? 'scale(1) translateX(0)' : `scale(0.9) ${textAlignment === 'right' ? 'translateX(20px)' : 'translateX(-20px)'}`,
                                 }}
                               >
                               <div 
