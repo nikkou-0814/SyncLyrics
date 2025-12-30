@@ -41,16 +41,10 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
   }, [isActive, progressDirection]);
 
   if (progressDirection === 'ttb' || progressDirection === 'btt') {
-    const getClipPath = (): string => {
-      switch (progressDirection) {
-        case 'btt':
-          return `inset(${100 - progressPercentage}% 0 0 0)`;
-        case 'ttb':
-          return `inset(0 0 ${100 - progressPercentage}% 0)`;
-        default:
-          return `inset(0 0 ${100 - progressPercentage}% 0)`;
-      }
-    };
+    const clipPath =
+      progressDirection === 'btt'
+        ? `inset(${100 - progressPercentage}% 0 0 0)`
+        : `inset(0 0 ${100 - progressPercentage}% 0)`;
 
     return (
       <span style={{ position: 'relative', display: 'inline-block', whiteSpace: 'pre-wrap' }}>
@@ -65,7 +59,7 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
             width: '100%',
             height: '100%',
             color: activeColor,
-            clipPath: getClipPath(),
+            clipPath,
             transition: shouldAnimate ? 'clip-path 0.1s linear' : 'none',
             whiteSpace: 'pre-wrap',
             pointerEvents: 'none',
@@ -77,28 +71,13 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
     );
   }
 
-  const getGradient = (): string => {
-    switch (progressDirection) {
-      case 'rtl':
-        return `linear-gradient(to left, ${activeColor}, ${activeColor} 50%, ${inactiveColor} 50%, ${inactiveColor})`;
-      case 'ltr':
-      default:
-        return `linear-gradient(to right, ${activeColor}, ${activeColor} 50%, ${inactiveColor} 50%, ${inactiveColor})`;
-    }
-  };
+  const gradient =
+    progressDirection === 'rtl'
+      ? `linear-gradient(to left, ${activeColor}, ${activeColor} 50%, ${inactiveColor} 50%, ${inactiveColor})`
+      : `linear-gradient(to right, ${activeColor}, ${activeColor} 50%, ${inactiveColor} 50%, ${inactiveColor})`;
 
-  const getBackgroundSize = (): string => '200% 100%';
-
-  const getBackgroundPosition = (): string => {
-    const progress = progressPercentage / 100;
-    switch (progressDirection) {
-      case 'rtl':
-        return `${progress * 100}% 0`;
-      case 'ltr':
-      default:
-        return `${(1 - progress) * 100}% 0`;
-    }
-  };
+  const backgroundPosition =
+    progressDirection === 'rtl' ? `${progressPercentage}% 0` : `${100 - progressPercentage}% 0`;
 
   return (
     <span
@@ -106,9 +85,9 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
         display: 'inline',
         whiteSpace: 'pre-wrap',
         color: 'transparent',
-        backgroundImage: getGradient(),
-        backgroundSize: getBackgroundSize(),
-        backgroundPosition: getBackgroundPosition(),
+        backgroundImage: gradient,
+        backgroundSize: '200% 100%',
+        backgroundPosition,
         backgroundClip: 'text',
         WebkitBackgroundClip: 'text',
         transition: shouldAnimate ? 'background-position 0.1s linear' : 'none',
@@ -137,8 +116,6 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
   const defaultInactive = isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)';
   const activeColor = activeColorProp ?? defaultActive;
   const inactiveColor = inactiveColorProp ?? defaultInactive;
-  const pronActiveColor = activeColor;
-  const pronInactiveColor = inactiveColor;
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const [delayedIndex, setDelayedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -197,7 +174,7 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
   }
   
   // 単語ごとにハイライトする表示
-  const textWithSpans = () => {
+  const textWithSpans = (() => {
     type AugWord = NonNullable<TTMLLine['words']>[number] & { __origIndex: number };
     const wordPositions: { start: number; end: number; word: AugWord }[] = [];
     let currentPosition = 0;
@@ -310,8 +287,8 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                     fontSize: '0.6em',
                     whiteSpace: 'pre-wrap',
                     textAlign: 'left',
-                    color: showGradient ? 'transparent' : pronInactiveColor,
-                    backgroundImage: showGradient ? `linear-gradient(to ${isLTR ? 'right' : 'left'}, ${pronActiveColor}, ${pronActiveColor} 47%, ${pronInactiveColor} 53%, ${pronInactiveColor})` : 'none',
+                    color: showGradient ? 'transparent' : inactiveColor,
+                    backgroundImage: showGradient ? `linear-gradient(to ${isLTR ? 'right' : 'left'}, ${activeColor}, ${activeColor} 47%, ${inactiveColor} 53%, ${inactiveColor})` : 'none',
                     backgroundSize: backgroundSize,
                     backgroundPosition: showGradient ? finalPosition : (isLTR ? '100% 0' : '0% 0'),
                     backgroundClip: 'text',
@@ -394,7 +371,7 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                   display: 'inline-block',
                   position: 'relative',
                   fontSize: '0.6em',
-                  color: pronInactiveColor,
+                  color: inactiveColor,
                   whiteSpace: 'pre-wrap',
                   textAlign: 'left'
                 }}
@@ -406,7 +383,7 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                         position: 'absolute',
                         top: 0,
                         left: 0,
-                        color: pronActiveColor,
+                        color: activeColor,
                         clipPath: (
                           progressDirection === 'btt' ? 
                             `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
@@ -472,11 +449,11 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
     }
     
     return spans;
-  };
+  })();
   
   return (
     <span ref={containerRef} style={{ display: 'inline-block', whiteSpace: 'pre-wrap' }}>
-      {textWithSpans()}
+      {textWithSpans}
     </span>
   );
 };

@@ -17,8 +17,9 @@ import { SiGithub } from 'react-icons/si';
 import type { RgbaColor, ColorWithAlphaPickerProps, ColorPickerProps } from '@/types';
 
 const clamp = (n: number, min = 0, max = 255) => Math.min(Math.max(n, min), max);
-const toHex = (n: number) => clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0').toUpperCase();
-const rgbToHex = (r: number, g: number, b: number) => `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+const rgbToHex = (r: number, g: number, b: number) => `#${[r, g, b]
+  .map((value) => clamp(Math.round(value), 0, 255).toString(16).padStart(2, '0').toUpperCase())
+  .join('')}`;
 
 const parseColorToRgba = (input: string | undefined | null): RgbaColor => {
   if (!input || typeof input !== 'string') return { r: 0, g: 0, b: 0, a: 1 };
@@ -88,8 +89,7 @@ const ColorWithAlphaPicker: React.FC<ColorWithAlphaPickerProps> = ({ label, valu
         type="color"
         value={baseHex}
         onChange={(e) => {
-          const newHex = e.target.value;
-          onChange(combineHexAndAlphaToRgba(newHex, alpha));
+          onChange(combineHexAndAlphaToRgba(e.target.value, alpha));
         }}
       />
       <div className="pt-1 px-1">
@@ -99,8 +99,7 @@ const ColorWithAlphaPicker: React.FC<ColorWithAlphaPickerProps> = ({ label, valu
           max={100}
           step={1}
           onValueChange={(values) => {
-            const newAlpha = values[0];
-            onChange(combineHexAndAlphaToRgba(baseHex, newAlpha));
+            onChange(combineHexAndAlphaToRgba(baseHex, values[0]));
           }}
         />
         <div className="flex justify-between mt-1">
@@ -258,8 +257,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       step="0.1"
                       value={settings.lyricOffset}
                       onChange={(e) => {
-                        const newOffset = Number(e.target.value);
-                        handleSettingChange('lyricOffset', newOffset);
+                        handleSettingChange('lyricOffset', Number(e.target.value));
                       }}
                       className="mt-1"
                     />
@@ -296,8 +294,10 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                         max={5}
                         step={0.1}
                         onValueChange={(values) => {
-                          const clamped = Math.min(5, Math.max(0, values[0] ?? 0));
-                          handleSettingChange('shortLineGroupThreshold', Math.round(clamped * 10) / 10);
+                          handleSettingChange(
+                            'shortLineGroupThreshold',
+                            Math.round(Math.min(5, Math.max(0, values[0] ?? 0)) * 10) / 10
+                          );
                         }}
                       />
                     </div>
@@ -930,8 +930,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const newOffset = Number((settings.lyricOffset - 0.1).toFixed(1));
-                            handleSettingChange('lyricOffset', newOffset);
+                            handleSettingChange('lyricOffset', Number((settings.lyricOffset - 0.1).toFixed(1)));
                           }}
                           className="px-3 py-2 text-lg font-semibold"
                         >
@@ -943,8 +942,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                           step="0.1"
                           value={settings.lyricOffset}
                           onChange={(e) => {
-                            const newOffset = Number(e.target.value);
-                            handleSettingChange('lyricOffset', newOffset);
+                            handleSettingChange('lyricOffset', Number(e.target.value));
                           }}
                           className="flex-1 text-center"
                         />
@@ -952,8 +950,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            const newOffset = Number((settings.lyricOffset + 0.1).toFixed(1));
-                            handleSettingChange('lyricOffset', newOffset);
+                            handleSettingChange('lyricOffset', Number((settings.lyricOffset + 0.1).toFixed(1)));
                           }}
                           className="px-3 py-2 text-lg font-semibold"
                         >
@@ -973,7 +970,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     <div className="space-y-2">
                       <Label htmlFor="shortLineGroupThreshold" className="text-sm font-medium flex items-center gap-2 mb-2">
                         <Clock className="h-4 w-4" />
-                        短い歌詞のまとめしきい値（秒）
+                        歌詞をグループ化する時間（秒）
                       </Label>
                       <div className="pt-4 px-2">
                         <Slider
@@ -983,8 +980,10 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                           max={5}
                           step={0.1}
                           onValueChange={(values) => {
-                            const clamped = Math.min(5, Math.max(0, values[0] ?? 0));
-                            handleSettingChange('shortLineGroupThreshold', Math.round(clamped * 10) / 10);
+                            handleSettingChange(
+                              'shortLineGroupThreshold',
+                              Math.round(Math.min(5, Math.max(0, values[0] ?? 0)) * 10) / 10
+                            );
                           }}
                         />
                       </div>

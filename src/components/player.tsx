@@ -406,7 +406,7 @@ const Player: React.FC<PlayerProps> = ({
     return `${m}:${s}`;
   };
 
-  const getInterludeDotsColor = (): string => {
+  const interludeDotsColorPrefix = (() => {
     if (!settings.useCustomColors) {
       return resolvedTheme === 'dark' ? 'rgba(255, 255, 255, ' : 'rgba(0, 0, 0, ';
     }
@@ -427,7 +427,7 @@ const Player: React.FC<PlayerProps> = ({
     }
     
     return resolvedTheme === 'dark' ? 'rgba(255, 255, 255, ' : 'rgba(0, 0, 0, ';
-  };
+  })();
 
   const renderInterludeDots = (startTime: number, endTime: number, alignment: 'left' | 'center' | 'right' = 'center') => {
     const total = endTime - startTime;
@@ -557,7 +557,7 @@ const Player: React.FC<PlayerProps> = ({
         width: '16px',
         height: '16px',
         borderRadius: '50%',
-        backgroundColor: `${getInterludeDotsColor()}${alpha})`,
+        backgroundColor: `${interludeDotsColorPrefix}${alpha})`,
         margin: '0 5px',
         transition: `background-color ${transformTransition}`,
       } as React.CSSProperties;
