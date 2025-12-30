@@ -141,7 +141,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
         className={`fixed z-50 ${positionClass} ${roundedClass} shadow-lg ${isMobile && shouldShowControls ? 'backdrop-blur-sm' : ''}`}
       >
         <Card 
-          className={`shadow-none bg-background/40 dark:bg-background/20 border border-white/10 dark:border-white/10 rounded-t-2xl ${isMobile ? 'rounded-b-none' : undefined}`}
+          className={`shadow-none bg-background/40 dark:bg-background/20 border border-white/10 dark:border-white/10 rounded-2xl ${isMobile ? 'rounded-b-none border-b-0' : undefined}`}
           onClick={() => {
             if (isMobile && onMobileControlsToggle) {
               onMobileControlsToggle();
@@ -171,7 +171,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                     value={[currentTime]}
                     max={duration}
                     step={0.1}
-                    className="flex-1 [&_.slider-track]:bg-foreground/20 [&_.slider-range]:bg-primary [&_.slider-thumb]:bg-primary [&_.slider-thumb]:shadow-lg [&_.slider-thumb]:border-2 [&_.slider-thumb]:border-background"
+                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-primary/80 [&_.slider-thumb]:opacity-0"
                     onValueChange={handleProgressChangeWithToggle}
                   />
                   <span className="text-xs font-medium min-w-10 text-center text-foreground/90 drop-shadow-sm">
@@ -224,7 +224,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                   <Slider
                     value={[volume]}
                     max={100}
-                    className="flex-1 [&_.slider-track]:bg-foreground/20 [&_.slider-range]:bg-primary [&_.slider-thumb]:bg-primary [&_.slider-thumb]:shadow-md [&_.slider-thumb]:border-2 [&_.slider-thumb]:border-background"
+                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-primary/80 [&_.slider-thumb]:opacity-0"
                     onValueChange={onLocalVolumeChange}
                   />
                 </div>
@@ -240,7 +240,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                     value={[currentTime]}
                     max={duration}
                     step={0.1}
-                    className="flex-1 [&_.slider-track]:bg-foreground/20 [&_.slider-range]:bg-primary [&_.slider-thumb]:bg-primary [&_.slider-thumb]:shadow-lg [&_.slider-thumb]:border-2 [&_.slider-thumb]:border-background"
+                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-primary/80 [&_.slider-thumb]:bg-primary"
                     onValueChange={handleProgressChangeWithToggle}
                   />
                   <span className="text-xs font-medium min-w-12 text-center text-foreground/90 drop-shadow-sm">
@@ -296,7 +296,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                       <Slider
                         value={[volume]}
                         max={100}
-                        className="w-28 [&_.slider-track]:bg-foreground/20 [&_.slider-range]:bg-primary [&_.slider-thumb]:bg-primary [&_.slider-thumb]:shadow-md [&_.slider-thumb]:border-2 [&_.slider-thumb]:border-background"
+                        className="w-28 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-primary/80 [&_.slider-thumb]:bg-primary"
                         onValueChange={onLocalVolumeChange}
                       />
                     </div>
@@ -327,7 +327,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
       
       {isMobile && !mobileControlsVisible && (
         <div
-          className="fixed bottom-0 left-0 right-0 h-32 bg-transparent z-[9999]"
+          className="fixed bottom-0 left-0 right-0 h-40 bg-transparent z-[9999]"
           onClick={onMobileControlsToggle}
         />
       )}
