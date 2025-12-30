@@ -15,6 +15,7 @@ import { SettingsSidebarProps } from '@/types';
 import { Slider } from '@/components/ui/slider';
 import { SiGithub } from 'react-icons/si';
 import type { RgbaColor, ColorWithAlphaPickerProps, ColorPickerProps } from '@/types';
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const clamp = (n: number, min = 0, max = 255) => Math.min(Math.max(n, min), max);
 const rgbToHex = (r: number, g: number, b: number) => `#${[r, g, b]
@@ -130,6 +131,31 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
   );
 };
 
+type MobileSettingsNoteProps = React.PropsWithChildren<{ className?: string }>;
+
+const MobileSettingsNote: React.FC<MobileSettingsNoteProps> = ({ children, className }) => (
+  <Alert className={className}>
+    <AlertDescription className="text-xs text-gray-500 dark:text-gray-400">
+      {children}
+    </AlertDescription>
+  </Alert>
+);
+
+type SettingsTooltipProps = React.PropsWithChildren;
+
+const SettingsTooltip: React.FC<SettingsTooltipProps> = ({ children }) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">
+        ?
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>
+      <p className="max-w-xs">{children}</p>
+    </TooltipContent>
+  </Tooltip>
+);
+
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   showSettings,
   setShowSettings,
@@ -187,14 +213,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                         <Type className="h-4 w-4" />
                         フォントサイズ
                         {settings.useAMLL && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs">AMLLがオンの場合は使用できません（自動調整されます）</p>
-                            </TooltipContent>
-                          </Tooltip>
+                          <SettingsTooltip>
+                            AMLLがオンの場合は使用できません（自動調整されます）
+                          </SettingsTooltip>
                         )}
                       </Label>
                       <div className="grid grid-cols-3 gap-1">
@@ -275,16 +296,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="shortLineGroupThreshold" className="text-sm font-medium flex items-center gap-2">
                       <Clock className="h-4 w-4" />
                       歌詞をグループ化する時間（秒）
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            設定された秒数未満の行は次の行とグループ化します。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <SettingsTooltip>
+                        設定された秒数未満の行は次の行とグループ化します。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
+                      </SettingsTooltip>
                     </Label>
                     <div className="pt-4 px-2">
                       <Slider
@@ -316,16 +330,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="useWordTiming" className="text-sm font-medium flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       単語単位の同期を使用
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <SettingsTooltip>
+                        TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
+                      </SettingsTooltip>
                     </Label>
                     <Switch
                       id="useWordTiming"
@@ -340,14 +347,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <MicVocal className="h-4 w-4" />
                       カラオケ風歌詞
                       {settings.useAMLL && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">AMLLがオンの場合は使用できません</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <SettingsTooltip>
+                          AMLLがオンの場合は使用できません
+                        </SettingsTooltip>
                       )}
                     </Label>
                     <Switch
@@ -363,17 +365,10 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <ArrowUpWideNarrow className="h-4 w-4" />
                       カラオケ風歌詞進行方向
                       {(!settings.useKaraokeLyric || settings.useAMLL) && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            {!settings.useKaraokeLyric && "カラオケ風歌詞がオフの場合は使用できません"}
-                            {settings.useAMLL && "AMLLがオンの場合は使用できません"}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                        <SettingsTooltip>
+                          {!settings.useKaraokeLyric && "カラオケ風歌詞がオフの場合は使用できません"}
+                          {settings.useAMLL && "AMLLがオンの場合は使用できません"}
+                        </SettingsTooltip>
                       )}
                     </Label>
                     <div className="grid grid-cols-4 gap-1">
@@ -403,16 +398,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="showPronunciation" className="text-sm font-medium flex items-center gap-2">
                       <Type className="h-4 w-4" />
                       発音を表示
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            TTMLを使用していて、発音に対応している場合に使用することが出来ます
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <SettingsTooltip>
+                        TTMLを使用していて、発音に対応している場合に使用することが出来ます
+                      </SettingsTooltip>
                     </Label>
                     <Switch
                       id="showPronunciation"
@@ -425,16 +413,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="showTranslation" className="text-sm font-medium flex items-center gap-2">
                       <Layers className="h-4 w-4" />
                       翻訳を表示
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">
-                            TTMLを使用していて、翻訳に対応している場合に使用することが出来ます
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <SettingsTooltip>
+                        TTMLを使用していて、翻訳に対応している場合に使用することが出来ます
+                      </SettingsTooltip>
                     </Label>
                     <Switch
                       id="showTranslation"
@@ -462,14 +443,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <Layers className="h-4 w-4" />
                       過去の歌詞を非表示
                       {!settings.useAMLL && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">AMLLがオフの場合は使用できません</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <SettingsTooltip>
+                          AMLLがオフの場合は使用できません
+                        </SettingsTooltip>
                       )}
                     </Label>
                     <Switch
@@ -498,14 +474,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="scrollPositionOffset" className="text-sm font-medium flex items-center gap-2">
                       <MoveHorizontal className="h-4 w-4 rotate-90" />
                       歌詞表示位置（上下）
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="max-w-xs">画面上での歌詞の垂直位置を調整します</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <SettingsTooltip>
+                        画面上での歌詞の垂直位置を調整します
+                      </SettingsTooltip>
                     </Label>
                     <div className="pt-4 px-2">
                       <Slider
@@ -661,14 +632,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <Spline className="h-4 w-4" />
                       スプリングアニメーション
                       {!settings.useAMLL && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">AMLLがオフの場合は使用できません</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <SettingsTooltip>
+                          AMLLがオフの場合は使用できません
+                        </SettingsTooltip>
                       )}
                     </Label>
                     <Switch
@@ -684,14 +650,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <Blend className="h-4 w-4" />
                       ブラーエフェクト
                       {!settings.useAMLL && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">AMLLがオフの場合は使用できません</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <SettingsTooltip>
+                          AMLLがオフの場合は使用できません
+                        </SettingsTooltip>
                       )}
                     </Label>
                     <Switch
@@ -707,14 +668,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <ArrowUpWideNarrow className="h-4 w-4" />
                       スケールエフェクト
                       {!settings.useAMLL && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">AMLLがオフの場合は使用できません</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <SettingsTooltip>
+                          AMLLがオフの場合は使用できません
+                        </SettingsTooltip>
                       )}
                     </Label>
                     <Switch
@@ -784,14 +740,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <MoveHorizontal className="h-4 w-4" />
                       プレーヤー位置
                       {settings.fullplayer && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">フルプレーヤーモードでは位置の変更ができません</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <SettingsTooltip>
+                          フルプレーヤーモードでは位置の変更ができません
+                        </SettingsTooltip>
                       )}
                     </Label>
                     <div className="grid grid-cols-3 gap-1">
@@ -887,9 +838,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         ))}
                       </div>
                       {settings.useAMLL && (
-                        <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                        <MobileSettingsNote>
                           AMLLがオンの場合は使用できません（自動調整されます）
-                        </div>
+                        </MobileSettingsNote>
                       )}
                     </div>
 
@@ -994,9 +945,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         </span>
                         <span className="text-xs text-muted-foreground">5秒</span>
                       </div>
-                      <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                      <MobileSettingsNote>
                         設定された秒数未満の行は次の行とグループ化します。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
-                      </div>
+                      </MobileSettingsNote>
                     </div>
                   </div>
 
@@ -1014,9 +965,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       disabled={settings.useAMLL}
                     />
                   </div>
-                  <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                  <MobileSettingsNote>
                     TTMLを使用していて、単語ごとに同期されている場合に<strong>カラオケ風歌詞</strong>と併用することで使用できます。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
-                  </div>
+                  </MobileSettingsNote>
 
                   <div className="flex items-center justify-between">
                     <Label htmlFor="useKaraokeLyric" className="text-sm font-medium flex items-center gap-2">
@@ -1031,9 +982,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     />
                   </div>
                   {settings.useAMLL && (
-                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                    <MobileSettingsNote>
                       AMLLがオンの場合は使用できません
-                    </div>
+                    </MobileSettingsNote>
                   )}
 
                   <div className="space-y-2">
@@ -1060,10 +1011,10 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       ))}
                     </div>
                     {(!settings.useKaraokeLyric || settings.useAMLL) && (
-                      <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
-                      {!settings.useKaraokeLyric && "カラオケ風歌詞がオフの場合は使用できません"}
-                      {settings.useAMLL && "AMLLがオンの場合は使用できません"}
-                      </div>
+                      <MobileSettingsNote>
+                        {!settings.useKaraokeLyric && "カラオケ風歌詞がオフの場合は使用できません"}
+                        {settings.useAMLL && "AMLLがオンの場合は使用できません"}
+                      </MobileSettingsNote>
                     )}
                   </div>
 
@@ -1093,9 +1044,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     />
                   </div>
 
-                  <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                  <MobileSettingsNote>
                     TTMLを使用していて、発音または翻訳に対応している場合に各機能を使用することが出来ます
-                  </div>
+                  </MobileSettingsNote>
 
                   <Separator />
 
@@ -1124,9 +1075,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     />
                   </div>
                   {!settings.useAMLL && (
-                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                    <MobileSettingsNote>
                       AMLLがオフの場合は使用できません
-                    </div>
+                    </MobileSettingsNote>
                   )}
 
                   <div className="flex justify-end mt-2">
@@ -1144,29 +1095,29 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                   <Separator />
 
                   <div className="space-y-2">
-                      <Label htmlFor="scrollPositionOffset" className="text-sm font-medium flex items-center gap-2 mb-2">
-                        <MoveHorizontal className="h-4 w-4 rotate-90" />
-                        歌詞表示位置（上下）
-                      </Label>
-                      <div className="text-sm text-muted-foreground bg-secondary p-2 rounded mb-2">
-                        画面上での歌詞の垂直位置を調整します
-                      </div>
-                      <div className="pt-4 px-2">
-                        <Slider
-                          id="scrollPositionOffset"
-                          defaultValue={[settings.scrollPositionOffset]}
-                          min={0}
-                          max={100}
-                          step={5}
-                          onValueChange={(values) => handleSettingChange('scrollPositionOffset', values[0])}
-                        />
-                      </div>
-                      <div className="flex justify-between mt-2">
-                        <span className="text-sm text-muted-foreground">上部</span>
-                        <span className="text-sm text-muted-foreground">中央</span>
-                        <span className="text-sm text-muted-foreground">下部</span>
-                      </div>
+                    <Label htmlFor="scrollPositionOffset" className="text-sm font-medium flex items-center gap-2 mb-2">
+                      <MoveHorizontal className="h-4 w-4 rotate-90" />
+                      歌詞表示位置（上下）
+                    </Label>
+                    <div className="pt-4 px-2">
+                      <Slider
+                        id="scrollPositionOffset"
+                        defaultValue={[settings.scrollPositionOffset]}
+                        min={0}
+                        max={100}
+                        step={5}
+                        onValueChange={(values) => handleSettingChange('scrollPositionOffset', values[0])}
+                      />
                     </div>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-sm text-muted-foreground">上部</span>
+                      <span className="text-sm text-muted-foreground">中央</span>
+                      <span className="text-sm text-muted-foreground">下部</span>
+                    </div>
+                    <MobileSettingsNote>
+                      画面上での歌詞の垂直位置を調整します
+                    </MobileSettingsNote>
+                  </div>
 
                   <Separator />
 
@@ -1310,9 +1261,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     />
                   </div>
                   {!settings.useAMLL && (
-                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                    <MobileSettingsNote>
                       AMLLがオフの場合は使用できません
-                    </div>
+                    </MobileSettingsNote>
                   )}
 
                   <div className="flex items-center justify-between">
@@ -1328,9 +1279,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     />
                   </div>
                   {!settings.useAMLL && (
-                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                    <MobileSettingsNote>
                       AMLLがオフの場合は使用できません
-                    </div>
+                    </MobileSettingsNote>
                   )}
 
                   <div className="flex items-center justify-between">
@@ -1346,9 +1297,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                     />
                   </div>
                   {!settings.useAMLL && (
-                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                    <MobileSettingsNote>
                       AMLLがオフの場合は使用できません
-                    </div>
+                    </MobileSettingsNote>
                   )}
 
                   <Separator />
@@ -1402,9 +1353,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       disabled={true}
                     />
                   </div>
-                  <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                  <MobileSettingsNote>
                     モバイルデバイスではフルプレーヤーのみ対応しています
-                  </div>
+                  </MobileSettingsNote>
 
                   <Separator />
 
@@ -1429,9 +1380,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         </Button>
                       ))}
                     </div>
-                    <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                    <MobileSettingsNote>
                       フルプレーヤーモードでは位置の変更ができません
-                    </div>
+                    </MobileSettingsNote>
                   </div>
                 </CardContent>
               </Card>
