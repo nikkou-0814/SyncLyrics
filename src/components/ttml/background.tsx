@@ -262,17 +262,17 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
             <span
               key={`bg-word-${index}-${word.begin}-${word.end}`}
               style={{
-                  display: 'inline-block',
-                  color: (!karaokeEnabled) ? (lineActivePlain ? activeColor : inactiveColor) : ((!wordIsActive && !wordIsCompleted) ? inactiveColor : 'transparent'),
+                display: 'inline-block',
+                color: (!karaokeEnabled) ? (lineActivePlain ? activeColor : inactiveColor) : ((!wordIsActive && !wordIsCompleted) ? inactiveColor : 'transparent'),
                 backgroundImage: bgImage,
                 backgroundSize: backgroundSize,
                 backgroundPosition: finalPosition,
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 transform: (karaokeEnabled && (wordIsActive || wordIsCompleted)) ? 'translateY(-3px)' : 'translateY(0px)',
-                  transition: animationEnabled
-                    ? (karaokeEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'background-position 0.1s linear, transform 1.5s ease, color 0.5s ease')
-                    : (karaokeEnabled ? 'transform 0.5s ease' : 'transform 0.5s ease, color 0.5s ease'),
+                transition: animationEnabled
+                  ? (karaokeEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'background-position 0.1s linear, transform 1.5s ease, color 0.5s ease')
+                  : (karaokeEnabled ? 'transform 0.5s ease' : 'transform 0.5s ease, color 0.5s ease'),
                 whiteSpace: 'pre-wrap',
                 fontSize: bgfontSizeValue,
               }}

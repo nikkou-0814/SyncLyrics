@@ -374,29 +374,29 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                   textAlign: 'left'
                 }}
               >
-                  {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
-                  {(isActive && !isPast && (wordIsActive || wordIsCompleted)) && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        color: activeColor,
-                        clipPath: (
-                          progressDirection === 'btt' ? 
-                            `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
-                            `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
-                        ),
-                        transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
-                        pointerEvents: 'none',
-                        whiteSpace: 'pre-wrap'
-                      }}
-                    >
-                      {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
-                    </span>
-                  )}
-                </span>
+                {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
+                {(isActive && !isPast && (wordIsActive || wordIsCompleted)) && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      color: activeColor,
+                      clipPath: (
+                        progressDirection === 'btt' ? 
+                          `inset(${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0 0 0)` : 
+                          `inset(0 0 ${100 - (wordIsActive ? (currentTime - word.begin) / (word.end - word.begin) * 100 : 100)}% 0)`
+                      ),
+                      transition: animationEnabled ? 'clip-path 0.1s linear' : 'none',
+                      pointerEvents: 'none',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
+                  </span>
+                )}
               </span>
+            </span>
             ) : (
               <span
                 key={`word-${index}-${word.begin}-${word.end}`}
@@ -683,10 +683,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     targetScrollTop = Math.max(0, Math.min(targetScrollTop, contentHeight - containerHeight));
 
     const ilLen = Math.max(0, period.end - period.start);
-    const duration = ilLen < 0.2 ? 150
-                    : ilLen < 0.5 ? 300
-                    : ilLen < 1.0 ? 500
-                    : 800;
+    const duration = ilLen < 0.2 ? 150 : ilLen < 0.5 ? 300 : ilLen < 1.0 ? 500 : 800;
 
     isProgrammaticScrollingRef.current = true;
     (smoothScrollTo as (element: HTMLElement, to: number, duration: number) => Promise<void>)(container, targetScrollTop, duration)
@@ -1171,8 +1168,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
         `}
         style={{
           transition: 'margin-bottom 0.3s ease, --lyrics-mask-bottom-start 0.35s ease, --lyrics-mask-bottom-end 0.35s ease',
-          '--lyrics-mask-bottom-start': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '420px' : '12%',
-          '--lyrics-mask-bottom-end': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '600px' : '35%',
+            '--lyrics-mask-bottom-start': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '420px' : '12%',
+            '--lyrics-mask-bottom-end': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '600px' : '35%',
           maskImage: isMobile 
             ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) var(--lyrics-mask-bottom-start), #000 var(--lyrics-mask-bottom-end), #000 90%, rgba(0,0,0,0) 100%)'
             : 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 40%, #000 75%, rgba(0,0,0,0) 100%)',
@@ -1371,16 +1368,16 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                       }}
                     >
                         <div
-                        className={`${
-                          settings.showTranslation ||
-                          (settings.showPronunciation &&
-                          !hidePronLine &&
-                          !(settings.useKaraokeLyric && settings.useWordTiming && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) &&
-                          ((line.pronunciationWords && line.pronunciationWords.length > 0) ||
-                            (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')))
-                          ? 'leading-[1.5]'
-                          : 'leading-[1.3]'
-                        } ${settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}`}
+                          className={`${
+                            settings.showTranslation ||
+                            (settings.showPronunciation &&
+                            !hidePronLine &&
+                            !(settings.useKaraokeLyric && settings.useWordTiming && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) &&
+                            ((line.pronunciationWords && line.pronunciationWords.length > 0) ||
+                              (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')))
+                            ? 'leading-[1.5]'
+                            : 'leading-[1.3]'
+                          } ${settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}`}
                         >
                         {line.backgroundText && (() => {
                           const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
@@ -1596,18 +1593,18 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                           }}
                                         >
                                           {settings.useWordTiming && line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0 ? (
-                                          <TranslationWordTimingLyricLine
-                                            backgroundWords={line.backgroundTranslationWords2}
-                                            currentTime={currentTime + (settings.lyricOffset || 0)}
-                                            resolvedTheme={resolvedTheme}
-                                            progressDirection={settings.lyricProgressDirection}
-                                            fontSize={settings.fontSize}
-                                            karaokeEnabled={settings.useKaraokeLyric}
-                                            persistActive={isDisplaying}
-                                            disableGradient
-                                            activeColor={activeLyricColor}
-                                            inactiveColor={inactiveLyricColor}
-                                          />
+                                            <TranslationWordTimingLyricLine
+                                              backgroundWords={line.backgroundTranslationWords2}
+                                              currentTime={currentTime + (settings.lyricOffset || 0)}
+                                              resolvedTheme={resolvedTheme}
+                                              progressDirection={settings.lyricProgressDirection}
+                                              fontSize={settings.fontSize}
+                                              karaokeEnabled={settings.useKaraokeLyric}
+                                              persistActive={isDisplaying}
+                                              disableGradient
+                                              activeColor={activeLyricColor}
+                                              inactiveColor={inactiveLyricColor}
+                                            />
                                           ) : (
                                             <span style={{ whiteSpace: 'pre-wrap' }}>
                                               <LineBreaker text={line.backgroundTranslationText2 || ''} />
@@ -1696,34 +1693,34 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               }}
                             >
                               {settings.useWordTiming && line.pronunciationWords && line.pronunciationWords.length > 0 ? (
-                                  <TranslationWordTimingLyricLine
-                                    backgroundWords={line.pronunciationWords}
-                                    currentTime={currentTime + (settings.lyricOffset || 0)}
-                                    resolvedTheme={resolvedTheme}
-                                    progressDirection={settings.lyricProgressDirection}
-                                    fontSize={settings.fontSize}
-                                    karaokeEnabled={settings.useKaraokeLyric}
-                                    persistActive={isDisplaying}
-                                    activeColor={activeLyricColor}
-                                    inactiveColor={inactiveLyricColor}
-                                  />
+                                <TranslationWordTimingLyricLine
+                                  backgroundWords={line.pronunciationWords}
+                                  currentTime={currentTime + (settings.lyricOffset || 0)}
+                                  resolvedTheme={resolvedTheme}
+                                  progressDirection={settings.lyricProgressDirection}
+                                  fontSize={settings.fontSize}
+                                  karaokeEnabled={settings.useKaraokeLyric}
+                                  persistActive={isDisplaying}
+                                  activeColor={activeLyricColor}
+                                  inactiveColor={inactiveLyricColor}
+                                />
                               ) : (settings.useKaraokeLyric && (now >= line.begin && now < (line.originalEnd || line.end))) ? (
-                                          <PronunciationKaraokeLyricLine
-                                            text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')}
-                                            progressPercentage={
-                                              (() => {
-                                                const end = (line.originalEnd || line.end);
-                                                if (now <= line.begin) return 0;
-                                                if (now >= end) return 100;
-                                                return ((now - line.begin) / (end - line.begin)) * 100;
-                                              })()
-                                            }
-                                            resolvedTheme={resolvedTheme}
-                                            isActive={(now >= line.begin && now < (line.originalEnd || line.end))}
-                                            progressDirection={settings.lyricProgressDirection}
-                                            activeColor={activeLyricColor}
-                                            inactiveColor={inactiveLyricColor}
-                                          />
+                                <PronunciationKaraokeLyricLine
+                                  text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')}
+                                  progressPercentage={
+                                    (() => {
+                                      const end = (line.originalEnd || line.end);
+                                      if (now <= line.begin) return 0;
+                                      if (now >= end) return 100;
+                                      return ((now - line.begin) / (end - line.begin)) * 100;
+                                    })()
+                                  }
+                                  resolvedTheme={resolvedTheme}
+                                  isActive={(now >= line.begin && now < (line.originalEnd || line.end))}
+                                  progressDirection={settings.lyricProgressDirection}
+                                  activeColor={activeLyricColor}
+                                  inactiveColor={inactiveLyricColor}
+                                />
                               ) : (
                                 <span style={{ whiteSpace: 'pre-wrap' }}>
                                   <LineBreaker text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')} />
@@ -1731,7 +1728,6 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               )}
                             </div>
                           )}
-                          
                         </div>
                         {settings.showTranslation && (((line.translationWords1 && line.translationWords1.length > 0) || (typeof line.translationText1 === 'string' && line.translationText1.trim() !== '') || (line.translationWords2 && line.translationWords2.length > 0) || (typeof line.translationText2 === 'string' && line.translationText2.trim() !== ''))) && (
                           <>
@@ -1824,19 +1820,19 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           return (
                             <div 
                               style={{
-                                  position: 'relative',
-                                  opacity: isStage ? 1 : 0,
-                                  top: isStage ? '0px' : settings.fontSize === 'small' ? '-80px' : settings.fontSize === 'medium' ? '-130px' : settings.fontSize === 'large' ? '-200px' : '-150px',
-                                  maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
-                                  overflow: 'auto',
-                                  transition: `transform 500ms ease,opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '300ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
-                                  willChange: 'opacity, max-height, filter, top',
-                                  pointerEvents: 'none',
-                                  textAlign: textAlignment,
-                                  transform: isStage ? 'scale(1) translateX(0)' : `scale(0.9) ${textAlignment === 'right' ? 'translateX(20px)' : 'translateX(-20px)'}`,
-                                  lineHeight: 1,
-                                }}
-                              >
+                                position: 'relative',
+                                opacity: isStage ? 1 : 0,
+                                top: isStage ? '0px' : settings.fontSize === 'small' ? '-80px' : settings.fontSize === 'medium' ? '-130px' : settings.fontSize === 'large' ? '-200px' : '-150px',
+                                maxHeight: isStage ? `${actualHeight > 0 ? actualHeight : 200}px` : '0px',
+                                overflow: 'auto',
+                                transition: `transform 500ms ease,opacity ${isStage ? '1000ms' : '220ms'} ease, max-height ${isStage ? '300ms' : '2000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}, top ${isStage ? '500ms' : '1000ms'} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
+                                willChange: 'opacity, max-height, filter, top',
+                                pointerEvents: 'none',
+                                textAlign: textAlignment,
+                                transform: isStage ? 'scale(1) translateX(0)' : `scale(0.9) ${textAlignment === 'right' ? 'translateX(20px)' : 'translateX(-20px)'}`,
+                                lineHeight: 1,
+                              }}
+                            >
                               <div 
                                 ref={(el) => {
                                   if (el) {

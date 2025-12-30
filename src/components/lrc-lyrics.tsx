@@ -336,8 +336,8 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
         `}
         style={{
           transition: 'margin-bottom 0.3s ease, --lyrics-mask-bottom-start 0.35s ease, --lyrics-mask-bottom-end 0.35s ease',
-          '--lyrics-mask-bottom-start': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '420px' : '12%',
-          '--lyrics-mask-bottom-end': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '600px' : '35%',
+            '--lyrics-mask-bottom-start': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '420px' : '12%',
+            '--lyrics-mask-bottom-end': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '600px' : '35%',
           maskImage: isMobile 
             ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) var(--lyrics-mask-bottom-start), #000 var(--lyrics-mask-bottom-end), #000 90%, rgba(0,0,0,0) 100%)'
             : 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 40%, #000 75%, rgba(0,0,0,0) 100%)',
@@ -448,19 +448,11 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                         transformOrigin: isRightAligned ? 'right center' : 'left center',
                         transition: `transform ${(() => {
                           const dt = Math.min(Math.max((endTime - line.time), 0.01), 1.0);
-                          return dt < 0.2 ? '0.15s'
-                                : dt < 0.3 ? '0.2s'
-                                : dt < 0.4 ? '0.25s'
-                                : dt < 0.5 ? '0.3s'
-                                : dt < 0.6 ? '0.35s'
-                                : dt < 0.7 ? '0.4s'
-                                : dt < 0.8 ? '0.45s'
-                                : dt < 0.9 ? '0.5s'
-                                : '0.6s';
+                          return dt < 0.2 ? '0.15s' : dt < 0.3 ? '0.2s' : dt < 0.4 ? '0.25s' : dt < 0.5 ? '0.3s' : dt < 0.6 ? '0.35s' : dt < 0.7 ? '0.4s' : dt < 0.8 ? '0.45s' : dt < 0.9 ? '0.5s' : '0.6s';
                         })()} ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`
                       }}
                     >
-                      <div className={settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}>
+                      <div className={`leading-[1.3] ${settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}`}>
                       {isActive && settings.useKaraokeLyric
                         ? (
                           <KaraokeLyricLine
