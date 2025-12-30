@@ -7,6 +7,18 @@ html {
     user-select: none;
 }
 
+@property --lyrics-mask-bottom-start {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 10%;
+}
+
+@property --lyrics-mask-bottom-end {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 30%;
+}
+
 @layer utilities {
     .hidden-scrollbar {
       -ms-overflow-style: none;

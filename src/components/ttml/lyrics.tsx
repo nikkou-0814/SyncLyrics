@@ -467,6 +467,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   smoothScrollTo,
   renderInterludeDots,
   resolvedTheme,
+  mobileControlsVisible,
 }) => {
   const SAME_BEGIN_EPS = 0.12;
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
@@ -1171,18 +1172,21 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
           ${isMobile ? 'px-3 w-full' : 'px-20 w-full'}
         `}
         style={{
+          transition: 'margin-bottom 0.3s ease, --lyrics-mask-bottom-start 0.35s ease, --lyrics-mask-bottom-end 0.35s ease',
+          '--lyrics-mask-bottom-start': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '420px' : '12%',
+          '--lyrics-mask-bottom-end': isMobile && settings.showplayercontrol && (mobileControlsVisible ?? true) ? '600px' : '35%',
           maskImage: isMobile 
-            ? 'linear-gradient(0deg, rgba(0,0,0,0) 10%, #000 30%, #000 90%, rgba(0,0,0,0) 100%)'
+            ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) var(--lyrics-mask-bottom-start), #000 var(--lyrics-mask-bottom-end), #000 90%, rgba(0,0,0,0) 100%)'
             : 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 40%, #000 75%, rgba(0,0,0,0) 100%)',
           WebkitMaskImage: isMobile 
-            ? 'linear-gradient(0deg, rgba(0,0,0,0) 10%, #000 30%, #000 90%, rgba(0,0,0,0) 100%)'
+            ? 'linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) var(--lyrics-mask-bottom-start), #000 var(--lyrics-mask-bottom-end), #000 90%, rgba(0,0,0,0) 100%)'
             : 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 40%, #000 75%, rgba(0,0,0,0) 100%)',
           marginBottom: isMobile ? '-120px' : settings.fullplayer
             ? settings.showplayercontrol
               ? '120px'
               : '0'
             : '0',
-        }}
+        } as React.CSSProperties}
         ref={lyricsContainerRef}
         onMouseEnter={handleLyricsMouseEnter}
         onMouseLeave={handleLyricsMouseLeave}

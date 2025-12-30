@@ -153,6 +153,7 @@ export interface PlayerLyricsProps {
     duration: number
   ) => void;
   ttmlData?: TTMLData;
+  mobileControlsVisible?: boolean;
 }
 
 export interface KaraokeLyricLineProps {
@@ -261,6 +262,7 @@ export interface AMLLLyricsProps {
   isMobile: boolean;
   isPlaying: boolean;
   resolvedTheme: string;
+  mobileControlsVisible?: boolean;
 }
 
 export interface PlayerState {

@@ -91,18 +91,6 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
     return <Volume className={iconClass} />;
   };
 
-  const positionClass = 
-    settings.playerposition === "left"
-      ? "left-0"
-      : settings.playerposition === "right"
-      ? "right-0"
-      : "left-1/2 transform -translate-x-1/2";
-
-  const roundedClass = 
-    isMobile || settings.fullplayer 
-      ? "rounded-t-lg" 
-      : "rounded-lg";
-
   const shouldShowControls = isMobile 
     ? mobileControlsVisible && settings.showplayercontrol
     : settings.showplayercontrol;
@@ -138,10 +126,10 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             ease: [0.19, 1, 0.22, 1] 
           },
         }}
-        className={`fixed z-50 ${positionClass} ${roundedClass} shadow-lg ${isMobile && shouldShowControls ? 'backdrop-blur-sm' : ''}`}
+        className={`fixed z-50 ${settings.playerposition === "left" ? "left-0" : settings.playerposition === "right" ? "right-0" : "left-1/2 transform -translate-x-1/2"} ${isMobile || settings.fullplayer ? "rounded-t-lg" : "rounded-lg"} ${isMobile ? undefined : 'shadow-lg backdrop-blur-sm'}`}
       >
         <Card 
-          className={`shadow-none bg-background/40 dark:bg-background/20 border border-white/10 dark:border-white/10 rounded-2xl ${isMobile ? 'rounded-b-none border-b-0' : undefined}`}
+          className={`shadow-none ${isMobile ? 'bg-transparent border-none' : 'bg-background/40 dark:bg-background/20 border rounded-2xl'} border-white/10 dark:border-white/10`}
           onClick={() => {
             if (isMobile && onMobileControlsToggle) {
               onMobileControlsToggle();
@@ -153,7 +141,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
               <div className="flex flex-col space-y-5">
                 {/* Track Info */}
                 <div className="space-y-2 text-center">
-                  <p className="font</div>-semibold text-base overflow-hidden text-nowrap text-ellipsis text-foreground drop-shadow-sm">
+                  <p className="font-semibold text-base overflow-hidden text-nowrap text-ellipsis text-foreground drop-shadow-sm">
                     {trackName.length > 35 ? `${trackName.slice(0, 35)}...` : trackName}
                   </p>
                   <p className="text-sm overflow-hidden text-nowrap text-ellipsis text-foreground/80 drop-shadow-md">

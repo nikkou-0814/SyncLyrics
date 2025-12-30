@@ -590,6 +590,7 @@ const Player: React.FC<PlayerProps> = ({
           isMobile={isMobile}
           isPlaying={isPlaying}
           resolvedTheme={theme}
+          mobileControlsVisible={mobileControlsVisible}
         />
       ) : ttmlData ? (
         <TTMLLyrics
@@ -604,6 +605,7 @@ const Player: React.FC<PlayerProps> = ({
           renderInterludeDots={renderInterludeDots}
           smoothScrollTo={smoothScrollTo}
           ttmlData={ttmlData}
+          mobileControlsVisible={mobileControlsVisible}
         />
       ) : (
         <PlayerLyrics
@@ -617,6 +619,7 @@ const Player: React.FC<PlayerProps> = ({
           onLyricClick={handleLyricClick}
           renderInterludeDots={renderInterludeDots}
           smoothScrollTo={smoothScrollTo}
+          mobileControlsVisible={mobileControlsVisible}
         />
       )}
 
