@@ -113,6 +113,7 @@ export interface Settings {
   playerposition: 'left' | 'center' | 'right';
   volume: number;
   lyricOffset: number;
+  shortLineGroupThreshold: number;
   useKaraokeLyric: boolean;
   lyricProgressDirection: 'rtl' | 'ltr' | 'btt' | 'ttb';
   CustomEasing: string;

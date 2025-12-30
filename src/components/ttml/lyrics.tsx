@@ -552,32 +552,73 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     });
     lines.sort((a, b) => a.begin - b.begin);
     
+    const shortLineGroupThreshold = Math.min(5, Math.max(0, settings.shortLineGroupThreshold ?? 0.6));
     const processedLines = lines.map(line => ({ ...line, originalEnd: line.end }));
+    const groupIds = new Array(processedLines.length).fill(-1);
+    let nextGroupId = 0;
     
     for (let i = 0; i < processedLines.length; i++) {
-      const currentLine = processedLines[i];
-      if (currentLine.groupEnd !== undefined) continue;
+      if (groupIds[i] !== -1) continue;
       
-      const overlappingLines = [currentLine];
-      for (let j = i + 1; j < processedLines.length && overlappingLines.length < 3; j++) {
+      const currentLine = processedLines[i];
+      const overlappingIndices = [i];
+      for (let j = i + 1; j < processedLines.length && overlappingIndices.length < 3; j++) {
+        if (groupIds[j] !== -1) continue;
         const otherLine = processedLines[j];
-        if (otherLine.groupEnd !== undefined) continue;
         
         const overlap = Math.max(0, Math.min(currentLine.end, otherLine.end) - Math.max(currentLine.begin, otherLine.begin));
         if (overlap > 0) {
-          overlappingLines.push(otherLine);
+          overlappingIndices.push(j);
         }
       }
       
-      const maxEnd = Math.max(...overlappingLines.map(line => line.originalEnd || line.end));
-      
-      overlappingLines.forEach(line => {
-        line.groupEnd = maxEnd;
+      const groupId = nextGroupId++;
+      overlappingIndices.forEach(idx => {
+        groupIds[idx] = groupId;
       });
+    }
+
+    const parent = Array.from({ length: nextGroupId }, (_, i) => i);
+    const find = (x: number): number => {
+      if (parent[x] !== x) parent[x] = find(parent[x]);
+      return parent[x];
+    };
+    const union = (a: number, b: number) => {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra !== rb) parent[rb] = ra;
+    };
+    
+    for (let i = 0; i < processedLines.length - 1; i++) {
+      const line = processedLines[i];
+      const lineDuration = (line.originalEnd || line.end) - line.begin;
+      if (lineDuration < shortLineGroupThreshold) {
+        if (groupIds[i] !== -1 && groupIds[i + 1] !== -1) {
+          union(groupIds[i], groupIds[i + 1]);
+        }
+      }
+    }
+    
+    const groupMaxEnd = new Map<number, number>();
+    for (let i = 0; i < processedLines.length; i++) {
+      const root = find(groupIds[i]);
+      const lineEnd = processedLines[i].originalEnd || processedLines[i].end;
+      const currentMax = groupMaxEnd.get(root);
+      if (currentMax == null || lineEnd > currentMax) {
+        groupMaxEnd.set(root, lineEnd);
+      }
+    }
+    
+    for (let i = 0; i < processedLines.length; i++) {
+      const root = find(groupIds[i]);
+      const maxEnd = groupMaxEnd.get(root);
+      if (maxEnd != null) {
+        processedLines[i].groupEnd = maxEnd;
+      }
     }
     
     return processedLines;
-  }, [ttmlData]);
+  }, [ttmlData, settings.shortLineGroupThreshold]);
 
   const getNextTimeDiffSkippingCluster = useCallback((baseLine: TTMLLine): number => {
     const baseIdx = allLyricLines.findIndex(l => l.begin === baseLine.begin && l.text === baseLine.text);

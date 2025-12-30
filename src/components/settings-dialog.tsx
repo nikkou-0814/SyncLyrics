@@ -273,6 +273,43 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     </div>
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="shortLineGroupThreshold" className="text-sm font-medium flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      歌詞をグループ化する時間（秒）
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-4 w-4 rounded-full">?</Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            設定された秒数未満の行は次の行とグループ化します。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </Label>
+                    <div className="pt-4 px-2">
+                      <Slider
+                        id="shortLineGroupThreshold"
+                        value={[Math.min(5, Math.max(0, settings.shortLineGroupThreshold))]}
+                        min={0}
+                        max={5}
+                        step={0.1}
+                        onValueChange={(values) => {
+                          const clamped = Math.min(5, Math.max(0, values[0] ?? 0));
+                          handleSettingChange('shortLineGroupThreshold', Math.round(clamped * 10) / 10);
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">0秒</span>
+                      <span className="text-xs text-muted-foreground">
+                        {Math.min(5, Math.max(0, settings.shortLineGroupThreshold)).toFixed(1)}秒
+                      </span>
+                      <span className="text-xs text-muted-foreground">5秒</span>
+                    </div>
+                  </div>
+
                   <Separator />
 
                   <div className="flex items-center justify-between">
@@ -923,13 +960,43 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                           +
                         </Button>
                       </div>
-                      <div className="mt-2">
+                      <div className="flex space-x-2">
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           プラス値: 早く表示
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           マイナス値: 遅く表示
                         </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="shortLineGroupThreshold" className="text-sm font-medium flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4" />
+                        短い歌詞のまとめしきい値（秒）
+                      </Label>
+                      <div className="pt-4 px-2">
+                        <Slider
+                          id="shortLineGroupThreshold"
+                          value={[Math.min(5, Math.max(0, settings.shortLineGroupThreshold))]}
+                          min={0}
+                          max={5}
+                          step={0.1}
+                          onValueChange={(values) => {
+                            const clamped = Math.min(5, Math.max(0, values[0] ?? 0));
+                            handleSettingChange('shortLineGroupThreshold', Math.round(clamped * 10) / 10);
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-2">
+                        <span className="text-xs text-muted-foreground">0秒</span>
+                        <span className="text-xs text-muted-foreground">
+                          {Math.min(5, Math.max(0, settings.shortLineGroupThreshold)).toFixed(1)}秒
+                        </span>
+                        <span className="text-xs text-muted-foreground">5秒</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground bg-secondary p-2 rounded">
+                        設定された秒数未満の行は次の行とグループ化します。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
                       </div>
                     </div>
                   </div>

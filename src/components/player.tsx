@@ -24,6 +24,7 @@ const DEFAULT_SETTINGS: Settings = {
   playerposition: 'right',
   volume: 50,
   lyricOffset: 0,
+  shortLineGroupThreshold: 0.6,
   useKaraokeLyric: true,
   lyricProgressDirection: 'ltr',
   CustomEasing: 'cubic-bezier(0.22, 1, 0.36, 1)',
