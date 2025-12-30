@@ -1172,11 +1172,11 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
         `}
         style={{
           maskImage: isMobile 
-            ? 'linear-gradient(0deg, rgba(0,0,0,0) 10%, #000 30%, #000 80%, rgba(0,0,0,0) 98%)'
-            : 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+            ? 'linear-gradient(0deg, rgba(0,0,0,0) 10%, #000 30%, #000 90%, rgba(0,0,0,0) 100%)'
+            : 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 40%, #000 75%, rgba(0,0,0,0) 100%)',
           WebkitMaskImage: isMobile 
-            ? 'linear-gradient(0deg, rgba(0,0,0,0) 15%, #000 30%, #000 80%, rgba(0,0,0,0) 98%)'
-            : 'linear-gradient(0deg, rgba(0,0,0,0) 2%, #000 50%, #000 52%, rgba(0,0,0,0) 98%)',
+            ? 'linear-gradient(0deg, rgba(0,0,0,0) 10%, #000 30%, #000 90%, rgba(0,0,0,0) 100%)'
+            : 'linear-gradient(0deg, rgba(0,0,0,0) 0%, #000 40%, #000 75%, rgba(0,0,0,0) 100%)',
           marginBottom: isMobile ? '-120px' : settings.fullplayer
             ? settings.showplayercontrol
               ? '120px'
