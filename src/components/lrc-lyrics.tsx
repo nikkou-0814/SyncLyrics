@@ -324,9 +324,7 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
   return (
     <div
       className={`fixed inset-0 flex flex-col justify-center z-50 
-        ${settings.lyricposition === 'center' ? 'items-center text-center' : 
-          settings.lyricposition === 'right' ? `items-end ${isMobile ? 'right-0' : 'right-20'}` : 
-          `items-start`}
+        ${settings.lyricposition === 'center' ? 'items-center text-center' : `items-start`}
         text-gray-900 dark:text-white
       `}
     >
@@ -403,7 +401,7 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                   ${
                     isInterlude
                       ? 'm-0 p-0'
-                      : `${settings.fontSize === 'small' ? 'my-2' : 'my-4'}
+                      : `${settings.fontSize === 'small' ? 'my-0' : 'my-4'}
                         ${
                           isActive
                             ? 'font-bold'
@@ -421,7 +419,7 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                   textAlign: settings.lyricposition,
                   transform:
                     isCurrentLineInterlude && index > currentLineIndex
-                      ? `${settings.fontSize === 'small' ? 'translateY(45px)'
+                      ? `${settings.fontSize === 'small' ? 'translateY(38px)'
                         : settings.fontSize === 'medium' ? 'translateY(68px)'
                         : 'translateY(83px)'}`
                       : 'translateY(0)',

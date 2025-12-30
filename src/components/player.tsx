@@ -509,7 +509,7 @@ const Player: React.FC<PlayerProps> = ({
 
     const fontSizeScale =
       settings.fontSize === 'small'
-        ? -0.1
+        ? -0.2
         : settings.fontSize === 'large'
         ? 0.2
         : 0;
@@ -535,15 +535,15 @@ const Player: React.FC<PlayerProps> = ({
           : settings.fontSize === 'small'
           ? '5px'
           : settings.fontSize === 'medium'
-          ? '10px'
-          : '15px',
+          ? '15px'
+          : '25px',
       right:
         alignment === 'right'
           ? settings.fontSize === 'small'
-            ? '5px'
-            : settings.fontSize === 'medium'
             ? '10px'
-            : '15px'
+            : settings.fontSize === 'medium'
+            ? '15px'
+            : '25px'
           : 'auto',
       transform:
         alignment === 'center'

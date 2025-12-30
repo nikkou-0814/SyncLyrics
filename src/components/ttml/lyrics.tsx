@@ -261,7 +261,6 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                   display: 'inline-flex',
                   flexDirection: 'column',
                   alignItems: 'flex-start',
-                  lineHeight: 1.5,
                   whiteSpace: 'pre-wrap'
                 }}
               >
@@ -330,7 +329,6 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                   display: 'inline-flex',
                   flexDirection: 'column',
                   alignItems: 'flex-start',
-                  lineHeight: 1.5,
                   whiteSpace: 'pre-wrap'
                 }}
               >
@@ -1316,10 +1314,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                   key={`${line.begin}-${line.end}-${index}`}
                   id={`ttml-line-${line.begin}-${line.end}`}
                   className={`transition-all duration-700 px-2 rounded-lg :hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer relative
-                    ${isEmpty ? 'm-0 p-0' : settings.fontSize === 'small' ? 'my-2' : 'my-4'} ${textColor}
+                    ${isEmpty ? 'm-0 p-0' : settings.fontSize === 'small' ? 'my-0' : 'my-4'} ${textColor}
                     ${hasAgents ? (
-                      textAlignment === 'left' ? 'w-5/6 mr-auto' :
-                      textAlignment === 'right' ? 'w-5/6 ml-auto' :
+                      textAlignment === 'left' ? 'w-11/12 mr-auto' :
+                      textAlignment === 'right' ? 'w-11/12 ml-auto' :
                       'w-full'
                     ) : 'w-full'}`}
                     style={{
@@ -1334,7 +1332,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                     transform: `${
                       isAfterInterludeDiv
                         ? (settings.fontSize === 'small'
-                          ? 'translateY(45px)'
+                          ? 'translateY(38px)'
                           : settings.fontSize === 'medium'
                             ? 'translateY(68px)'
                             : 'translateY(83px)')
@@ -1369,11 +1367,21 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                       style={{
                         transform: isStage ? `translateX(${stageShiftPx}px) scale(1.02)` : 'translateX(0) scale(1.0)',
                         transformOrigin: isRightAligned ? 'right center' : 'left center',
-                        transition: `transform 0.8s ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`
+                        transition: `transform 0.8s ${settings.CustomEasing || 'cubic-bezier(0.22, 1, 0.36, 1)'}`,
                       }}
                     >
-                      <div className={`${settings.fontSize === 'small' ? 'p-4' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}`}>
-                            
+                        <div
+                        className={`${
+                          settings.showTranslation ||
+                          (settings.showPronunciation &&
+                          !hidePronLine &&
+                          !(settings.useKaraokeLyric && settings.useWordTiming && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) &&
+                          ((line.pronunciationWords && line.pronunciationWords.length > 0) ||
+                            (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')))
+                          ? 'leading-[1.5]'
+                          : 'leading-[1.3]'
+                        } ${settings.fontSize === 'small' ? 'p-3' : settings.fontSize === 'medium' ? 'p-4' : settings.fontSize === 'large' ? 'p-5' : 'p-4'}`}
+                        >
                         {line.backgroundText && (() => {
                           const backgroundStartTime = line.backgroundWords && line.backgroundWords.length > 0 
                             ? line.backgroundWords[0].begin 
@@ -1405,6 +1413,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 textAlign: textAlignment,
                                 marginBottom: '15px',
                                 transform: isStage ? 'scale(1) translateX(0)' : `scale(0.9) ${textAlignment === 'right' ? 'translateX(20px)' : 'translateX(-20px)'}`,
+                                lineHeight: 1,
                               }}
                             >
                               <div 
@@ -1539,13 +1548,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         <div
                                           style={{
                                             fontSize: {
-                                              small: '1.1rem',
-                                              medium: '1.4rem',
-                                              large: '1.9rem',
+                                              small: '0.9rem',
+                                              medium: '1.2rem',
+                                              large: '1.8rem',
                                             }[settings.fontSize],
                                             pointerEvents: 'none',
                                             textAlign: textAlignment,
-                                            marginTop: '0.15em',
+                                            marginTop: '0.5em',
                                             transition: 'color 0.5s ease',
                                             opacity: 0.6,
                                           }}
@@ -1574,14 +1583,14 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         <div
                                           style={{
                                             fontSize: {
-                                              small: '1.2rem',
-                                              medium: '1.5rem',
-                                              large: '2.0rem',
+                                              small: '0.9rem',
+                                              medium: '1.2rem',
+                                              large: '1.8rem',
                                             }[settings.fontSize],
                                             fontWeight: 'bold',
                                             pointerEvents: 'none',
                                             textAlign: (settings.useKaraokeLyric && settings.useWordTiming) ? 'left' : textAlignment,
-                                            marginTop: '0.15em',
+                                            marginTop: '0.5em',
                                             transition: 'color 0.5s ease',
                                             opacity: 0.6,
                                           }}
@@ -1730,9 +1739,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               <div
                                 style={{
                                   fontSize: {
-                                    small: '1.2rem',
-                                    medium: '1.5rem',
-                                    large: '2.0rem',
+                                    small: '1rem',
+                                    medium: '1.4rem',
+                                    large: '1.9rem',
                                   }[settings.fontSize],
                                   pointerEvents: 'none',
                                   textAlign: textAlignment,
@@ -1763,9 +1772,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               <div
                                 style={{
                                   fontSize: {
-                                    small: '1.2rem',
-                                    medium: '1.5rem',
-                                    large: '2.0rem',
+                                    small: '1rem',
+                                    medium: '1.4rem',
+                                    large: '1.9rem',
                                   }[settings.fontSize],
                                   fontWeight: 'bold',
                                   pointerEvents: 'none',
@@ -1825,6 +1834,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   pointerEvents: 'none',
                                   textAlign: textAlignment,
                                   transform: isStage ? 'scale(1) translateX(0)' : `scale(0.9) ${textAlignment === 'right' ? 'translateX(20px)' : 'translateX(-20px)'}`,
+                                  lineHeight: 1,
                                 }}
                               >
                               <div 
@@ -1963,13 +1973,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         <div
                                           style={{
                                             fontSize: {
-                                              small: '1.1rem',
-                                              medium: '1.3rem',
-                                              large: '1.9rem',
+                                              small: '0.9rem',
+                                              medium: '1.2rem',
+                                              large: '1.8rem',
                                             }[settings.fontSize],
                                             pointerEvents: 'none',
                                             textAlign: textAlignment,
-                                            marginTop: '0.15em',
+                                            marginTop: '0.5em',
                                             transition: 'color 0.5s ease',
                                             opacity: 0.6,
                                           }}
@@ -1998,14 +2008,14 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         <div
                                           style={{
                                             fontSize: {
-                                              small: '1.2rem',
-                                              medium: '1.5rem',
-                                              large: '2.0rem',
+                                              small: '0.9rem',
+                                              medium: '1.2rem',
+                                              large: '1.8rem',
                                             }[settings.fontSize],
                                             fontWeight: 'bold',
                                             pointerEvents: 'none',
                                             textAlign: (settings.useKaraokeLyric && settings.useWordTiming) ? 'left' : textAlignment,
-                                            marginTop: '0.15em',
+                                            marginTop: '0.5em',
                                             transition: 'color 0.5s ease',
                                             opacity: 0.6,
                                           }}
