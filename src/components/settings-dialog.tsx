@@ -1351,6 +1351,9 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       onCheckedChange={(checked) => handleSettingChange('autoHideMobileControls', checked)}
                     />
                   </div>
+                  <MobileSettingsNote>
+                    再度コントローラーを表示する際は画面下部をタップすることにより表示されます
+                  </MobileSettingsNote>
 
                   <Separator />
 
