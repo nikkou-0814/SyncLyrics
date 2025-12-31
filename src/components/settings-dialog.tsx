@@ -399,13 +399,14 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <Type className="h-4 w-4" />
                       発音を表示
                       <SettingsTooltip>
-                        TTMLを使用していて、発音に対応している場合に使用することが出来ます
+                        TTMLを使用していて、発音に対応している場合に使用することが出来ます。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
                       </SettingsTooltip>
                     </Label>
                     <Switch
                       id="showPronunciation"
                       checked={settings.showPronunciation ?? false}
                       onCheckedChange={(checked) => handleSettingChange('showPronunciation', checked)}
+                      disabled={settings.useAMLL}
                     />
                   </div>
 
@@ -414,13 +415,14 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       <Layers className="h-4 w-4" />
                       翻訳を表示
                       <SettingsTooltip>
-                        TTMLを使用していて、翻訳に対応している場合に使用することが出来ます
+                        TTMLを使用していて、翻訳に対応している場合に使用することが出来ます。{settings.useAMLL && "AMLLがオンの場合は使用できません"}
                       </SettingsTooltip>
                     </Label>
                     <Switch
                       id="showTranslation"
                       checked={settings.showTranslation ?? false}
                       onCheckedChange={(checked) => handleSettingChange('showTranslation', checked)}
+                      disabled={settings.useAMLL}
                     />
                   </div>
 
@@ -501,11 +503,17 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                     <Label htmlFor="useCustomColors" className="text-sm font-medium flex items-center gap-2">
                       <Palette className="h-4 w-4" />
                       カスタムカラーを使用
+                      {settings.useAMLL && (
+                        <SettingsTooltip>
+                          AMLLがオンの場合は使用できません
+                        </SettingsTooltip>
+                      )}
                     </Label>
                     <Switch
                       id="useCustomColors"
                       checked={settings.useCustomColors}
                       onCheckedChange={(checked) => handleSettingChange('useCustomColors', checked)}
+                      disabled={settings.useAMLL}
                     />
                   </div>
 
@@ -1144,8 +1152,14 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       id="useCustomColors"
                       checked={settings.useCustomColors}
                       onCheckedChange={(checked) => handleSettingChange('useCustomColors', checked)}
+                      disabled={settings.useAMLL}
                     />
                   </div>
+                  {settings.useAMLL && (
+                    <MobileSettingsNote>
+                      AMLLがオンの場合は使用できません
+                    </MobileSettingsNote>
+                  )}
 
                   {settings.useCustomColors && (
                     <>
