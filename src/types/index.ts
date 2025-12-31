@@ -110,6 +110,7 @@ export interface Settings {
   lyricposition: 'left' | 'center' | 'right';
   backgroundblur: number;
   backgroundtransparency: number;
+  youtubeFullDisplay: boolean;
   theme: 'system' | 'dark' | 'light';
   playerposition: 'left' | 'center' | 'right';
   volume: number;

@@ -599,6 +599,20 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
 
                   <Separator />
 
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="youtubeFullDisplay" className="text-sm font-medium flex items-center gap-2">
+                      <Expand className="h-4 w-4" />
+                      YouTube画面をフル表示
+                    </Label>
+                    <Switch
+                      id="youtubeFullDisplay"
+                      checked={settings.youtubeFullDisplay}
+                      onCheckedChange={(checked) => handleSettingChange('youtubeFullDisplay', checked)}
+                    />
+                  </div>
+
+                  <Separator />
+
                   <div className="space-y-2">
                     <Label htmlFor="theme" className="text-sm font-medium flex items-center gap-2">
                       <Palette className="h-4 w-4" />
@@ -1219,6 +1233,20 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       <span className="text-xs text-muted-foreground">透明</span>
                       <span className="text-xs text-muted-foreground">不透明</span>
                     </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between py-2">
+                    <Label htmlFor="youtubeFullDisplay" className="text-sm font-medium flex items-center gap-2">
+                      <Expand className="h-4 w-4" />
+                      YouTube画面をフル表示
+                    </Label>
+                    <Switch
+                      id="youtubeFullDisplay"
+                      checked={settings.youtubeFullDisplay}
+                      onCheckedChange={(checked) => handleSettingChange('youtubeFullDisplay', checked)}
+                    />
                   </div>
 
                   <Separator />

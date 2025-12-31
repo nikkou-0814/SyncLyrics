@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS: Settings = {
   lyricposition: 'left',
   backgroundblur: 10,
   backgroundtransparency: 50,
+  youtubeFullDisplay: true,
   theme: 'dark',
   playerposition: 'right',
   volume: 50,
@@ -661,26 +662,43 @@ const Player: React.FC<PlayerProps> = ({
         onMobileControlsToggle={handleMobileControlsToggle}
       />
 
-      <div className="fixed z-0 w-full h-full">
+      <div className="fixed inset-0 z-0 overflow-hidden">
         <div
-          className="w-full h-full fixed top-0 left-0"
+          className="absolute inset-0"
           style={{
-            backgroundColor: resolvedTheme === 'dark' 
-              ? `rgba(0, 0, 0, ${settings.backgroundtransparency / 100})`
-              : `rgba(255, 255, 255, ${settings.backgroundtransparency / 100})`,
+            backgroundColor:
+              resolvedTheme === 'dark'
+                ? `rgba(0, 0, 0, ${settings.backgroundtransparency / 100})`
+                : `rgba(255, 255, 255, ${settings.backgroundtransparency / 100})`,
             backdropFilter: settings.backgroundblur > 0 ? `blur(${settings.backgroundblur}px)` : 'none',
+            zIndex: 1,
           }}
         />
-        <YouTube
-          videoId={audioUrl}
-          opts={opts}
-          onReady={onPlayerReady}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onStateChange={onStateChange}
-          style={{ width: '100%', height: '100%' }}
-          iframeClassName="w-full h-full"
-        />
+        <div className="absolute inset-0" style={{ zIndex: 0 }}>
+          <div
+            className="absolute left-1/2 top-1/2"
+            style={{
+              width: settings.youtubeFullDisplay
+                ? 'max(100vw, calc(100vh * 16 / 9))'
+                : 'min(100vw, calc(100vh * 16 / 9))',
+              height: settings.youtubeFullDisplay
+                ? 'max(100vh, calc(100vw * 9 / 16))'
+                : 'min(100vh, calc(100vw * 9 / 16))',
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <YouTube
+              videoId={audioUrl}
+              opts={opts}
+              onReady={onPlayerReady}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onStateChange={onStateChange}
+              style={{ width: '100%', height: '100%' }}
+              iframeClassName="w-full h-full"
+            />
+          </div>
+        </div>
       </div>
 
       <SettingsSidebar
