@@ -124,7 +124,9 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
                   fontSize: '0.48em',
                   color: pronInactiveColor,
                   whiteSpace: 'pre-wrap',
-                  textAlign: karaokeEnabled ? 'left' : 'inherit'
+                  textAlign: karaokeEnabled ? 'left' : 'inherit',
+                  transform: wordIsActive || wordIsCompleted ? 'translateY(-3px)' : 'translateY(0px)',
+                  transition: 'transform 1s ease'
                 }}
               >
                 {getPronForWord(word)}
@@ -252,7 +254,10 @@ const BackgroundWordTimingLyricLine: React.FC<BackgroundWordTimingLyricLineProps
                   backgroundPosition: finalPosition,
                   backgroundClip: 'text',
                   WebkitBackgroundClip: 'text',
-                  transition: karaokeEnabled ? (animationEnabled ? 'background-position 0.1s linear' : 'none') : 'color 0.5s ease'
+                  transform: (karaokeEnabled && (wordIsActive || wordIsCompleted)) ? 'translateY(-3px)' : 'translateY(0px)',
+                  transition: animationEnabled
+                    ? (karaokeEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'background-position 0.1s linear, transform 1.5s ease, color 0.5s ease')
+                    : (karaokeEnabled ? 'transform 0.5s ease' : 'transform 0.5s ease, color 0.5s ease')
                 }}
               >
                 {getPronForWord(word)}

@@ -292,7 +292,8 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                     backgroundPosition: showGradient ? finalPosition : (isLTR ? '100% 0' : '0% 0'),
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
-                    transition: animationEnabled ? 'background-position 0.1s linear' : 'none'
+                    transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
+                    transition: animationEnabled ? 'background-position 0.1s linear, transform 1.5s ease' : 'transform 1s ease'
                   }}
                 >
                   {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
@@ -371,7 +372,9 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
                   fontSize: '0.6em',
                   color: inactiveColor,
                   whiteSpace: 'pre-wrap',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  transform: shouldAnimate && isActive ? 'translateY(-3px)' : 'translateY(0px)',
+                  transition: 'transform 1.5s ease'
                 }}
               >
                 {pronMap ? (pronMap[word.__origIndex] || '') : (line.pronunciationWords && line.pronunciationWords[index] ? line.pronunciationWords[index].text : '')}
