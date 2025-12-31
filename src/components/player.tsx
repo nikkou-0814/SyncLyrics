@@ -15,6 +15,7 @@ import { PlayerProps, Settings } from '@/types';
 
 const DEFAULT_SETTINGS: Settings = {
   showplayercontrol: true,
+  autoHideMobileControls: true,
   fullplayer: false,
   fontSize: 'medium',
   lyricposition: 'left',
@@ -129,7 +130,19 @@ const Player: React.FC<PlayerProps> = ({
 
   // モバイル版でのコントロール表示管理
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile) {
+      setMobileControlsVisible(true);
+      return;
+    }
+
+    if (!settings.autoHideMobileControls) {
+      setMobileControlsVisible(true);
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
+      return;
+    }
 
     // 再生停止時は常に表示
     if (!isPlaying) {
@@ -155,12 +168,17 @@ const Player: React.FC<PlayerProps> = ({
         clearTimeout(hideTimeoutRef.current);
       }
     };
-  }, [isMobile, isPlaying, lastInteractionTime]);
+  }, [isMobile, isPlaying, lastInteractionTime, settings.autoHideMobileControls]);
 
   // モバイル版でのコントロール表示切り替え
   const handleMobileControlsToggle = () => {
     if (!isMobile) return;
-    
+
+    if (!settings.autoHideMobileControls) {
+      setMobileControlsVisible(true);
+      return;
+    }
+
     setMobileControlsVisible(true);
     setLastInteractionTime(Date.now());
     

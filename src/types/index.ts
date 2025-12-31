@@ -104,6 +104,7 @@ export interface BackgroundWordTimingLyricLineProps {
 
 export interface Settings {
   showplayercontrol: boolean;
+  autoHideMobileControls: boolean;
   fullplayer: boolean;
   fontSize: 'small' | 'medium' | 'large';
   lyricposition: 'left' | 'center' | 'right';

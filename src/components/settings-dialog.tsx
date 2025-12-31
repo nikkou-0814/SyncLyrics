@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline, FileText } from 'lucide-react';
+import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline, FileText, EyeOff } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -1337,6 +1337,18 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       id="showplayercontrol"
                       checked={settings.showplayercontrol}
                       onCheckedChange={(checked) => handleSettingChange('showplayercontrol', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
+                    <Label htmlFor="autoHideMobileControls" className="text-sm font-medium flex items-center gap-2">
+                      <EyeOff className="h-4 w-4" />
+                      自動でコントローラーを非表示
+                    </Label>
+                    <Switch
+                      id="autoHideMobileControls"
+                      checked={settings.autoHideMobileControls}
+                      onCheckedChange={(checked) => handleSettingChange('autoHideMobileControls', checked)}
                     />
                   </div>
 
