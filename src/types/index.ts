@@ -333,3 +333,13 @@ export type HistoryDisplayItem = {
   trackHighlightRange: { start: number; end: number } | null;
   artistHighlightRange: { start: number; end: number } | null;
 };
+
+export interface SimpleLyricLineProps {
+  text: string;
+  isActive?: boolean;
+  color?: string;
+  activeColor?: string;
+  inactiveColor?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}

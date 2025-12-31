@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import LineBreaker from '@/components/linebreak';
+import SimpleLyricLine from '@/components/simple-lyric-line';
 import BackgroundWordTimingLyricLine from '@/components/ttml/background';
 import PronunciationKaraokeLyricLine from '@/components/ttml/pronunciation';
 import TranslationWordTimingLyricLine from '@/components/ttml/translation';
@@ -1528,20 +1529,19 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   />
                                 ) : (
                                   <div>
-                                    <span style={{ 
-                                      fontSize: {
-                                        small: '1.2rem',
-                                        medium: '1.5rem',
-                                        large: '2.0rem',
-                                      }[settings.fontSize],
-                                      color: settings.useCustomColors
-                                        ? (isDisplaying ? activeLyricColor : inactiveLyricColor)
-                                        : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'),
-                                      pointerEvents: 'none',
-                                      transition: 'color 0.5s ease'
-                                    }}>
-                                      <LineBreaker text={backgroundText} />
-                                    </span>
+                                    <SimpleLyricLine
+                                      text={backgroundText}
+                                      isActive={isDisplaying}
+                                      activeColor={settings.useCustomColors ? activeLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)')}
+                                      inactiveColor={settings.useCustomColors ? inactiveLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)')}
+                                      style={{
+                                        fontSize: {
+                                          small: '1.2rem',
+                                          medium: '1.5rem',
+                                          large: '2.0rem',
+                                        }[settings.fontSize],
+                                      }}
+                                    />
                                     {settings.showPronunciation && !hideBackgroundPronLine && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
                                       shouldUseWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
                                         <div
@@ -1604,23 +1604,16 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         <div
                                           style={{
                                             fontSize: '0.48em',
-                                            color: (() => {
-                                              const begin = line.begin;
-                                              const end = (line.originalEnd || line.end);
-                                              const active = now >= begin && now < end;
-                                              if (settings.useCustomColors) {
-                                                return active ? activeLyricColor : inactiveLyricColor;
-                                              }
-                                              const dark = active ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)';
-                                              const light = active ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)';
-                                              return resolvedTheme === 'dark' ? dark : light;
-                                            })(),
-                                            pointerEvents: 'none',
-                                            textAlign: textAlignment,
                                             marginTop: '0.1em',
+                                            textAlign: textAlignment,
                                           }}
                                         >
-                                          <LineBreaker text={backgroundPronText} />
+                                          <SimpleLyricLine
+                                            text={backgroundPronText}
+                                            isActive={isDisplaying || (now >= line.begin && now < (line.originalEnd || line.end))}
+                                            activeColor={settings.useCustomColors ? activeLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)')}
+                                            inactiveColor={settings.useCustomColors ? inactiveLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)')}
+                                          />
                                         </div>
                                       )
                                     )}
@@ -1661,14 +1654,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             inactiveColor={inactiveLyricColor}
                                           />
                                           ) : (
-                                            <span
-                                              style={{
-                                                whiteSpace: 'pre-wrap',
-                                                color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
-                                              }}
-                                            >
-                                              <LineBreaker text={backgroundTranslationText1} />
-                                            </span>
+                                            <SimpleLyricLine
+                                              text={backgroundTranslationText1}
+                                              isActive={isDisplaying}
+                                              activeColor={settings.useWordTiming ? activeLyricColor : 'inherit'}
+                                              inactiveColor={settings.useWordTiming ? inactiveLyricColor : 'inherit'}
+                                              style={{ color: settings.useWordTiming ? undefined : 'inherit' }}
+                                            />
                                           )}
                                         </div>
                                       )}
@@ -1702,14 +1694,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               inactiveColor={inactiveLyricColor}
                                           />
                                           ) : (
-                                            <span
-                                              style={{
-                                                whiteSpace: 'pre-wrap',
-                                                color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
-                                              }}
-                                            >
-                                              <LineBreaker text={backgroundTranslationText2} />
-                                            </span>
+                                            <SimpleLyricLine
+                                              text={backgroundTranslationText2}
+                                              isActive={isDisplaying}
+                                              activeColor={settings.useWordTiming ? activeLyricColor : 'inherit'}
+                                              inactiveColor={settings.useWordTiming ? inactiveLyricColor : 'inherit'}
+                                              style={{ color: settings.useWordTiming ? undefined : 'inherit' }}
+                                            />
                                           )}
                                         </div>
                                       )}
@@ -1755,21 +1746,21 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   inactiveColor={inactiveLyricColor}
                                 />
                               ) : (
-                                <span style={{ pointerEvents: 'none', color: isDisplaying ? activeLyricColor : inactiveLyricColor }}>
-                                  <LineBreaker text={line.text || ''} />
-                                </span>
+                                <SimpleLyricLine
+                                  text={line.text || ''}
+                                  isActive={isDisplaying}
+                                  activeColor={activeLyricColor}
+                                  inactiveColor={inactiveLyricColor}
+                                />
                               )
                             )
                           ) : (
-                            <span
-                              style={{
-                                pointerEvents: 'none',
-                                color: isDisplaying ? activeLyricColor : inactiveLyricColor,
-                                transition: 'color 0.5s ease'
-                              }}
-                            >
-                              <LineBreaker text={line.text || ''} />
-                            </span>
+                            <SimpleLyricLine
+                              text={line.text || ''}
+                              isActive={isDisplaying}
+                              activeColor={activeLyricColor}
+                              inactiveColor={inactiveLyricColor}
+                            />
                           )}
                           {settings.showPronunciation && !hidePronLine && !(settings.useKaraokeLyric && isWordTimingEnabled && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) && ((line.pronunciationWords && line.pronunciationWords.length > 0) || (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')) && (
                             <div
@@ -1823,9 +1814,12 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   inactiveColor={inactiveLyricColor}
                                 />
                               ) : (
-                                <span style={{ whiteSpace: 'pre-wrap' }}>
-                                  <LineBreaker text={pronText} />
-                                </span>
+                                <SimpleLyricLine
+                                  text={pronText}
+                                  isActive={isDisplaying || (now >= line.begin && now < (line.originalEnd || line.end))}
+                                  activeColor={settings.useCustomColors ? activeLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)')}
+                                  inactiveColor={settings.useCustomColors ? inactiveLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)')}
+                                />
                               )}
                             </div>
                           )}
@@ -1859,14 +1853,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     inactiveColor={inactiveLyricColor}
                                   />
                                 ) : (
-                                  <span
-                                    style={{
-                                      whiteSpace: 'pre-wrap',
-                                      color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
-                                    }}
-                                  >
-                                    <LineBreaker text={translationText1} />
-                                  </span>
+                                  <SimpleLyricLine
+                                    text={translationText1}
+                                    isActive={isDisplaying}
+                                    activeColor={settings.useWordTiming ? activeLyricColor : 'inherit'}
+                                    inactiveColor={settings.useWordTiming ? inactiveLyricColor : 'inherit'}
+                                    style={{ color: settings.useWordTiming ? undefined : 'inherit' }}
+                                  />
                                 )}
                               </div>
                             )}
@@ -1898,14 +1891,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     inactiveColor={inactiveLyricColor}
                                   />
                                 ) : (
-                                  <span
-                                    style={{
-                                      whiteSpace: 'pre-wrap',
-                                      color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
-                                    }}
-                                  >
-                                    <LineBreaker text={translationText2} />
-                                  </span>
+                                  <SimpleLyricLine
+                                    text={translationText2}
+                                    isActive={isDisplaying}
+                                    activeColor={settings.useWordTiming ? activeLyricColor : 'inherit'}
+                                    inactiveColor={settings.useWordTiming ? inactiveLyricColor : 'inherit'}
+                                    style={{ color: settings.useWordTiming ? undefined : 'inherit' }}
+                                  />
                                 )}
                               </div>
                             )}

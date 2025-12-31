@@ -1,10 +1,34 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import LineBreaker from '@/components/linebreak';
+import SimpleLyricLine from '@/components/simple-lyric-line';
 import { PlayerLyricsProps, KaraokeLyricLineProps } from '@/types';
 
-const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
+const areKaraokeLinePropsEqual = (
+  prev: KaraokeLyricLineProps,
+  next: KaraokeLyricLineProps
+) => {
+  if (prev.isActive !== next.isActive) return false;
+
+  if (
+    prev.text !== next.text ||
+    prev.resolvedTheme !== next.resolvedTheme ||
+    prev.progressDirection !== next.progressDirection ||
+    prev.activeColor !== next.activeColor ||
+    prev.inactiveColor !== next.inactiveColor
+  ) {
+    return false;
+  }
+
+  if (next.isActive) {
+    return prev.progressPercentage === next.progressPercentage;
+  }
+
+  return true;
+};
+
+const KaraokeLyricLine = React.memo<KaraokeLyricLineProps>(({
   text,
   progressPercentage,
   resolvedTheme,
@@ -24,10 +48,14 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
     let animationFrameId: number | null = null;
     let timerId: NodeJS.Timeout | null = null;
 
-    if (progressDirection === 'ttb' || progressDirection === 'btt') {
-      animationFrameId = requestAnimationFrame(() => setShouldAnimate(true));
+    if (isActive) {
+      if (progressDirection === 'ttb' || progressDirection === 'btt') {
+        animationFrameId = requestAnimationFrame(() => setShouldAnimate(true));
+      } else {
+        timerId = setTimeout(() => setShouldAnimate(true), 50);
+      }
     } else {
-      timerId = setTimeout(() => setShouldAnimate(true), 50);
+      setShouldAnimate(false);
     }
 
     return () => {
@@ -83,8 +111,6 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
     }
   };
 
-  const getBackgroundSize = (): string => '200% 100%';
-
   const getBackgroundPosition = (): string => {
     const progress = progressPercentage / 100;
     switch (progressDirection) {
@@ -103,7 +129,7 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
         whiteSpace: 'pre-wrap',
         color: 'transparent',
         backgroundImage: getGradient(),
-        backgroundSize: getBackgroundSize(),
+        backgroundSize: '200% 100%',
         backgroundPosition: getBackgroundPosition(),
         backgroundClip: 'text',
         WebkitBackgroundClip: 'text',
@@ -114,7 +140,8 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
       <LineBreaker text={text} />
     </span>
   );
-};
+}, areKaraokeLinePropsEqual);
+KaraokeLyricLine.displayName = 'KaraokeLyricLine';
 
 const LrcLyrics: React.FC<PlayerLyricsProps> = ({
   lyricsData,
@@ -131,7 +158,6 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
 }) => {
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const [isLyricsHovered, setIsLyricsHovered] = useState<boolean>(false);
-  const [progressPercentage, setProgressPercentage] = useState<number>(0);
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState<boolean>(true);
   const scrollDisableTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isProgrammaticScrollingRef = useRef<boolean>(false);
@@ -142,25 +168,23 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
   const activeLyricColor = settings.useCustomColors ? settings.activeLyricColor : (resolvedTheme === 'dark' ? '#FFFFFF' : '#000000');
   const inactiveLyricColor = settings.useCustomColors ? settings.inactiveLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)');
 
-  useEffect(() => {
-    if (currentLineIndex < 0 || currentLineIndex >= lyricsData.length) return;
-    
+  const currentLineProgress = useMemo(() => {
+    if (currentLineIndex < 0 || currentLineIndex >= lyricsData.length) return 0;
+
     const currentLyricTime = lyricsData[currentLineIndex].time;
-    const nextLyricTime = 
+    const nextLyricTime =
       currentLineIndex + 1 < lyricsData.length
         ? lyricsData[currentLineIndex + 1].time
         : duration;
-    
+
     const timeDiff = nextLyricTime - currentLyricTime;
     if (timeDiff <= 0) {
-      setProgressPercentage(currentTime >= currentLyricTime ? 100 : 0);
-      return;
+      return (currentTime + settings.lyricOffset) >= currentLyricTime ? 100 : 0;
     }
-    
+
     const elapsed = (currentTime + settings.lyricOffset) - currentLyricTime;
     const progress = Math.min(Math.max(elapsed / timeDiff, 0), 1) * 100;
-    
-    setProgressPercentage(progress);
+    return progress;
   }, [currentTime, currentLineIndex, lyricsData, duration, settings.lyricOffset]);
 
   useEffect(() => {
@@ -457,7 +481,7 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                         ? (
                           <KaraokeLyricLine
                           text={line.text}
-                          progressPercentage={progressPercentage}
+                          progressPercentage={currentLineProgress}
                           resolvedTheme={resolvedTheme}
                           isActive={isActive}
                           progressDirection={settings.lyricProgressDirection}
@@ -466,9 +490,10 @@ const LrcLyrics: React.FC<PlayerLyricsProps> = ({
                           />
                         )
                         : (
-                          <span style={{ pointerEvents: 'none', color: isActive ? activeLyricColor : inactiveLyricColor }}>
-                          <LineBreaker text={line.text} />
-                          </span>
+                          <SimpleLyricLine
+                            text={line.text}
+                            color={isActive ? activeLyricColor : inactiveLyricColor}
+                          />
                         )
                       }
                       </div>
