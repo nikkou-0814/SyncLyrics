@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import {  Pause,  Play, Volume, Volume1, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-react';
+import { Pause, Play, Volume, Volume1, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -84,7 +84,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   };
 
   const VolumeIcon = () => {
-    const iconClass = "h-4 w-4";
+    const iconClass = "h-4 w-4 fill-foreground";
     if (volume === 0) return <VolumeX className={iconClass} />;
     if (volume > 50) return <Volume2 className={iconClass} />;
     if (volume > 0) return <Volume1 className={iconClass} />;
@@ -159,7 +159,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                     value={[currentTime]}
                     max={duration}
                     step={0.1}
-                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-primary/80 [&_.slider-thumb]:opacity-0"
+                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-foreground dark:[&_.slider-range]:bg-primary/80 [&_.slider-thumb]:opacity-0"
                     onValueChange={handleProgressChangeWithToggle}
                   />
                   <span className="text-xs font-medium min-w-10 text-center text-foreground/90 drop-shadow-sm">
@@ -173,48 +173,42 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={handleSkipBackWithToggle}
-                    className="h-12 w-12 rounded-full hover:bg-foreground/15 transition-all duration-200 text-foreground/90 hover:text-foreground drop-shadow-sm"
+                    className="h-12 w-12 rounded-full hover:bg-foreground/15 active:scale-90 transition-all duration-200 text-foreground/90 hover:text-foreground drop-shadow-sm"
                   >
-                    <SkipBack className="h-6 w-6" />
+                    <SkipBack className="fill-foreground" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handlePlayPause}
-                    className="h-16 w-16 rounded-full hover:bg-foreground/15 hover:scale-105 transition-all duration-200 text-primary drop-shadow-lg"
+                    className="h-16 w-16 rounded-full hover:bg-foreground/15 active:scale-90 transition-all duration-200 text-primary drop-shadow-lg"
                   >
                     {isPlaying ? (
-                      <Pause className="h-10 w-10" />
+                      <Pause className="fill-foreground" />
                     ) : (
-                      <Play className="h-10 w-10 ml-1" />
+                      <Play className="fill-foreground" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleSkipForwardWithToggle}
-                    className="h-12 w-12 rounded-full hover:bg-foreground/15 transition-all duration-200 text-foreground/90 hover:text-foreground drop-shadow-sm"
+                    className="h-12 w-12 rounded-full hover:bg-foreground/15 active:scale-90 transition-all duration-200 text-foreground/90 hover:text-foreground drop-shadow-sm"
                   >
-                    <SkipForward className="h-6 w-6" />
+                    <SkipForward className="fill-foreground" />
                   </Button>
                 </div>
 
                 {/* Volume Control */}
-                <div className="flex items-center gap-3 pt-2 px-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleMuteWithToggle}
-                    className="h-9 w-9 rounded-full hover:bg-foreground/15 transition-all duration-200 text-foreground/90 hover:text-foreground drop-shadow-sm"
-                  >
-                    <VolumeIcon />
-                  </Button>
+                <div className="flex items-center gap-3 pb-4 px-2">
+                  <Volume1 className='h-4 w-4 fill-foreground' />
                   <Slider
                     value={[volume]}
                     max={100}
-                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-primary/80 [&_.slider-thumb]:opacity-0"
+                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-foreground dark:[&_.slider-range]:bg-primary/80 [&_.slider-thumb]:opacity-0"
                     onValueChange={onLocalVolumeChange}
                   />
+                  <Volume2 className='h-4 w-4 fill-foreground' />
                 </div>
               </div>
             ) : (
@@ -228,7 +222,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                     value={[currentTime]}
                     max={duration}
                     step={0.1}
-                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-primary/80 [&_.slider-thumb]:bg-primary"
+                    className="flex-1 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-foreground dark:[&_.slider-range]:bg-primary/80 [&_.slider-thumb]:bg-primary"
                     onValueChange={handleProgressChangeWithToggle}
                   />
                   <span className="text-xs font-medium min-w-12 text-center text-foreground/90 drop-shadow-sm">
@@ -247,7 +241,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                         onClick={handleSkipBackWithToggle}
                         className="h-10 w-10 rounded-full hover:bg-foreground/15 transition-all duration-200 text-foreground/90 hover:text-foreground drop-shadow-sm"
                       >
-                        <SkipBack className="h-5 w-5" />
+                        <SkipBack className="fill-foreground" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -256,9 +250,9 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                         className="h-12 w-12 rounded-full hover:bg-foreground/15 hover:scale-105 transition-all duration-200 text-primary drop-shadow-lg"
                       >
                         {isPlaying ? (
-                          <Pause className="h-7 w-7" />
+                          <Pause className="fill-foreground" />
                         ) : (
-                          <Play className="h-7 w-7 ml-0.5" />
+                          <Play className="fill-foreground" />
                         )}
                       </Button>
                       <Button
@@ -267,7 +261,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                         onClick={handleSkipForwardWithToggle}
                         className="h-10 w-10 rounded-full hover:bg-foreground/15 transition-all duration-200 text-foreground/90 hover:text-foreground drop-shadow-sm"
                       >
-                        <SkipForward className="h-5 w-5" />
+                        <SkipForward className="fill-foreground" />
                       </Button>
                     </div>
 
@@ -284,7 +278,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                       <Slider
                         value={[volume]}
                         max={100}
-                        className="w-28 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-primary/80 [&_.slider-thumb]:bg-primary"
+                        className="w-28 [&_.slider-track]:bg-foreground/15 [&_.slider-range]:bg-foreground dark:[&_.slider-range]:bg-primary/80 [&_.slider-thumb]:bg-primary"
                         onValueChange={onLocalVolumeChange}
                       />
                     </div>
