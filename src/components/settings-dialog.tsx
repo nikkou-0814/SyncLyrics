@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MicVocal, ArrowUpWideNarrow, Spline, FileText, EyeOff } from 'lucide-react';
+import { Settings as SettingsIcon, Type, Music, LetterText, Clock, Blend, Palette, Layers, SlidersHorizontal, Expand, MoveHorizontal, MoveVertical, MicVocal, ArrowUpWideNarrow, Spline, FileText, EyeOff } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -18,6 +18,7 @@ import type { RgbaColor, ColorWithAlphaPickerProps, ColorPickerProps } from '@/t
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const clamp = (n: number, min = 0, max = 255) => Math.min(Math.max(n, min), max);
+const formatPositionValue = (value?: number) => Math.min(Math.max(Math.round(value ?? 50), 0), 100);
 const rgbToHex = (r: number, g: number, b: number) => `#${[r, g, b]
   .map((value) => clamp(Math.round(value), 0, 255).toString(16).padStart(2, '0').toUpperCase())
   .join('')}`;
@@ -572,7 +573,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                         defaultValue={[settings.backgroundblur]}
                         min={0}
                         max={20}
-                        step={1}
+                        step={0.1}
                         onValueChange={(values) => handleSettingChange('backgroundblur', values[0])}
                       />
                     </div>
@@ -618,6 +619,65 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                       onCheckedChange={(checked) => handleSettingChange('youtubeFullDisplay', checked)}
                     />
                   </div>
+
+                  {settings.youtubeFullDisplay && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="youtubeFullPositionX" className="text-sm font-medium flex items-center gap-2">
+                          <MoveHorizontal className="h-4 w-4" />
+                          YouTube表示位置（左右）
+                        </Label>
+                        <div className="pt-4 px-2">
+                          <Slider
+                            id="youtubeFullPositionX"
+                            value={[settings.youtubeFullPositionX ?? 50]}
+                            min={0}
+                            max={100}
+                            step={1}
+                            onValueChange={(values) =>
+                              handleSettingChange('youtubeFullPositionX', Math.round(values[0]))
+                            }
+                          />
+                        </div>
+                        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                          <span>左</span>
+                          <span>{formatPositionValue(settings.youtubeFullPositionX)}</span>
+                          <span>右</span>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-2">
+                        <Label htmlFor="youtubeFullPositionY" className="text-sm font-medium flex items-center gap-2">
+                          <MoveVertical className="h-4 w-4" />
+                          YouTube表示位置（上下）
+                          {!settings.youtubeFullDisplay && (
+                            <SettingsTooltip>
+                              画面フル表示がオフの場合は使用できません
+                            </SettingsTooltip>
+                          )}
+                        </Label>
+                        <div className="pt-4 px-2">
+                          <Slider
+                            id="youtubeFullPositionY"
+                            value={[settings.youtubeFullPositionY ?? 50]}
+                            min={0}
+                            max={100}
+                            step={1}
+                            onValueChange={(values) =>
+                              handleSettingChange('youtubeFullPositionY', Math.round(values[0]))
+                            }
+                          />
+                        </div>
+                        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                          <span>上</span>
+                          <span>{formatPositionValue(settings.youtubeFullPositionY)}</span>
+                          <span>下</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <Separator />
 
@@ -1216,7 +1276,7 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                         defaultValue={[settings.backgroundblur]}
                         min={0}
                         max={20}
-                        step={1}
+                        step={0.1}
                         onValueChange={(values) => handleSettingChange('backgroundblur', values[0])}
                       />
                     </div>
@@ -1262,6 +1322,60 @@ const MobileSettingsView: React.FC<Omit<SettingsSidebarProps, 'isMobile'>> = ({
                       onCheckedChange={(checked) => handleSettingChange('youtubeFullDisplay', checked)}
                     />
                   </div>
+
+                  {settings.youtubeFullDisplay && (
+                    <>
+                      <div>
+                        <Label htmlFor="youtubeFullPositionX" className="text-sm font-medium mb-2 flex items-center gap-2">
+                          <MoveHorizontal className="h-4 w-4" />
+                          YouTube表示位置（左右）
+                        </Label>
+                        <div className="pt-4 px-2">
+                          <Slider
+                            id="youtubeFullPositionX"
+                            value={[settings.youtubeFullPositionX ?? 50]}
+                            min={0}
+                            max={100}
+                            step={1}
+                            onValueChange={(values) =>
+                              handleSettingChange('youtubeFullPositionX', Math.round(values[0]))
+                            }
+                            disabled={!settings.youtubeFullDisplay}
+                          />
+                        </div>
+                        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                          <span>左</span>
+                          <span>{formatPositionValue(settings.youtubeFullPositionX)}</span>
+                          <span>右</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="youtubeFullPositionY" className="text-sm font-medium mb-2 flex items-center gap-2">
+                          <MoveVertical className="h-4 w-4" />
+                          YouTube表示位置（上下）
+                        </Label>
+                        <div className="pt-4 px-2">
+                          <Slider
+                            id="youtubeFullPositionY"
+                            value={[settings.youtubeFullPositionY ?? 50]}
+                            min={0}
+                            max={100}
+                            step={1}
+                            onValueChange={(values) =>
+                              handleSettingChange('youtubeFullPositionY', Math.round(values[0]))
+                            }
+                            disabled={!settings.youtubeFullDisplay}
+                          />
+                        </div>
+                        <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                          <span>上</span>
+                          <span>{formatPositionValue(settings.youtubeFullPositionY)}</span>
+                          <span>下</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <Separator />
 

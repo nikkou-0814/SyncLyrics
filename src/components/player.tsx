@@ -22,6 +22,8 @@ const DEFAULT_SETTINGS: Settings = {
   backgroundblur: 10,
   backgroundtransparency: 50,
   youtubeFullDisplay: true,
+  youtubeFullPositionX: 50,
+  youtubeFullPositionY: 50,
   theme: 'dark',
   playerposition: 'right',
   volume: 50,
@@ -46,6 +48,26 @@ const DEFAULT_SETTINGS: Settings = {
   activeLyricColor: 'rgba(255, 255, 255, 0.9)',
   inactiveLyricColor: 'rgba(255, 255, 255, 0.5)',
   interludeDotsColor: 'rgba(255, 255, 255, 0.7)',
+};
+
+const clampPercent = (value: number) => Math.min(Math.max(Math.round(value), 0), 100);
+
+const normalizeYoutubePosition = (value: unknown, axis: 'x' | 'y') => {
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return clampPercent(value);
+  }
+  if (typeof value === 'string') {
+    if (axis === 'x') {
+      if (value === 'left') return 0;
+      if (value === 'center') return 50;
+      if (value === 'right') return 100;
+    } else {
+      if (value === 'top') return 0;
+      if (value === 'center') return 50;
+      if (value === 'bottom') return 100;
+    }
+  }
+  return undefined;
 };
 
 const Player: React.FC<PlayerProps> = ({
@@ -84,7 +106,16 @@ const Player: React.FC<PlayerProps> = ({
       if (parsed && typeof parsed === 'object' && 'useTTML' in parsed) {
         delete parsed.useTTML;
       }
-      return { ...DEFAULT_SETTINGS, ...parsed };
+      const normalized = { ...parsed };
+      const normalizedX = normalizeYoutubePosition(parsed?.youtubeFullPositionX, 'x');
+      if (normalizedX !== undefined) {
+        normalized.youtubeFullPositionX = normalizedX;
+      }
+      const normalizedY = normalizeYoutubePosition(parsed?.youtubeFullPositionY, 'y');
+      if (normalizedY !== undefined) {
+        normalized.youtubeFullPositionY = normalizedY;
+      }
+      return { ...DEFAULT_SETTINGS, ...normalized };
     }
     return DEFAULT_SETTINGS;
   });
@@ -672,6 +703,26 @@ const Player: React.FC<PlayerProps> = ({
     },
   };
 
+  const youtubeFullPositionStyle = useMemo<React.CSSProperties>(() => {
+    const useFullPosition = settings.youtubeFullDisplay;
+    const horizontal = clampPercent(
+      typeof settings.youtubeFullPositionX === 'number' ? settings.youtubeFullPositionX : 50
+    );
+    const vertical = clampPercent(
+      typeof settings.youtubeFullPositionY === 'number' ? settings.youtubeFullPositionY : 50
+    );
+    const left = useFullPosition ? `${horizontal}%` : '50%';
+    const top = useFullPosition ? `${vertical}%` : '50%';
+    const translateX = useFullPosition ? `-${horizontal}%` : '-50%';
+    const translateY = useFullPosition ? `-${vertical}%` : '-50%';
+
+    return {
+      left,
+      top,
+      transform: `translate(${translateX}, ${translateY})`,
+    };
+  }, [settings.youtubeFullDisplay, settings.youtubeFullPositionX, settings.youtubeFullPositionY]);
+
   return (
     <>
       {ttmlData && settings.useAMLL ? (
@@ -750,7 +801,7 @@ const Player: React.FC<PlayerProps> = ({
         />
         <div className="absolute inset-0" style={{ zIndex: 0 }}>
           <div
-            className="absolute left-1/2 top-1/2"
+            className="absolute"
             style={{
               width: settings.youtubeFullDisplay
                 ? 'max(100vw, calc(100vh * 16 / 9))'
@@ -758,7 +809,7 @@ const Player: React.FC<PlayerProps> = ({
               height: settings.youtubeFullDisplay
                 ? 'max(100vh, calc(100vw * 9 / 16))'
                 : 'min(100vh, calc(100vw * 9 / 16))',
-              transform: 'translate(-50%, -50%)',
+              ...youtubeFullPositionStyle,
             }}
           >
             <YouTube
