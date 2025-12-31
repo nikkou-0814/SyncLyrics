@@ -7,8 +7,60 @@ import PronunciationKaraokeLyricLine from '@/components/ttml/pronunciation';
 import TranslationWordTimingLyricLine from '@/components/ttml/translation';
 import { TTMLLine, PlayerLyricsProps, TTMLData, WordTimingKaraokeLyricLineProps, KaraokeLyricLineProps } from '@/types';
 
-// カラオケ風歌詞表示用
-const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
+const joinWords = (words?: TTMLLine['words']): string => {
+  if (!words || words.length === 0) return '';
+  return words.map(word => word.text).join(' ');
+};
+
+const areKaraokeLinePropsEqual = (
+  prev: KaraokeLyricLineProps,
+  next: KaraokeLyricLineProps
+) => {
+  if (prev.isActive !== next.isActive) return false;
+
+  if (
+    prev.text !== next.text ||
+    prev.resolvedTheme !== next.resolvedTheme ||
+    prev.progressDirection !== next.progressDirection ||
+    prev.activeColor !== next.activeColor ||
+    prev.inactiveColor !== next.inactiveColor
+  ) {
+    return false;
+  }
+
+  if (next.isActive) {
+    return prev.progressPercentage === next.progressPercentage;
+  }
+
+  return true;
+};
+
+const areWordTimingPropsEqual = (
+  prev: WordTimingKaraokeLyricLineProps,
+  next: WordTimingKaraokeLyricLineProps
+) => {
+  if (prev.isActive !== next.isActive) return false;
+  if (prev.isPast !== next.isPast) return false;
+
+  if (
+    prev.line !== next.line ||
+    prev.resolvedTheme !== next.resolvedTheme ||
+    prev.progressDirection !== next.progressDirection ||
+    prev.showPronunciation !== next.showPronunciation ||
+    prev.activeColor !== next.activeColor ||
+    prev.inactiveColor !== next.inactiveColor
+  ) {
+    return false;
+  }
+
+  if (next.isActive) {
+    return prev.currentTime === next.currentTime;
+  }
+
+  return true;
+};
+
+const KaraokeLyricLine = React.memo<KaraokeLyricLineProps>(({
   text,
   progressPercentage,
   resolvedTheme,
@@ -28,10 +80,14 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
     let animationFrameId: number | null = null;
     let timerId: NodeJS.Timeout | null = null;
 
-    if (progressDirection === 'ttb' || progressDirection === 'btt') {
-      animationFrameId = requestAnimationFrame(() => setShouldAnimate(true));
+    if (isActive) {
+      if (progressDirection === 'ttb' || progressDirection === 'btt') {
+        animationFrameId = requestAnimationFrame(() => setShouldAnimate(true));
+      } else {
+        timerId = setTimeout(() => setShouldAnimate(true), 50);
+      }
     } else {
-      timerId = setTimeout(() => setShouldAnimate(true), 50);
+      setShouldAnimate(false);
     }
 
     return () => {
@@ -97,10 +153,10 @@ const KaraokeLyricLine: React.FC<KaraokeLyricLineProps> = ({
       <LineBreaker text={text} />
     </span>
   );
-};
+}, areKaraokeLinePropsEqual);
+KaraokeLyricLine.displayName = 'KaraokeLyricLine';
 
-
-const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
+const WordTimingKaraokeLyricLine = React.memo<WordTimingKaraokeLyricLineProps>(({
   line,
   currentTime,
   resolvedTheme,
@@ -169,12 +225,11 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
     return res;
   }, [showPronunciation, line]);
 
-  if (!line.words || line.words.length === 0) {
-    return <span style={{ color: isActive ? activeColor : inactiveColor }}>{line.text}</span>;
-  }
-  
-  // 単語ごとにハイライトする表示
-  const textWithSpans = (() => {
+  const textWithSpans = useMemo(() => {
+    if (!line.words || line.words.length === 0) {
+      return <span style={{ color: isActive ? activeColor : inactiveColor }}>{line.text}</span>;
+    }
+    
     type AugWord = NonNullable<TTMLLine['words']>[number] & { __origIndex: number };
     const wordPositions: { start: number; end: number; word: AugWord }[] = [];
     let currentPosition = 0;
@@ -450,14 +505,15 @@ const WordTimingKaraokeLyricLine: React.FC<WordTimingKaraokeLyricLineProps> = ({
     }
     
     return spans;
-  })();
+  }, [line, isActive, currentTime, inactiveColor, activeColor, animationEnabled, delayedIndex, progressDirection, showPronunciation, pronMap, isPast]);
   
   return (
     <span ref={containerRef} style={{ display: 'inline-block', whiteSpace: 'pre-wrap' }}>
       {textWithSpans}
     </span>
   );
-};
+}, areWordTimingPropsEqual);
+WordTimingKaraokeLyricLine.displayName = 'WordTimingKaraokeLyricLine';
 
 export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   ttmlData,
@@ -487,8 +543,6 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
   const [activeInterlude, setActiveInterlude] = useState<{start: number, end: number, divIndex: number} | null>(null);
   const interludeHoldRef = useRef<boolean>(false);
   const lastInterludeKeyRef = useRef<string | null>(null);
-  const [progressPercentage, setProgressPercentage] = useState<number>(0);
-  const [hasWordTiming, setHasWordTiming] = useState<boolean>(false);
   const activeLyricColor = settings.useCustomColors ? settings.activeLyricColor : (resolvedTheme === 'dark' ? '#FFFFFF' : '#000000');
   const inactiveLyricColor = settings.useCustomColors ? settings.inactiveLyricColor : (resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.5)');
   const backgroundRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -599,32 +653,15 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     return processedLines;
   }, [ttmlData, settings.shortLineGroupThreshold]);
 
-  const getNextTimeDiffSkippingCluster = useCallback((baseLine: TTMLLine): number => {
-    const baseIdx = allLyricLines.findIndex(l => l.begin === baseLine.begin && l.text === baseLine.text);
-    if (baseIdx < 0) return 1.0;
-    for (let i = baseIdx + 1; i < allLyricLines.length; i++) {
-      const next = allLyricLines[i];
-      const inSameGroup = currentGroup.some(g => g.begin === next.begin && g.text === next.text);
-      const gap = next.begin - baseLine.begin;
-      if (inSameGroup) continue;
-      if (gap < SAME_BEGIN_EPS) continue;
-      return Math.max(gap, 0.01);
-    }
-    return 1.0;
-  }, [allLyricLines, currentGroup]);
+  const hasWordTiming = useMemo(() => {
+    if (!ttmlData) return false;
 
-  useEffect(() => {
-    if (!ttmlData) return;
-    
-    // 単語ごとの同期か
     const hasTiming = ttmlData.timing === 'Word';
-    
-    // 行ごとの同期か
-    const hasWords = allLyricLines.some(line => 
+    const hasWords = allLyricLines.some(line =>
       line.words && line.words.length > 0
     );
-    
-    setHasWordTiming(hasTiming || hasWords);
+
+    return hasTiming || hasWords;
   }, [ttmlData, allLyricLines]);
 
   // 間奏を検出
@@ -825,6 +862,68 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     
     return indices;
   }, [ttmlData]);
+
+  const currentLinesMap = useMemo(() => {
+    const map = new Map<string, TTMLLine>();
+    currentLines.forEach(line => {
+      const key = `${line.begin}-${line.text ?? ''}`;
+      if (!map.has(key)) {
+        map.set(key, line);
+      }
+    });
+    return map;
+  }, [currentLines]);
+
+  const currentGroupKeySet = useMemo(() => {
+    return new Set(currentGroup.map(line => `${line.begin}-${line.text ?? ''}`));
+  }, [currentGroup]);
+
+  const getNextTimeDiffSkippingCluster = useCallback((baseLine: TTMLLine): number => {
+    const baseIdx = allLyricLines.findIndex(l => l.begin === baseLine.begin && l.text === baseLine.text);
+    if (baseIdx < 0) return 1.0;
+    for (let i = baseIdx + 1; i < allLyricLines.length; i++) {
+      const next = allLyricLines[i];
+      const inSameGroup = currentGroupKeySet.has(`${next.begin}-${next.text ?? ''}`);
+      const gap = next.begin - baseLine.begin;
+      if (inSameGroup) continue;
+      if (gap < SAME_BEGIN_EPS) continue;
+      return Math.max(gap, 0.01);
+    }
+    return 1.0;
+  }, [allLyricLines, currentGroupKeySet]);
+
+  const currentGroupLineKeySet = useMemo(() => {
+    return new Set(currentGroup.map(line => `${line.begin}-${line.end}`));
+  }, [currentGroup]);
+
+  const stageLineKeySet = useMemo(() => {
+    return new Set(stageLineKeys);
+  }, [stageLineKeys]);
+
+  const divLastLineIndexSet = useMemo(() => {
+    return new Set(divLastLineIndices);
+  }, [divLastLineIndices]);
+
+  const lineIndexToDivIndex = useMemo(() => {
+    const map = new Map<number, number>();
+    let startIndex = 0;
+    for (let divIndex = 0; divIndex < divLastLineIndices.length; divIndex++) {
+      const endIndex = divLastLineIndices[divIndex];
+      for (let i = startIndex; i <= endIndex; i++) {
+        map.set(i, divIndex);
+      }
+      startIndex = endIndex + 1;
+    }
+    return map;
+  }, [divLastLineIndices]);
+
+  const interludeByDivIndex = useMemo(() => {
+    const map = new Map<number, { start: number; end: number; divIndex: number }>();
+    interludePeriods.forEach(period => {
+      map.set(period.divIndex, period);
+    });
+    return map;
+  }, [interludePeriods]);
 
   const getActiveGroup = useCallback((time: number): { group: TTMLLine[], end: number, index: number } => {
     const active: TTMLLine[] = allLyricLines.filter(line => 
@@ -1068,7 +1167,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       preStageKeyRef.current = null;
     }
 
-    const groupKeysSet = new Set(currentGroup.map(l => `${l.begin}-${l.end}`));
+    const groupKeysSet = currentGroupLineKeySet;
     const includePre = preStageKeyRef.current ? groupKeysSet.has(preStageKeyRef.current) : false;
 
     setStageLineKeys(prev => {
@@ -1088,31 +1187,27 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
       }
       return next;
     });
-  }, [currentTime, currentGroup, groupEnd, activeInterlude, settings.lyricOffset]);
+  }, [currentTime, currentGroup, currentGroupLineKeySet, groupEnd, activeInterlude, settings.lyricOffset]);
 
-  useEffect(() => {
+  const progressPercentage = useMemo(() => {
     if (currentGroup.length === 0 || groupEnd === null) {
-      setProgressPercentage(0);
-      return;
+      return 0;
     }
-    
+
     const currentFirstLine = currentGroup[0];
     const adjustedTime = currentTime + (settings.lyricOffset || 0);
-    
+
     if (adjustedTime >= currentFirstLine.begin && adjustedTime < groupEnd) {
       const timeDiff = groupEnd - currentFirstLine.begin;
       if (timeDiff <= 0) {
-        setProgressPercentage(adjustedTime >= currentFirstLine.begin ? 100 : 0);
-        return;
+        return adjustedTime >= currentFirstLine.begin ? 100 : 0;
       }
-      
+
       const elapsed = adjustedTime - currentFirstLine.begin;
-      const progress = Math.min(Math.max(elapsed / timeDiff, 0), 1) * 100;
-      
-      setProgressPercentage(progress);
-    } else {
-      setProgressPercentage(0);
+      return Math.min(Math.max(elapsed / timeDiff, 0), 1) * 100;
     }
+
+    return 0;
   }, [currentTime, currentGroup, groupEnd, settings.lyricOffset]);
 
   // バックグラウンドボーカルの高さを測定
@@ -1145,9 +1240,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     setIsLyricsHovered(false);
   };
 
+  const now = currentTime + (settings.lyricOffset || 0);
+  const isGroupActive = currentGroup.length > 0 && groupEnd !== null && now >= currentGroup[0].begin && now < groupEnd;
+  const isWordTimingEnabled = settings.useWordTiming;
+
   useEffect(() => {
     updateStageLine();
-  }, [currentTime, currentGroup, groupEnd, isAutoScrollEnabled, updateStageLine]);
+  }, [currentGroup, groupEnd, isAutoScrollEnabled, updateStageLine]);
 
   if (!ttmlData) {
     return null;
@@ -1192,22 +1291,18 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
         <div className="relative">
           <div style={{ height: window.innerHeight }}></div>
           {allLyricLines.map((line, index) => {
-            const activeLine = currentLines.find(l => l.begin === line.begin && l.text === line.text) as (TTMLLine & { originalEnd?: number }) | undefined;
+            const lineTextKey = `${line.begin}-${line.text ?? ''}`;
+            const activeLine = currentLinesMap.get(lineTextKey) as (TTMLLine & { originalEnd?: number }) | undefined;
             const isActive = !!activeLine;
-            const now = currentTime + (settings.lyricOffset || 0);
-            
-            // グループ内の歌詞かどうかをチェック
-            const isInCurrentGroup = currentGroup.some(groupLine => 
-              groupLine.begin === line.begin && groupLine.text === line.text
-            );
-            
-            const isGroupActive = currentGroup.length > 0 && groupEnd !== null && now >= currentGroup[0].begin && now < groupEnd;
+
+            const isInCurrentGroup = currentGroupKeySet.has(lineTextKey);
             const lineEnd = line.groupEnd || line.originalEnd || line.end;
             const isPast = isGroupActive && isInCurrentGroup ? false : lineEnd < now;
             const isDisplaying = isActive || (isGroupActive && isInCurrentGroup);
+            const shouldUseWordTiming = isDisplaying && isWordTimingEnabled;
             const isEmpty = !line.text || line.text.trim() === '';
             const lineKey = `${line.begin}-${line.end}`;
-            const isStage = !activeInterlude && stageLineKeys.includes(lineKey) && !isPast;
+            const isStage = !activeInterlude && stageLineKeySet.has(lineKey) && !isPast;
             const agent = line.agent ? ttmlData.agents.find(a => a.id === line.agent) : null;
             
             let textColor = '';
@@ -1267,44 +1362,38 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
             
             // 間奏か
             const normalizeForCompare = (s?: string) => (s ?? '').replace(/\s+/g, '').toLowerCase();
-            const mainTextForCompare = normalizeForCompare(
-              (line.text && line.text.trim() !== '')
-                ? line.text
-                : (line.words && line.words.length > 0 ? line.words.map(w => w.text).join(' ') : '')
-            );
-            const pronTextForCompare = normalizeForCompare(
-              (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')
-                ? line.pronunciationText
-                : (line.pronunciationWords && line.pronunciationWords.length > 0 ? line.pronunciationWords.map(w => w.text).join(' ') : '')
-            );
+            const mainText = (line.text && line.text.trim() !== '') ? line.text : joinWords(line.words);
+            const pronText = (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')
+              ? line.pronunciationText
+              : joinWords(line.pronunciationWords);
+            const backgroundText = (line.backgroundText && line.backgroundText.trim() !== '')
+              ? line.backgroundText
+              : joinWords(line.backgroundWords);
+            const backgroundPronText = (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== '')
+              ? line.backgroundPronunciationText
+              : joinWords(line.backgroundPronunciationWords);
+            const translationText1 = (typeof line.translationText1 === 'string' && line.translationText1.trim() !== '')
+              ? line.translationText1
+              : joinWords(line.translationWords1);
+            const translationText2 = (typeof line.translationText2 === 'string' && line.translationText2.trim() !== '')
+              ? line.translationText2
+              : joinWords(line.translationWords2);
+            const backgroundTranslationText1 = (typeof line.backgroundTranslationText1 === 'string' && line.backgroundTranslationText1.trim() !== '')
+              ? line.backgroundTranslationText1
+              : joinWords(line.backgroundTranslationWords1);
+            const backgroundTranslationText2 = (typeof line.backgroundTranslationText2 === 'string' && line.backgroundTranslationText2.trim() !== '')
+              ? line.backgroundTranslationText2
+              : joinWords(line.backgroundTranslationWords2);
+            const mainTextForCompare = normalizeForCompare(mainText);
+            const pronTextForCompare = normalizeForCompare(pronText);
             const hidePronLine = mainTextForCompare !== '' && pronTextForCompare !== '' && mainTextForCompare === pronTextForCompare;
-            const backgroundTextForCompare = normalizeForCompare(
-              (line.backgroundText && line.backgroundText.trim() !== '')
-                ? line.backgroundText
-                : (line.backgroundWords && line.backgroundWords.length > 0 ? line.backgroundWords.map(w => w.text).join(' ') : '')
-            );
-            const backgroundPronTextForCompare = normalizeForCompare(
-              (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== '')
-                ? line.backgroundPronunciationText
-                : (line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')
-            );
+            const backgroundTextForCompare = normalizeForCompare(backgroundText);
+            const backgroundPronTextForCompare = normalizeForCompare(backgroundPronText);
             const hideBackgroundPronLine = backgroundTextForCompare !== '' && backgroundPronTextForCompare !== '' && backgroundTextForCompare === backgroundPronTextForCompare;
-
-            const isDivEnd = divLastLineIndices.includes(index);
-            const interludePeriod = isDivEnd ? 
-              interludePeriods.find(ip => ip.divIndex === divLastLineIndices.indexOf(index)) : 
-              null;
-            
-            const shouldRenderInterlude = isDivEnd && interludePeriod !== undefined;
-            const lineDivIndex = (() => {
-              for (let i = 0; i < divLastLineIndices.length; i++) {
-                if (index <= divLastLineIndices[i]) {
-                  return i;
-                }
-              }
-              return 0;
-            })();
-            
+            const lineDivIndex = lineIndexToDivIndex.get(index) ?? 0;
+            const isDivEnd = divLastLineIndexSet.has(index);
+            const interludePeriod = isDivEnd ? (interludeByDivIndex.get(lineDivIndex) ?? null) : null;
+            const shouldRenderInterlude = isDivEnd && interludePeriod != null;
             const isAfterInterludeDiv = activeInterlude !== null && 
               lineDivIndex > activeInterlude.divIndex;
             
@@ -1375,7 +1464,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                             settings.showTranslation ||
                             (settings.showPronunciation &&
                             !hidePronLine &&
-                            !(settings.useKaraokeLyric && settings.useWordTiming && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) &&
+                            !(settings.useKaraokeLyric && isWordTimingEnabled && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) &&
                             ((line.pronunciationWords && line.pronunciationWords.length > 0) ||
                               (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')))
                             ? 'leading-[1.5]'
@@ -1423,10 +1512,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   }
                                 }}
                               >
-                                {line.backgroundWords && line.backgroundWords.length > 0 ? (
+                                {line.backgroundWords && line.backgroundWords.length > 0 && shouldUseWordTiming ? (
                                   <BackgroundWordTimingLyricLine
                                     backgroundWords={line.backgroundWords}
-                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    currentTime={now}
                                     resolvedTheme={resolvedTheme}
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
@@ -1451,17 +1540,17 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                       pointerEvents: 'none',
                                       transition: 'color 0.5s ease'
                                     }}>
-                                      <LineBreaker text={line.backgroundText} />
+                                      <LineBreaker text={backgroundText} />
                                     </span>
                                     {settings.showPronunciation && !hideBackgroundPronLine && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
-                                      settings.useWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
+                                      shouldUseWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
                                         <div
                                           style={{
                                             fontSize: '0.48em',
                                             color: (() => {
                                               const begin = line.begin;
                                               const end = (line.originalEnd || line.end);
-                                              const active = isDisplaying || ((currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end);
+                                              const active = isDisplaying || (now >= begin && now < end);
                                               if (settings.useCustomColors) {
                                                 return active ? activeLyricColor : inactiveLyricColor;
                                               }
@@ -1477,7 +1566,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         >
                                           <TranslationWordTimingLyricLine
                                             backgroundWords={line.backgroundPronunciationWords}
-                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            currentTime={now}
                                             resolvedTheme={resolvedTheme}
                                             progressDirection={settings.lyricProgressDirection}
                                             fontSize={settings.fontSize}
@@ -1485,7 +1574,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             persistActive={isDisplaying}
                                           />
                                         </div>
-                                      ) : (settings.useKaraokeLyric && ((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))) ? (
+                                      ) : (settings.useKaraokeLyric && (now >= line.begin && now < (line.originalEnd || line.end))) ? (
                                         <div
                                           style={{
                                             fontSize: '0.48em',
@@ -1495,10 +1584,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                           }}
                                         >
                                           <PronunciationKaraokeLyricLine
-                                            text={line.backgroundPronunciationText || (line.backgroundPronunciationWords ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')}
+                                            text={backgroundPronText}
                                             progressPercentage={
                                               (() => {
-                                                const now = currentTime + (settings.lyricOffset || 0);
                                                 const end = (line.originalEnd || line.end);
                                                 if (now <= line.begin) return 0;
                                                 if (now >= end) return 100;
@@ -1506,7 +1594,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               })()
                                             }
                                             resolvedTheme={resolvedTheme}
-                                            isActive={((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))}
+                                            isActive={(now >= line.begin && now < (line.originalEnd || line.end))}
                                             progressDirection={settings.lyricProgressDirection}
                                             activeColor={settings.useCustomColors ? activeLyricColor : undefined}
                                             inactiveColor={settings.useCustomColors ? inactiveLyricColor : undefined}
@@ -1519,7 +1607,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             color: (() => {
                                               const begin = line.begin;
                                               const end = (line.originalEnd || line.end);
-                                              const active = (currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end;
+                                              const active = now >= begin && now < end;
                                               if (settings.useCustomColors) {
                                                 return active ? activeLyricColor : inactiveLyricColor;
                                               }
@@ -1532,7 +1620,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             marginTop: '0.1em',
                                           }}
                                         >
-                                          <LineBreaker text={line.backgroundPronunciationText || (line.backgroundPronunciationWords ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')} />
+                                          <LineBreaker text={backgroundPronText} />
                                         </div>
                                       )
                                     )}
@@ -1559,10 +1647,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             opacity: 0.6,
                                           }}
                                         >
-                                          {settings.useWordTiming && line.backgroundTranslationWords1 && line.backgroundTranslationWords1.length > 0 ? (
+                                          {shouldUseWordTiming && line.backgroundTranslationWords1 && line.backgroundTranslationWords1.length > 0 ? (
                                           <TranslationWordTimingLyricLine
                                             backgroundWords={line.backgroundTranslationWords1}
-                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            currentTime={now}
                                             resolvedTheme={resolvedTheme}
                                             progressDirection={settings.lyricProgressDirection}
                                             fontSize={settings.fontSize}
@@ -1573,8 +1661,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             inactiveColor={inactiveLyricColor}
                                           />
                                           ) : (
-                                            <span style={{ whiteSpace: 'pre-wrap' }}>
-                                              <LineBreaker text={line.backgroundTranslationText1 || ''} />
+                                            <span
+                                              style={{
+                                                whiteSpace: 'pre-wrap',
+                                                color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
+                                              }}
+                                            >
+                                              <LineBreaker text={backgroundTranslationText1} />
                                             </span>
                                           )}
                                         </div>
@@ -1595,10 +1688,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             opacity: 0.6,
                                           }}
                                         >
-                                          {settings.useWordTiming && line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0 ? (
+                                          {shouldUseWordTiming && line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0 ? (
                                             <TranslationWordTimingLyricLine
                                               backgroundWords={line.backgroundTranslationWords2}
-                                              currentTime={currentTime + (settings.lyricOffset || 0)}
+                                              currentTime={now}
                                               resolvedTheme={resolvedTheme}
                                               progressDirection={settings.lyricProgressDirection}
                                               fontSize={settings.fontSize}
@@ -1607,10 +1700,15 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               disableGradient
                                               activeColor={activeLyricColor}
                                               inactiveColor={inactiveLyricColor}
-                                            />
+                                          />
                                           ) : (
-                                            <span style={{ whiteSpace: 'pre-wrap' }}>
-                                              <LineBreaker text={line.backgroundTranslationText2 || ''} />
+                                            <span
+                                              style={{
+                                                whiteSpace: 'pre-wrap',
+                                                color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
+                                              }}
+                                            >
+                                              <LineBreaker text={backgroundTranslationText2} />
                                             </span>
                                           )}
                                         </div>
@@ -1633,10 +1731,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           }}
                         >
                           {settings.useKaraokeLyric ? (
-                            hasWordTiming && settings.useWordTiming && line.words && line.words.length > 0 ? (
+                            hasWordTiming && isWordTimingEnabled && line.words && line.words.length > 0 ? (
                               <WordTimingKaraokeLyricLine
                                 line={line}
-                                currentTime={currentTime + (settings.lyricOffset || 0)}
+                                currentTime={now}
                                 resolvedTheme={resolvedTheme}
                                 progressDirection={settings.lyricProgressDirection}
                                 isActive={isDisplaying}
@@ -1673,7 +1771,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                               <LineBreaker text={line.text || ''} />
                             </span>
                           )}
-                          {settings.showPronunciation && !hidePronLine && !(settings.useKaraokeLyric && settings.useWordTiming && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) && ((line.pronunciationWords && line.pronunciationWords.length > 0) || (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')) && (
+                          {settings.showPronunciation && !hidePronLine && !(settings.useKaraokeLyric && isWordTimingEnabled && line.words && line.words.length > 0 && line.pronunciationWords && line.pronunciationWords.length > 0) && ((line.pronunciationWords && line.pronunciationWords.length > 0) || (typeof line.pronunciationText === 'string' && line.pronunciationText.trim() !== '')) && (
                             <div
                               style={{
                                 fontSize: '0.6em',
@@ -1695,10 +1793,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 marginBottom: '0.15em',
                               }}
                             >
-                              {settings.useWordTiming && line.pronunciationWords && line.pronunciationWords.length > 0 ? (
+                              {shouldUseWordTiming && line.pronunciationWords && line.pronunciationWords.length > 0 ? (
                                 <TranslationWordTimingLyricLine
                                   backgroundWords={line.pronunciationWords}
-                                  currentTime={currentTime + (settings.lyricOffset || 0)}
+                                  currentTime={now}
                                   resolvedTheme={resolvedTheme}
                                   progressDirection={settings.lyricProgressDirection}
                                   fontSize={settings.fontSize}
@@ -1709,7 +1807,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 />
                               ) : (settings.useKaraokeLyric && (now >= line.begin && now < (line.originalEnd || line.end))) ? (
                                 <PronunciationKaraokeLyricLine
-                                  text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')}
+                                  text={pronText}
                                   progressPercentage={
                                     (() => {
                                       const end = (line.originalEnd || line.end);
@@ -1726,7 +1824,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                 />
                               ) : (
                                 <span style={{ whiteSpace: 'pre-wrap' }}>
-                                  <LineBreaker text={line.pronunciationText || (line.pronunciationWords ? line.pronunciationWords.map(w => w.text).join(' ') : '')} />
+                                  <LineBreaker text={pronText} />
                                 </span>
                               )}
                             </div>
@@ -1749,10 +1847,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   opacity: 0.8,
                                 }}
                               >
-                                {settings.useWordTiming && line.translationWords1 && line.translationWords1.length > 0 ? (
+                                {shouldUseWordTiming && line.translationWords1 && line.translationWords1.length > 0 ? (
                                   <TranslationWordTimingLyricLine
                                     backgroundWords={line.translationWords1}
-                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    currentTime={now}
                                     resolvedTheme={resolvedTheme}
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
@@ -1761,8 +1859,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     inactiveColor={inactiveLyricColor}
                                   />
                                 ) : (
-                                  <span style={{ whiteSpace: 'pre-wrap' }}>
-                                    <LineBreaker text={line.translationText1 || ''} />
+                                  <span
+                                    style={{
+                                      whiteSpace: 'pre-wrap',
+                                      color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
+                                    }}
+                                  >
+                                    <LineBreaker text={translationText1} />
                                   </span>
                                 )}
                               </div>
@@ -1783,10 +1886,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   opacity: 0.8,
                                 }}
                               >
-                                {settings.useWordTiming && line.translationWords2 && line.translationWords2.length > 0 ? (
+                                {shouldUseWordTiming && line.translationWords2 && line.translationWords2.length > 0 ? (
                                   <TranslationWordTimingLyricLine
                                     backgroundWords={line.translationWords2}
-                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    currentTime={now}
                                     resolvedTheme={resolvedTheme}
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
@@ -1795,8 +1898,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                     inactiveColor={inactiveLyricColor}
                                   />
                                 ) : (
-                                  <span style={{ whiteSpace: 'pre-wrap' }}>
-                                    <LineBreaker text={line.translationText2 || ''} />
+                                  <span
+                                    style={{
+                                      whiteSpace: 'pre-wrap',
+                                      color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
+                                    }}
+                                  >
+                                    <LineBreaker text={translationText2} />
                                   </span>
                                 )}
                               </div>
@@ -1843,10 +1951,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                   }
                                 }}
                               >
-                                {line.backgroundWords && line.backgroundWords.length > 0 ? (
+                                {line.backgroundWords && line.backgroundWords.length > 0 && shouldUseWordTiming ? (
                                   <BackgroundWordTimingLyricLine
                                     backgroundWords={line.backgroundWords}
-                                    currentTime={currentTime + (settings.lyricOffset || 0)}
+                                    currentTime={now}
                                     resolvedTheme={resolvedTheme}
                                     progressDirection={settings.lyricProgressDirection}
                                     fontSize={settings.fontSize}
@@ -1871,17 +1979,17 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                       pointerEvents: 'none',
                                       transition: 'color 0.5s ease'
                                     }}>
-                                      <LineBreaker text={line.backgroundText} />
+                                      <LineBreaker text={backgroundText} />
                                     </span>
                                     {settings.showPronunciation && !hideBackgroundPronLine && (((line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0) || (typeof line.backgroundPronunciationText === 'string' && line.backgroundPronunciationText.trim() !== ''))) && (
-                                      settings.useWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
+                                      shouldUseWordTiming && line.backgroundPronunciationWords && line.backgroundPronunciationWords.length > 0 ? (
                                         <div
                                           style={{
                                             fontSize: '0.48em',
                                             color: (() => {
                                               const begin = line.begin;
                                               const end = (line.originalEnd || line.end);
-                                              const active = (currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end;
+                                              const active = now >= begin && now < end;
                                               if (settings.useCustomColors) {
                                                 return active ? activeLyricColor : inactiveLyricColor;
                                               }
@@ -1897,7 +2005,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                         >
                                           <TranslationWordTimingLyricLine
                                             backgroundWords={line.backgroundPronunciationWords}
-                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            currentTime={now}
                                             resolvedTheme={resolvedTheme}
                                             progressDirection={settings.lyricProgressDirection}
                                             fontSize={settings.fontSize}
@@ -1907,7 +2015,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             inactiveColor={inactiveLyricColor}
                                           />
                                         </div>
-                                      ) : (settings.useKaraokeLyric && ((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))) ? (
+                                      ) : (settings.useKaraokeLyric && (now >= line.begin && now < (line.originalEnd || line.end))) ? (
                                         <div
                                           style={{
                                             fontSize: '0.48em',
@@ -1918,10 +2026,9 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                           }}
                                         >
                                           <PronunciationKaraokeLyricLine
-                                            text={line.backgroundPronunciationText || (line.backgroundPronunciationWords ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')}
+                                            text={backgroundPronText}
                                             progressPercentage={
                                               (() => {
-                                                const now = currentTime + (settings.lyricOffset || 0);
                                                 const end = (line.originalEnd || line.end);
                                                 if (now <= line.begin) return 0;
                                                 if (now >= end) return 100;
@@ -1929,7 +2036,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                               })()
                                             }
                                             resolvedTheme={resolvedTheme}
-                                            isActive={((currentTime + (settings.lyricOffset || 0)) >= line.begin && (currentTime + (settings.lyricOffset || 0)) < (line.originalEnd || line.end))}
+                                            isActive={(now >= line.begin && now < (line.originalEnd || line.end))}
                                             progressDirection={settings.lyricProgressDirection}
                                             activeColor={settings.useCustomColors ? activeLyricColor : undefined}
                                             inactiveColor={settings.useCustomColors ? inactiveLyricColor : undefined}
@@ -1942,7 +2049,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             color: (() => {
                                               const begin = line.begin;
                                               const end = (line.originalEnd || line.end);
-                                              const active = isDisplaying || ((currentTime + (settings.lyricOffset || 0)) >= begin && (currentTime + (settings.lyricOffset || 0)) < end);
+                                              const active = isDisplaying || (now >= begin && now < end);
                                               if (settings.useCustomColors) {
                                                 return active ? activeLyricColor : inactiveLyricColor;
                                               }
@@ -1956,7 +2063,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             marginTop: '0.1em',
                                           }}
                                         >
-                                          <LineBreaker text={line.backgroundPronunciationText || (line.backgroundPronunciationWords ? line.backgroundPronunciationWords.map(w => w.text).join(' ') : '')} />
+                                          <LineBreaker text={backgroundPronText} />
                                         </div>
                                       )
                                     )}
@@ -1983,10 +2090,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             opacity: 0.6,
                                           }}
                                         >
-                                        {settings.useWordTiming && line.backgroundTranslationWords1 && line.backgroundTranslationWords1.length > 0 ? (
+                                        {shouldUseWordTiming && line.backgroundTranslationWords1 && line.backgroundTranslationWords1.length > 0 ? (
                                           <TranslationWordTimingLyricLine
                                             backgroundWords={line.backgroundTranslationWords1}
-                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            currentTime={now}
                                             resolvedTheme={resolvedTheme}
                                             progressDirection={settings.lyricProgressDirection}
                                             fontSize={settings.fontSize}
@@ -1997,8 +2104,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             inactiveColor={inactiveLyricColor}
                                           />
                                         ) : (
-                                          <span style={{ whiteSpace: 'pre-wrap' }}>
-                                            <LineBreaker text={line.backgroundTranslationText1 || ''} />
+                                          <span
+                                            style={{
+                                              whiteSpace: 'pre-wrap',
+                                              color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
+                                            }}
+                                          >
+                                            <LineBreaker text={backgroundTranslationText1} />
                                           </span>
                                         )}
                                         </div>
@@ -2019,10 +2131,10 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             opacity: 0.6,
                                           }}
                                         >
-                                        {settings.useWordTiming && line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0 ? (
+                                        {shouldUseWordTiming && line.backgroundTranslationWords2 && line.backgroundTranslationWords2.length > 0 ? (
                                           <TranslationWordTimingLyricLine
                                             backgroundWords={line.backgroundTranslationWords2}
-                                            currentTime={currentTime + (settings.lyricOffset || 0)}
+                                            currentTime={now}
                                             resolvedTheme={resolvedTheme}
                                             progressDirection={settings.lyricProgressDirection}
                                             fontSize={settings.fontSize}
@@ -2033,8 +2145,13 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                                             inactiveColor={inactiveLyricColor}
                                           />
                                         ) : (
-                                          <span style={{ whiteSpace: 'pre-wrap' }}>
-                                            <LineBreaker text={line.backgroundTranslationText2 || ''} />
+                                          <span
+                                            style={{
+                                              whiteSpace: 'pre-wrap',
+                                              color: settings.useWordTiming ? (isDisplaying ? activeLyricColor : inactiveLyricColor) : undefined,
+                                            }}
+                                          >
+                                            <LineBreaker text={backgroundTranslationText2} />
                                           </span>
                                         )}
                                         </div>
@@ -2051,8 +2168,8 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                   )}
                 </div>
                 {shouldRenderInterlude && interludePeriod && 
-                  (currentTime + (settings.lyricOffset || 0) >= interludePeriod.start && 
-                    currentTime + (settings.lyricOffset || 0) < interludePeriod.end && 
+                  (now >= interludePeriod.start && 
+                    now < interludePeriod.end && 
                     renderInterludeDots) ? 
                     (() => {
                       let nextPosition: 'left' | 'center' | 'right' = settings.lyricposition;

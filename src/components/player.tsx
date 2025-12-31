@@ -58,6 +58,11 @@ const Player: React.FC<PlayerProps> = ({
   ttmlData,
 }) => {
   const youtubeRef = useRef<YouTube['internalPlayer'] | null>(null);
+  const tickerRef = useRef<NodeJS.Timeout | null>(null);
+  const currentTimeRef = useRef<number>(0);
+  const lastUiTimeRef = useRef<number>(0);
+  const lastUiUpdateAtRef = useRef<number>(0);
+  const currentLineIndexRef = useRef<number>(-1);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [currentLineIndex, setCurrentLineIndex] = useState<number>(-1);
@@ -83,13 +88,14 @@ const Player: React.FC<PlayerProps> = ({
     }
     return DEFAULT_SETTINGS;
   });
-
+  const settingsRef = useRef<Settings>(settings);
   const processedLyricsData = useMemo(() => {
     if (lyricsData.length > 0 && lyricsData[0].time >= 5) {
       return [{ time: 0, text: '' }, ...lyricsData];
     }
     return lyricsData;
   }, [lyricsData]);
+  const processedLyricsRef = useRef(processedLyricsData);
 
   const updateSettings = (newSettings: Partial<Settings>) => {
     setSettings((prevSettings) => {
@@ -102,6 +108,22 @@ const Player: React.FC<PlayerProps> = ({
   useEffect(() => {
     setVolume(settings.volume);
   }, [settings.volume]);
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
+  useEffect(() => {
+    processedLyricsRef.current = processedLyricsData;
+  }, [processedLyricsData]);
+
+  useEffect(() => {
+    currentLineIndexRef.current = currentLineIndex;
+  }, [currentLineIndex]);
+
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+  }, [currentTime]);
 
   useEffect(() => {
     if (settings?.lyricOffset !== 0 && !didShowToastRef.current) {
@@ -224,14 +246,14 @@ const Player: React.FC<PlayerProps> = ({
   const handleSkipBack = () => {
     if (!youtubeRef.current) return;
     youtubeRef.current.seekTo(0);
-    setCurrentTime(0);
+    syncTimeAndIndex(0);
   };
 
   // 曲末にスキップ
   const handleSkipForward = () => {
     if (!youtubeRef.current) return;
     youtubeRef.current.seekTo(duration);
-    setCurrentTime(duration);
+    syncTimeAndIndex(duration);
   };
 
   // 音量変更
@@ -247,7 +269,7 @@ const Player: React.FC<PlayerProps> = ({
   // スライダー操作
   const handleProgressChange = (value: number[]) => {
     const newTime = value[0];
-    setCurrentTime(newTime);
+    syncTimeAndIndex(newTime);
     if (youtubeRef.current) {
       youtubeRef.current.seekTo(newTime);
     }
@@ -258,7 +280,7 @@ const Player: React.FC<PlayerProps> = ({
     if (!youtubeRef.current) return;
     const adjustedTime = time - settings.lyricOffset;
     youtubeRef.current.seekTo(adjustedTime);
-    setCurrentTime(adjustedTime);
+    syncTimeAndIndex(adjustedTime);
     if (!isPlaying) {
       youtubeRef.current.playVideo();
       setIsPlaying(true);
@@ -390,32 +412,84 @@ const Player: React.FC<PlayerProps> = ({
     event.target.setVolume(settings.volume);
   };
 
-  const onStateChange: YouTubeProps['onStateChange'] = (event) => {
-    if (event.data === 1) {
-      const interval = setInterval(() => {
-        updateTime();
-      }, 100);
-      const stopUpdating = () => {
-        clearInterval(interval);
-      };
-      youtubeRef.current?.addEventListener('onStateChange', stopUpdating);
-    }
-  };
-
-  const updateTime = () => {
-    if (!youtubeRef.current) return;
-    const time = youtubeRef.current.getCurrentTime();
-    const adjustedTime = time + settings.lyricOffset;
-    let index = -1;
-    for (let i = 0; i < processedLyricsData.length; i++) {
-      if (processedLyricsData[i].time <= adjustedTime) {
-        index = i;
+  const findLineIndex = useCallback((time: number, lines: { time: number }[]): number => {
+    let low = 0;
+    let high = lines.length - 1;
+    let result = -1;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      if (lines[mid].time <= time) {
+        result = mid;
+        low = mid + 1;
       } else {
-        break;
+        high = mid - 1;
       }
     }
+    return result;
+  }, []);
+
+  const syncTimeAndIndex = useCallback((time: number) => {
+    const adjustedTime = time + (settingsRef.current.lyricOffset || 0);
+    const index = findLineIndex(adjustedTime, processedLyricsRef.current);
+    currentTimeRef.current = time;
+    lastUiTimeRef.current = time;
+    lastUiUpdateAtRef.current = performance.now();
+    if (index !== currentLineIndexRef.current) {
+      currentLineIndexRef.current = index;
+      setCurrentLineIndex(index);
+    }
     setCurrentTime(time);
-    setCurrentLineIndex(index);
+  }, [findLineIndex]);
+
+  const updateTime = useCallback(() => {
+    if (!youtubeRef.current) return;
+    const time = youtubeRef.current.getCurrentTime();
+    currentTimeRef.current = time;
+    const adjustedTime = time + (settingsRef.current.lyricOffset || 0);
+    const index = findLineIndex(adjustedTime, processedLyricsRef.current);
+    if (index !== currentLineIndexRef.current) {
+      currentLineIndexRef.current = index;
+      setCurrentLineIndex(index);
+    }
+    const nowMs = performance.now();
+    const shouldSyncUi =
+      Math.abs(time - lastUiTimeRef.current) >= 0.2 ||
+      nowMs - lastUiUpdateAtRef.current >= 50;
+    if (shouldSyncUi) {
+      lastUiUpdateAtRef.current = nowMs;
+      lastUiTimeRef.current = time;
+      setCurrentTime(time);
+    }
+  }, [findLineIndex]);
+
+  const stopTimeTracking = useCallback(() => {
+    if (tickerRef.current) {
+      clearInterval(tickerRef.current);
+      tickerRef.current = null;
+    }
+  }, []);
+
+  const startTimeTracking = useCallback(() => {
+    stopTimeTracking();
+    updateTime();
+    tickerRef.current = setInterval(updateTime, 50);
+  }, [stopTimeTracking, updateTime]);
+
+  useEffect(() => {
+    return () => {
+      stopTimeTracking();
+    };
+  }, [stopTimeTracking]);
+
+  const onStateChange: YouTubeProps['onStateChange'] = (event) => {
+    const isNowPlaying = event.data === 1;
+    setIsPlaying(isNowPlaying);
+    if (isNowPlaying) {
+      startTimeTracking();
+    } else {
+      stopTimeTracking();
+      updateTime();
+    }
   };
 
   // 時刻フォーマット
@@ -691,8 +765,6 @@ const Player: React.FC<PlayerProps> = ({
               videoId={audioUrl}
               opts={opts}
               onReady={onPlayerReady}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
               onStateChange={onStateChange}
               style={{ width: '100%', height: '100%' }}
               iframeClassName="w-full h-full"
