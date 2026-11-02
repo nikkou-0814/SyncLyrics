@@ -651,7 +651,6 @@ export default function Home() {
     setError(null);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&service=${selectedService}`);
-      const data: { results: SearchResult[] } = await res.json();
       if (!res.ok) {
         setError({
           message: '検索に失敗しました。',
@@ -659,6 +658,7 @@ export default function Home() {
         });
         return;
       }
+      const data: { results: SearchResult[] } = await res.json();
       if (data.results.length === 0) {
         setError({
           message: '一致する検索結果はありませんでした。',
@@ -723,7 +723,6 @@ export default function Home() {
           album_id: track.album_id,
         }),
       });
-      const data: { lyricsData: LyricLine[] } = await res.json();
       if (!res.ok) {
         setError({
           message: '歌詞の取得に失敗しました。',
@@ -731,6 +730,7 @@ export default function Home() {
         });
         return;
       }
+      const data: { lyricsData: LyricLine[] } = await res.json();
       setLyricsData(data.lyricsData);
       const prev = JSON.parse(localStorage.getItem('playerSettings') || '{}');
       if (prev && typeof prev === 'object' && 'useTTML' in prev) {
