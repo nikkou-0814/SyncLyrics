@@ -21,6 +21,8 @@ TTML形式ファイルのサンプルとして、単語レベルの同期、複�
 
 ## 開発環境のセットアップ
 
+Node.js 24 と pnpm を使用します。
+
 1. リポジトリをクローン
 ```bash
 git clone https://github.com/nikkou-0814/SyncLyrics.git

@@ -92,7 +92,7 @@ const Player: React.FC<PlayerProps> = ({
   const [volume, setVolume] = useState<number>(50);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mobileControlsVisible, setMobileControlsVisible] = useState<boolean>(true);
-  const [lastInteractionTime, setLastInteractionTime] = useState<number>(Date.now());
+  const [lastInteractionTime, setLastInteractionTime] = useState<number>(() => Date.now());
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { setTheme, resolvedTheme } = useTheme();
   const theme = resolvedTheme || 'system';
