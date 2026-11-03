@@ -44,4 +44,4 @@ MITライセンスの下で公開されています。
 
 ## 謝辞
 
-本アプリケーションの開発にあたり、[Apple Music-like Lyrics](https://github.com/Steve-xmh/applemusic-like-lyrics)の制作者の皆様に深く感謝申し上げます。
+本アプリケーションの開発にあたり、[Apple Music-like Lyrics](https://github.com/amll-dev/applemusic-like-lyrics)の制作者の皆様に深く感謝申し上げます。
