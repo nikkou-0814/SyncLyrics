@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { LyricPlayer } from '@applemusic-like-lyrics/react';
 import '@applemusic-like-lyrics/core/style.css';
 import type { LyricLineMouseEvent, LyricLine, LyricWord } from '@applemusic-like-lyrics/core';
@@ -137,11 +137,16 @@ const AMLLLyrics: React.FC<AMLLLyricsProps> = ({
     }
   };
 
-  const springParams = {
+  // 再生時刻の更新で設定を再適用すると、AMLL内の遅延スクロールが取り消される。
+  const springParams = useMemo(() => ({
     mass: settings.amllSpringParams?.mass ?? 1,
     stiffness: settings.amllSpringParams?.tension ?? 300,
     damping: settings.amllSpringParams?.friction ?? 30,
-  };
+  }), [
+    settings.amllSpringParams?.mass,
+    settings.amllSpringParams?.tension,
+    settings.amllSpringParams?.friction,
+  ]);
 
   const getAlignPosition = () => {
     if (settings.scrollPositionOffset !== undefined) {
