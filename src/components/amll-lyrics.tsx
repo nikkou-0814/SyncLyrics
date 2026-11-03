@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { LyricPlayer } from '@applemusic-like-lyrics/react';
+import '@applemusic-like-lyrics/core/style.css';
 import type { LyricLineMouseEvent, LyricLine, LyricWord } from '@applemusic-like-lyrics/core';
 import { AMLLLyricsProps } from '@/types';
 
@@ -136,10 +137,10 @@ const AMLLLyrics: React.FC<AMLLLyricsProps> = ({
     }
   };
 
-  const springParams = settings.amllSpringParams || {
-    mass: 1,
-    tension: 300,
-    friction: 30,
+  const springParams = {
+    mass: settings.amllSpringParams?.mass ?? 1,
+    stiffness: settings.amllSpringParams?.tension ?? 300,
+    damping: settings.amllSpringParams?.friction ?? 30,
   };
 
   const getAlignPosition = () => {
@@ -242,9 +243,9 @@ const AMLLLyrics: React.FC<AMLLLyricsProps> = ({
         height: '100%',
       }}>
         <LyricPlayer
+          className="[&_.amll-lyric-player]:mix-blend-normal"
           lyricLines={lyricLines}
           currentTime={currentTimeMs}
-          disabled={!isPlaying}
           playing={isPlaying}
           alignAnchor="center"
           alignPosition={getAlignPosition()}
@@ -261,18 +262,10 @@ const AMLLLyrics: React.FC<AMLLLyricsProps> = ({
             width: '100%',
             height: '100%',
             textAlign: getTextAlign() as 'left' | 'center' | 'right',
-            '--amll-lyric-view-color': resolvedTheme === 'dark' 
+            '--amll-lp-font-size': '1em',
+            '--amll-lp-color': resolvedTheme === 'dark'
               ? 'rgba(255, 255, 255, 0.9)' 
               : 'rgba(0, 0, 0, 0.9)',
-            '--amll-lyric-view-color-inactive': resolvedTheme === 'dark' 
-              ? 'rgba(255, 255, 255, 0.4)' 
-              : 'rgba(0, 0, 0, 0.5)',
-            '--amll-lyric-view-color-bg': resolvedTheme === 'dark' 
-              ? 'rgba(255, 255, 255, 0.3)' 
-              : 'rgba(0, 0, 0, 0.3)',
-            '--amll-lyric-view-color-duet': resolvedTheme === 'dark' 
-              ? 'rgba(173, 216, 230, 0.9)' 
-              : 'rgba(70, 130, 180, 0.9)',
           } as React.CSSProperties}
         />
       </div>

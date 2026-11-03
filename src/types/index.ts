@@ -150,7 +150,7 @@ export interface PlayerLyricsProps {
   settings: Settings;
   resolvedTheme: string;
   onLyricClick: (time: number) => void;
-  renderInterludeDots: (startTime: number, endTime: number, alignment?: 'left' | 'center' | 'right') => JSX.Element | null;
+  renderInterludeDots: (startTime: number, endTime: number, alignment?: 'left' | 'center' | 'right') => React.JSX.Element | null;
   smoothScrollTo: (
     element: HTMLElement,
     to: number,

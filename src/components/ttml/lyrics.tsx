@@ -6,7 +6,7 @@ import SimpleLyricLine from '@/components/simple-lyric-line';
 import BackgroundWordTimingLyricLine from '@/components/ttml/background';
 import PronunciationKaraokeLyricLine from '@/components/ttml/pronunciation';
 import TranslationWordTimingLyricLine from '@/components/ttml/translation';
-import { TTMLLine, PlayerLyricsProps, TTMLData, WordTimingKaraokeLyricLineProps, KaraokeLyricLineProps } from '@/types';
+import { TTMLLine, PlayerLyricsProps, WordTimingKaraokeLyricLineProps, KaraokeLyricLineProps } from '@/types';
 
 const joinWords = (words?: TTMLLine['words']): string => {
   if (!words || words.length === 0) return '';
@@ -270,7 +270,7 @@ const WordTimingKaraokeLyricLine = React.memo<WordTimingKaraokeLyricLineProps>((
     }
     
     // テキストを分割
-    const spans: JSX.Element[] = [];
+    const spans: React.JSX.Element[] = [];
     let lastEnd = 0;
     
     wordPositions.forEach(({start, end, word}, index) => {
@@ -753,39 +753,32 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     }
   }, [activeInterlude, centerInterludeOnce]);
 
+  const agents = useMemo(() => {
+    if (!ttmlData) return [];
+    if (ttmlData.agents.length > 0) return ttmlData.agents;
+    const ids = allLyricLines.map(line => line.agent).filter((id): id is string => Boolean(id));
+    return [...new Set(ids)].map(id => ({
+      id,
+      name: `Singer ${id}`,
+      type: /^v\d+$/.test(id) && parseInt(id.slice(1), 10) < 1000 ? 'person' : 'group',
+    }));
+  }, [ttmlData, allLyricLines]);
+
   // agentが設定されているか
   const hasAgents = useMemo(() => {
     if (!ttmlData) return false;
     const agentIdsInLyrics = allLyricLines.map(line => line.agent).filter(Boolean) as string[];
-    
-    // エージェントリストが空で行にエージェントIDがある場合は自動生成
-    if (ttmlData.agents.length === 0 && agentIdsInLyrics.length > 0) {
-      const uniqueAgentIds = [...new Set(agentIdsInLyrics)];
-      const generatedAgents = uniqueAgentIds.map(id => ({
-        id,
-        name: `Singer ${id}`,
-        type: /^v\d+$/.test(id) && parseInt(id.slice(1), 10) < 1000 ? 'person' : 'group'
-      }));
-      
-      interface ExtendedTTMLData extends TTMLData {
-        _generatedAgents?: typeof generatedAgents;
-      }
-      
-      const extendedData = ttmlData as ExtendedTTMLData;
-      extendedData._generatedAgents = generatedAgents;
-      Object.assign(ttmlData, { agents: generatedAgents });
-    }
-    
+
     // エージェントの条件確認
-    const hasMultipleAgents = ttmlData.agents && ttmlData.agents.length > 1;
+    const hasMultipleAgents = agents.length > 1;
     const hasAgentLines = agentIdsInLyrics.length > 0;
     
     // エージェントIDが実際に存在するか
-    const validAgentIds = new Set(ttmlData.agents.map(a => a.id));
+    const validAgentIds = new Set(agents.map(a => a.id));
     const allAgentIdsValid = agentIdsInLyrics.every(id => validAgentIds.has(id));
     
     return (hasMultipleAgents || hasAgentLines) && allAgentIdsValid;
-  }, [ttmlData, allLyricLines]);
+  }, [ttmlData, allLyricLines, agents]);
 
   const agentAlignmentMap = useMemo(() => {
     if (!ttmlData) return {} as Record<string, 'left' | 'right'>;
@@ -799,7 +792,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     }
 
     const uniqueAgentIds = [...new Set(agentIdsInLyrics)];
-    const lookupAgentType = (id: string) => ttmlData.agents.find(agent => agent.id === id)?.type || '';
+    const lookupAgentType = (id: string) => agents.find(agent => agent.id === id)?.type || '';
 
     const alignments: Record<string, 'left' | 'right'> = {};
     const leftAligned: string[] = [];
@@ -848,7 +841,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
     });
 
     return alignments;
-  }, [ttmlData, allLyricLines]);
+  }, [ttmlData, allLyricLines, agents]);
 
   const divLastLineIndices = useMemo(() => {
     if (!ttmlData) return [];
@@ -1304,7 +1297,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
             const isEmpty = !line.text || line.text.trim() === '';
             const lineKey = `${line.begin}-${line.end}`;
             const isStage = !activeInterlude && stageLineKeySet.has(lineKey) && !isPast;
-            const agent = line.agent ? ttmlData.agents.find(a => a.id === line.agent) : null;
+            const agent = line.agent ? agents.find(a => a.id === line.agent) : null;
             
             let textColor = '';
             if (isDisplaying) {
@@ -2171,7 +2164,7 @@ export const TTMLLyrics: React.FC<PlayerLyricsProps> = ({
                           const firstLineInNextDiv = nextDiv.lines[0];
                           // エージェント情報から位置を確認
                           if (hasAgents && firstLineInNextDiv.agent) {
-                            const agent = ttmlData.agents.find(a => a.id === firstLineInNextDiv.agent);
+                            const agent = agents.find(a => a.id === firstLineInNextDiv.agent);
                             if (agent) {
                               const agentId = agent.id;
                               const firstAgentId = allLyricLines.find(l => l.agent)?.agent || '';

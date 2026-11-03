@@ -9,6 +9,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PlayerControlsProps } from '@/types';
 import { TextMarquee } from '@/components/text-marquee';
 
+const VolumeIcon = ({ volume }: { volume: number }) => {
+  const iconClass = "h-4 w-4 fill-foreground";
+  if (volume === 0) return <VolumeX className={iconClass} />;
+  if (volume > 50) return <Volume2 className={iconClass} />;
+  if (volume > 0) return <Volume1 className={iconClass} />;
+  return <Volume className={iconClass} />;
+};
+
 const PlayerControls: React.FC<PlayerControlsProps> = ({
   isPlaying,
   togglePlayPause,
@@ -82,14 +90,6 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
     if (isMobile && onMobileControlsToggle) {
       onMobileControlsToggle();
     }
-  };
-
-  const VolumeIcon = () => {
-    const iconClass = "h-4 w-4 fill-foreground";
-    if (volume === 0) return <VolumeX className={iconClass} />;
-    if (volume > 50) return <Volume2 className={iconClass} />;
-    if (volume > 0) return <Volume1 className={iconClass} />;
-    return <Volume className={iconClass} />;
   };
 
   const shouldShowControls = isMobile 
@@ -277,7 +277,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                         onClick={toggleMuteWithToggle}
                         className="h-9 w-9 rounded-full hover:bg-foreground/15 transition-all duration-200 text-foreground/90 hover:text-foreground drop-shadow-sm"
                       >
-                        <VolumeIcon />
+                        <VolumeIcon volume={volume} />
                       </Button>
                       <Slider
                         value={[volume]}
